@@ -1,0 +1,27 @@
+are all inherited instance vars added to classes?
+
+
+use a timer to poll for missing content once/second?
+
+
+do the remaining Clone methods
+
+
+make sure caller_gid doesnt get passed on too far from ElementaryAction_execute
+(eg TokenGroupClass_CallActionSlot)
+
+
+cope with DSM: and CI: filename prefixes
+cope with .. in filenames
+see 8.3.2 in UK MHEG Profile
+
+
+have a monitor/debugger console
+
+
+change fatal()'s to error()'s where possible
+
+
+change all LIST macros to take TYPE as first param
+
+
