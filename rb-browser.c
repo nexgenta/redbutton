@@ -1,11 +1,14 @@
 /*
- * rb-browser [-v] [-f] [-k <keymap_file>] [-t <timeout>] <service_gateway_dir>
+ * rb-browser [-v] [-f] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>
  *
  * -v is verbose/debug mode
  * -f is full screen, otherwise it uses a window
  * -k changes the default key map to the given file
  * (use rb-keymap to generate a keymap config file)
  * -t is how long to poll for missing files before generating a ContentRefError (default 10 seconds)
+ * -r means use a remote backend (rb-download running on another host), <service_gateway> should be host[:port]
+ * if -r is not specified, rb-download is running on the same machine
+ * and <service_gateway> should be an entry in the services directory, eg. services/4165
  */
 
 #include <unistd.h>
@@ -118,6 +121,6 @@ main(int argc, char *argv[])
 void
 usage(char *prog_name)
 {
-	fatal("Usage: %s [-v] [-f] [-k <keymap_file>] [-t <timeout>] <service_gateway_dir>", prog_name);
+	fatal("Usage: %s [-v] [-f] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>", prog_name);
 }
 
