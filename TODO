@@ -1,0 +1,19 @@
+work out why this happened on BBC1 once:
+read: Value too large for defined data type
+Unable to read PID
+
+have a verbose flag
+
+use a linked list of modules rather than an array in struct carousel
+=> easier to delete/add modules
+
+transactionId in DII messages is a version number
+=> need to download again if it gets bigger
+(we currently just look at the module version, is this enough?)
+
+what happens when you change channel?
+(kill -9 and restart with the new programme_number?)
+
+create carousels/PID/CID dir in add_dsmcc_pid()
+(may need to use carousels/<assoc_tag> as stream2pid may return 0)
+
