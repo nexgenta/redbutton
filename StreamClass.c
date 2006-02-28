@@ -30,9 +30,9 @@ default_StreamClassInstanceVars(StreamClass *t, StreamClassInstanceVars *v)
 void
 free_StreamClassInstanceVars(StreamClassInstanceVars *v)
 {
-	LIST_FREE(&v->CounterTriggers, CounterTrigger, safe_free);
-
 	MHEGStreamPlayer_fini(&v->player);
+
+	LIST_FREE(&v->CounterTriggers, CounterTrigger, safe_free);
 
 	return;
 }
