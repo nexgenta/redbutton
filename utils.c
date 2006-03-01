@@ -20,12 +20,75 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "utils.h"
+
+/*
+ * write the given string (ie upto \0) to the given fd
+ */
+
+void
+write_string(int fd, const char *str)
+{
+	write_all(fd, str, strlen(str));
+
+	return;
+}
+
+/*
+ * guarantee writing count bytes from buf to fd
+ * W. Richard Stevens
+ */
+
+void
+write_all(int fd, const void *buf, size_t count)
+{
+	size_t nwritten;
+	const char *buf_ptr;
+
+	buf_ptr = buf;
+	while(count > 0)
+	{
+		if((nwritten = write(fd, buf_ptr, count)) < 0)
+		{
+			if(errno == EINTR || errno == EAGAIN)
+				nwritten = 0;
+			else
+				fatal("write: %s\n", strerror(errno));
+		}
+		count -= nwritten;
+		buf_ptr += nwritten;
+	}
+
+	return;
+}
+
+/*
+ * move str to the next non-white space character (or the end of the string)
+ */
+
+char *
+skip_ws(char *str)
+{
+	if(str == NULL)
+		return NULL;
+
+	while(*str != '\0' && isspace((int) *str))
+		str ++;
+
+	return str;
+}
+
+/*
+ * returns a single ASCII char for the values 0-15
+ */
 
 char
 hex_digit(uint8_t val)

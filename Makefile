@@ -4,6 +4,8 @@ CFLAGS=-Wall -O
 OBJS=	rb-download.o	\
 	list.o		\
 	findmheg.o	\
+	listen.o	\
+	command.o	\
 	assoc.o		\
 	carousel.o	\
 	module.o	\

@@ -36,6 +36,11 @@
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #endif
 
+void write_string(int, const char *);
+void write_all(int, const void *, size_t);
+
+char *skip_ws(char *);
+
 char hex_digit(uint8_t);
 
 void *safe_malloc(size_t);
