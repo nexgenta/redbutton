@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include <zlib.h>
 #include <netinet/in.h>
 
@@ -77,8 +78,8 @@ add_module(struct carousel *car, struct DownloadInfoIndication *dii, struct DIIM
 	mod->block_size = ntohs(dii->blockSize);
 	mod->nblocks = (ntohl(diimod->moduleSize) + mod->block_size - 1) / mod->block_size;
 	mod->blocks_left = mod->nblocks;
-	mod->got_block = safe_malloc(mod->nblocks);
-	bzero(mod->got_block, mod->nblocks);
+	mod->got_block = safe_malloc(mod->nblocks * sizeof(bool));
+	bzero(mod->got_block, mod->nblocks * sizeof(bool));
 	mod->size = ntohl(diimod->moduleSize);
 	mod->data = safe_malloc(mod->size);
 
@@ -126,7 +127,7 @@ download_block(struct carousel *car, struct module *mod, uint16_t block, unsigne
 	if(mod->got_block[block])
 		return;
 
-	mod->got_block[block] = TRUE;
+	mod->got_block[block] = true;
 	memcpy(mod->data + (block * mod->block_size), data, length);
 
 	mod->blocks_left --;

@@ -24,6 +24,7 @@
 #define __MODULE_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "dsmcc.h"
 #include "assoc.h"
@@ -45,7 +46,7 @@ struct module
 	uint16_t block_size;
 	uint16_t nblocks;
 	uint32_t blocks_left;		/* number of blocks left to download */
-	unsigned char *got_block;	/* which blocks we have downloaded so far */
+	bool *got_block;		/* which blocks we have downloaded so far */
 	uint32_t size;			/* size of the file */
 	unsigned char *data;		/* the actual file data */
 };
@@ -61,7 +62,7 @@ struct carousel
 	struct assoc assoc;		/* map stream_id's to elementary_pid's */
 	int32_t npids;			/* PIDs we are reading data from */
 	struct pid_fds *pids;		/* array, npids in length */
-	int got_dsi;			/* TRUE if we have downloaded the DSI */
+	bool got_dsi;			/* true if we have downloaded the DSI */
 	uint32_t nmodules;		/* modules we have/are downloading */
 	struct module *modules;		/* array, nmodules in length */
 };

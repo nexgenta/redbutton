@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <netinet/in.h>
 
 #include "carousel.h"
@@ -34,14 +35,14 @@ void
 load_carousel(struct carousel *car)
 {
 	unsigned char *table;
-	int done;
+	bool done;
 
 	/* no modules yet */
 	car->nmodules = 0;
 	car->modules = NULL;
 
 	/* see what the next DSMCC table is */
-	done = FALSE;
+	done = false;
 	do
 	{
 		struct dsmccMessageHeader *dsmcc;
@@ -114,7 +115,7 @@ process_dsi(struct carousel *car, struct DownloadServerInitiate *dsi)
 	if(car->got_dsi)
 		return;
 
-	car->got_dsi = TRUE;
+	car->got_dsi = true;
 
 	elementary_pid = process_biop_service_gateway_info(car->service_id, &car->assoc, DSI_privateDataByte(dsi), ntohs(dsi->privateDataLength));
 

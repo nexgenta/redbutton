@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <netinet/in.h>
 
 #include "carousel.h"
@@ -68,7 +69,7 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 	uint16_t section_length;
 	uint16_t offset;
 	uint16_t map_pid = 0;
-	int found;
+	bool found;
 	unsigned char *pmt;
 	uint8_t stream_type;
 	uint16_t elementary_pid;
@@ -90,7 +91,7 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 	_car.npids = 0;
 	_car.pids = NULL;
 	/* no modules loaded yet */
-	_car.got_dsi = FALSE;
+	_car.got_dsi = false;
 	_car.nmodules = 0;
 	_car.modules = NULL;
 
@@ -101,7 +102,7 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 	section_length = 3 + (((pat[1] & 0x0f) << 8) + pat[2]);
 
 	/* find the PMT for this service_id */
-	found = FALSE;
+	found = false;
 	offset = 8;
 	/* -4 for the CRC at the end */
 	while((offset < (section_length - 4)) && !found)
@@ -109,7 +110,7 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 		if((pat[offset] << 8) + pat[offset+1] == service_id)
 		{
 			map_pid = ((pat[offset+2] & 0x1f) << 8) + pat[offset+3];
-			found = TRUE;
+			found = true;
 		}
 		else
 		{

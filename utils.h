@@ -27,11 +27,6 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-#ifndef FALSE
-#define FALSE	0
-#define TRUE	1
-#endif
-
 #ifndef MAX
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #endif

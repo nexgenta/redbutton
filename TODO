@@ -1,5 +1,3 @@
-replace TRUE/FALSE with stdbool
-
 work out why this happened on BBC1 once:
 read: Value too large for defined data type
 Unable to read PID
