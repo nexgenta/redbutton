@@ -7,9 +7,12 @@
 
 #include <netinet/in.h>
 
+#include "module.h"
+
 struct listen_data
 {
 	struct sockaddr_in addr;	/* ip:port to listen on */
+	struct carousel *carousel;	/* carousel we are downloading */
 };
 
 int parse_addr(char *, struct in_addr *, in_port_t *);

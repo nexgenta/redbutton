@@ -132,7 +132,10 @@ main(int argc, char *argv[])
 		car = find_mheg(device, timeout, service_id, carousel_id);
 		printf("Carousel ID=%u\n", car->carousel_id);
 		if(listen)
+		{
+			listen_data.carousel = car;
 			start_listener(&listen_data);
+		}
 		load_carousel(car);
 	}
 	else
