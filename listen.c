@@ -192,8 +192,9 @@ start_listener(struct listen_data *listen_data)
 			quit = handle_connection(listen_data, accept_sock, &client_addr);
 			close(accept_sock);
 /* TODO */
-if(quit) printf("QUIT!!!\n");
-			exit(EXIT_SUCCESS);
+if(quit) printf("TODO: QUIT\n");
+			/* use _exit in child so stdio etc don't clean up twice */
+			_exit(EXIT_SUCCESS);
 		}
 		else
 		{
@@ -226,7 +227,7 @@ handle_connection(struct listen_data *listen_data, int client_sock, struct socka
 	{
 		/* \0 terminate the buffer */
 		cmd[nread] = '\0';
-		/* strip off an trailing \n (only needed when testing with telnet etc) */
+		/* strip off any trailing \n */
 		nread --;
 		while(nread > 0 && (cmd[nread] == '\n' || cmd[nread] == '\r'))
 			cmd[nread--] = '\0';
