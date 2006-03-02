@@ -287,12 +287,21 @@ canonical_filename(char *path)
 		/* no more slashes => nothing left to do */
 		if(*slash == '\0')
 			return _canon;
-		/* if the next path component is "../", eat the previous one */
-		if(strncmp(slash, "/../", 4) == 0)
+		/* if this component is empty (ie ./ or /) remove it */
+		if(strncmp(start, "./", 2) == 0 || *start == '/')
 		{
 			/* include \0 terminator */
-			len = strlen(start) + 1;
-			memmove(start, slash + 4, len - ((slash - start) + 4));
+			len = strlen(slash + 1) + 1;
+			memmove(start, slash + 1, len);
+			/* restart the search */
+			start = _canon;
+		}
+		/* if the next path component is "../", eat this one */
+		else if(strncmp(slash, "/../", 4) == 0)
+		{
+			/* include \0 terminator */
+			len = strlen(slash + 4) + 1;
+			memmove(start, slash + 4, len);
 			/* restart the search */
 			start = _canon;
 		}
