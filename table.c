@@ -169,8 +169,12 @@ read_dsmcc_tables(struct carousel *car)
 		/* read the table */
 		if((n = read(fd, _buf, sizeof(_buf))) < 0)
 		{
+			/*
+			 * may get EOVERFLOW if we don't read quick enough,
+			 * so just report it and have another go
+			 */
 			error("read: %s", strerror(errno));
-			return NULL;
+			_buf[0] = 0;
 		}
 	}
 	while(_buf[0] != TID_DSMCC_CONTROL && _buf[0] != TID_DSMCC_DATA);
