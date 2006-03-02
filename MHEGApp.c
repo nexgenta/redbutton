@@ -21,7 +21,7 @@ MHEGApp_init(MHEGApp *m)
 }
 
 void
-MHEGApp_stop(MHEGApp *m)
+MHEGApp_fini(MHEGApp *m)
 {
 	if(m->app != NULL)
 		free_InterchangedObject(m->app);
@@ -63,7 +63,7 @@ MHEGApp_loadApplication(MHEGApp *m, OctetString *derfile)
 
 	if((der = MHEGEngine_openFile(derfile, "r")) == NULL)
 	{
-		error("Unable to open '%.*s': %s", derfile->size, derfile->data, strerror(errno));
+		error("Unable to open '%.*s'", derfile->size, derfile->data);
 		safe_free(m->app);
 		m->app = NULL;
 		return NULL;
@@ -118,7 +118,7 @@ MHEGApp_loadScene(MHEGApp *m, OctetString *derfile)
 
 	if((der = MHEGEngine_openFile(derfile, "r")) == NULL)
 	{
-		error("Unable to open '%.*s': %s", derfile->size, derfile->data, strerror(errno));
+		error("Unable to open '%.*s'", derfile->size, derfile->data);
 		safe_free(m->scene);
 		m->scene = NULL;
 		return NULL;

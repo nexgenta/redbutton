@@ -33,6 +33,9 @@
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #endif
 
+void write_string(int, const char *);
+void write_all(int, const void *, size_t);
+
 unsigned int char2hex(unsigned char);
 
 int next_utf8(unsigned char *, int, int *);

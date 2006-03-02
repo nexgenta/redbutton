@@ -173,7 +173,7 @@ MHEGEngine_init(bool remote, char *srg_loc, int verbose, unsigned int timeout, b
 
 	MHEGDisplay_init(&engine.display, fullscreen, keymap);
 
-	engine.backend = new_MHEGBackend(remote, srg_loc);
+	MHEGBackend_init(&engine.backend, remote, srg_loc);
 
 	MHEGApp_init(&engine.active_app);
 
@@ -223,7 +223,7 @@ MHEGEngine_run(OctetString *derfile)
 		ApplicationClass_Deactivation(app);
 		ApplicationClass_Destruction(app);
 		/* clean up */
-		MHEGApp_stop(&engine.active_app);
+		MHEGApp_fini(&engine.active_app);
 		LIST_FREE(&engine.objects, RootClassPtr, safe_free);
 		LIST_FREE(&engine.missing_content, MissingContent, free_MissingContentListItem);
 		LIST_FREE(&engine.active_links, LinkClassPtr, safe_free);
@@ -264,15 +264,15 @@ fatal("TODO: Retune to '%.*s' (service_id %u)", engine.quit_data.size, engine.qu
 }
 
 void
-MHEGEngine_stop(void)
+MHEGEngine_fini(void)
 {
-	MHEGDisplay_stop(&engine.display);
+	MHEGDisplay_fini(&engine.display);
 
 	LIST_FREE(&engine.persistent, PersistentData, free_PersistentDataListItem);
 
 	si_free();
 
-	free_MHEGBackend(engine.backend);
+	MHEGBackend_fini(&engine.backend);
 
 	return;
 }
@@ -1293,18 +1293,30 @@ MHEGEngine_pollMissingContent(void)
 bool
 MHEGEngine_checkContentRef(ContentReference *name)
 {
-	return (*(engine.backend->checkContentRef))(engine.backend, name);
+	return (*(engine.backend.fns->checkContentRef))(&engine.backend, name);
 }
 
 /*
  * file contents are stored in out (out->data will need to be free'd)
  * returns false if it can't load the file (out will be {0,NULL})
+ * out should be uninitialised before calling this
  */
 
 bool
 MHEGEngine_loadFile(OctetString *name, OctetString *out)
 {
-	return (*(engine.backend->loadFile))(engine.backend, name, out);
+	/* in case it fails */
+	out->size = 0;
+	out->data = NULL;
+
+	/* just in case */
+	if(name->size == 0)
+	{
+		verbose("MHEGEngine_loadFile: no filename given");
+		return false;
+	}
+
+	return (*(engine.backend.fns->loadFile))(&engine.backend, name, out);
 }
 
 /*
@@ -1316,7 +1328,7 @@ MHEGEngine_loadFile(OctetString *name, OctetString *out)
 FILE *
 MHEGEngine_openFile(OctetString *name, char *mode)
 {
-	return (*(engine.backend->openFile))(engine.backend, name, mode);
+	return (*(engine.backend.fns->openFile))(&engine.backend, name, mode);
 }
 
 /*
@@ -1326,7 +1338,7 @@ MHEGEngine_openFile(OctetString *name, char *mode)
 int
 MHEGEngine_closeFile(FILE *file)
 {
-	return (*(engine.backend->closeFile))(engine.backend, file);
+	return (*(engine.backend.fns->closeFile))(&engine.backend, file);
 }
 
 /*

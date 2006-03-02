@@ -1,3 +1,6 @@
+handle SIGPIPE - default handler terminates the process
+
+
 are all inherited instance vars added to classes?
 
 
@@ -12,7 +15,8 @@ make sure caller_gid doesnt get passed on too far from ElementaryAction_execute
 
 
 cope with DSM: and CI: filename prefixes
-cope with .. in filenames
+cope with .. in filenames (may not be needed, remote backend does it for us,
+for local backend filesystem does it for us)
 see 8.3.2 in UK MHEG Profile
 
 

@@ -154,7 +154,7 @@ typedef struct
 	int verbose;					/* -v cmd line flag */
 	unsigned int timeout;				/* how long to poll for missing content before generating an error */
 	MHEGDisplay display;				/* make porting easier */
-	MHEGBackend *backend;				/* local or remote access to DSMCC carousel and MPEG streams */
+	MHEGBackend backend;				/* local or remote access to DSMCC carousel and MPEG streams */
 	MHEGApp active_app;				/* application we are currently running */
 	QuitReason quit_reason;				/* do we need to stop the current app */
 	OctetString quit_data;				/* new app to Launch or Spawn, or channel to Retune to */
@@ -171,7 +171,7 @@ typedef struct
 /* prototypes */
 void MHEGEngine_init(bool, char *, int, unsigned int, bool, char *);
 int MHEGEngine_run(OctetString *);
-void MHEGEngine_stop();
+void MHEGEngine_fini();
 
 MHEGDisplay *MHEGEngine_getDisplay(void);
 

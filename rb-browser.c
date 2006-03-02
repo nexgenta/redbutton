@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	}
 
 	/* clean up */
-	MHEGEngine_stop();
+	MHEGEngine_fini();
 
 	return rc;
 }

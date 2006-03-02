@@ -52,7 +52,7 @@ typedef struct
 } MHEGDisplay;
 
 void MHEGDisplay_init(MHEGDisplay *, bool, char *);
-void MHEGDisplay_stop(MHEGDisplay *);
+void MHEGDisplay_fini(MHEGDisplay *);
 
 bool MHEGDisplay_processEvents(MHEGDisplay *, bool);
 

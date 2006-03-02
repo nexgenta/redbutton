@@ -14,7 +14,7 @@ typedef struct
 } MHEGApp;
 
 void MHEGApp_init(MHEGApp *);
-void MHEGApp_stop(MHEGApp *);
+void MHEGApp_fini(MHEGApp *);
 
 ApplicationClass *MHEGApp_loadApplication(MHEGApp *, OctetString *);
 SceneClass *MHEGApp_loadScene(MHEGApp *, OctetString *);

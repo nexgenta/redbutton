@@ -240,7 +240,7 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 }
 
 void
-MHEGDisplay_stop(MHEGDisplay *d)
+MHEGDisplay_fini(MHEGDisplay *d)
 {
 	/* calls XCloseDisplay for us which free's all our Windows, Pixmaps, etc */
 	XtDestroyApplicationContext(d->app);
