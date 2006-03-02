@@ -245,7 +245,7 @@ external_filename(struct listen_data *listen_data, char *cref)
 	canon_cref = canonical_filename(cref + 3);
 
 	/* if the canonical name starts with "../", it is invalid */
-	if(strncmp(canon_cref, "../", 3) == 0)
+	if(strcmp(canon_cref, "..") == 0 || strncmp(canon_cref, "../", 3) == 0)
 		return NULL;
 
 	/* create the carousel filename, ie prepend the servive gateway directory */
