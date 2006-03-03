@@ -37,10 +37,13 @@
 /* Programme Map Section */
 #define TID_PMT		0x02
 
-/* stream_type we are interested in */
+/* stream_types we are interested in */
+#define STREAM_TYPE_VIDEO		0x02
+#define STREAM_TYPE_AUDIO		0x03
 #define STREAM_TYPE_ISO13818_6_B	0x0b
 
 /* descriptors we want */
+#define TAG_LANGUAGE_DESCRIPTOR		0x0a
 #define TAG_CAROUSEL_ID_DESCRIPTOR	0x13
 #define TAG_STREAM_ID_DESCRIPTOR	0x52
 
@@ -54,6 +57,12 @@ struct stream_id_descriptor
 {
 	uint8_t component_tag;
 };
+
+struct language_descriptor
+{
+	char language_code[3];
+	uint8_t audio_type;
+} __attribute__((__packed__));
 
 /*
  * fills in a struct carousel based on the given service_id
@@ -85,6 +94,9 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 
 	/* unknown */
 	_car.carousel_id = 0;
+	_car.audio_pid = 0;
+	_car.video_pid = 0;
+	_car.current_pid = 0;
 	/* map between stream_id_descriptors and elementary_PIDs */
 	init_assoc(&_car.assoc);
 	/* no PIDs yet */
@@ -135,8 +147,7 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 	offset += 2 + info_length;
 
 	/*
-	 *  find the carousel_identification_descriptor
-	 *  and the stream_identification_descriptor
+	 *  find the Descriptor Tags we are interested in
 	 */
 	while(offset < (section_length - 4))
 	{
@@ -144,6 +155,10 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 		offset += 1;
 		elementary_pid = ((pmt[offset] & 0x1f) << 8) + pmt[offset+1];
 		offset += 2;
+		/* is it the default video stream for this service */
+		if(stream_type == STREAM_TYPE_VIDEO)
+			_car.video_pid = elementary_pid;
+		/* read the descriptors */
 		info_length = ((pmt[offset] & 0x0f) << 8) + pmt[offset+1];
 		offset += 2;
 		while(info_length != 0)
@@ -170,6 +185,14 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 				component_tag = desc->component_tag;
 //				printf("pid=0x%x component_tag=0x%x\n", elementary_pid, component_tag);
 				add_assoc(&_car.assoc, elementary_pid, desc->component_tag);
+			}
+			else if(desc_tag == TAG_LANGUAGE_DESCRIPTOR && stream_type == STREAM_TYPE_AUDIO)
+			{
+				struct language_descriptor *desc;
+				desc = (struct language_descriptor *) &pmt[offset];
+				/* only remember the normal audio stream (not visually impaired stream) */
+				if(desc->audio_type == 0)
+					_car.audio_pid = elementary_pid;
 			}
 			offset += desc_length;
 			info_length -= desc_length;

@@ -131,6 +131,8 @@ main(int argc, char *argv[])
 		service_id = strtoul(argv[optind], NULL, 0);
 		car = find_mheg(device, timeout, service_id, carousel_id);
 		printf("Carousel ID=%u\n", car->carousel_id);
+		printf("Video PID=%u\n", car->video_pid);
+		printf("Audio PID=%u\n", car->audio_pid);
 		if(listen)
 		{
 			listen_data.carousel = car;
