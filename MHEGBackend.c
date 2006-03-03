@@ -17,36 +17,34 @@
 bool local_checkContentRef(MHEGBackend *, ContentReference *);
 bool local_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *local_openFile(MHEGBackend *, OctetString *, char *);
-int local_closeFile(MHEGBackend *, FILE *);
 
 static struct MHEGBackendFns local_backend_fns =
 {
 	local_checkContentRef,	/* checkContentRef */
 	local_loadFile,		/* loadFile */
 	local_openFile,		/* openFile */
-	local_closeFile		/* closeFile */
 };
 
 /* remote backend funcs */
 bool remote_checkContentRef(MHEGBackend *, ContentReference *);
 bool remote_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *remote_openFile(MHEGBackend *, OctetString *, char *);
-int remote_closeFile(MHEGBackend *, FILE *);
 
 static struct MHEGBackendFns remote_backend_fns =
 {
 	remote_checkContentRef,	/* checkContentRef */
 	remote_loadFile,	/* loadFile */
 	remote_openFile,	/* openFile */
-	remote_closeFile	/* closeFile */
 };
 
 /* internal functions */
 static int parse_addr(char *, struct in_addr *, in_port_t *);
 static int get_host_addr(char *, struct in_addr *);
 
-static int remote_command(MHEGBackend *, char *);
-static unsigned int remote_response(int);
+static FILE *remote_command(MHEGBackend *, char *);
+static unsigned int remote_response(FILE *);
+
+static char *external_filename(MHEGBackend *, OctetString *);
 
 /* public interface */
 void
@@ -138,70 +136,67 @@ get_host_addr(char *host, struct in_addr *output)
 
 /*
  * send the given command to the remote backend
- * returns a socket fd to read the response from
- * returns <0 if it can't contact the backend
+ * returns a socket FILE to read the response from
+ * returns NULL if it can't contact the backend
  */
 
-static int
+static FILE *
 remote_command(MHEGBackend *t, char *cmd)
 {
 	int sock;
+	FILE *file;
 
 	/* connect to the backend */
 	if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		error("Unable to create backend socket: %s", strerror(errno));
-		return -1;
+		return NULL;
 	}
 
 	if(connect(sock, (struct sockaddr *) &t->addr, sizeof(struct sockaddr_in)) < 0)
 	{
 		error("Unable to connect to backend: %s", strerror(errno));
-		return -1;
+		close(sock);
+		return NULL;
 	}
 
-	/* send the command */
-	write_string(sock, cmd);
+	/* associate a FILE with the socket (so stdio can do buffering) */
+	if((file = fdopen(sock, "r+")) != NULL)
+	{
+		/* send the command */
+		fputs(cmd, file);
+	}
+	else
+	{
+		error("Unable to buffer backend connection: %s", strerror(errno));
+		close(sock);
+	}
 
-	return sock;
+	return file;
 }
 
 /*
- * read the backend response from the given socket fd
+ * read the backend response from the given socket FILE
  * returns the OK/error code
  */
 
 #define BACKEND_RESPONSE_OK	200
+#define BACKEND_RESPONSE_ERROR	500
 
 static unsigned int
-remote_response(int sock)
+remote_response(FILE *file)
 {
 	char buf[1024];
-	char byte;
-	unsigned int total;
-	ssize_t nread;
 	unsigned int rc;
 
 	/* read upto \n */
-	total = 0;
-	do
-	{
-		if((nread = read(sock, &byte, 1)) == 1)
-			buf[total++] = byte;
-	}
-	while(nread == 1 && byte != '\n' && total < (sizeof(buf) - 1));
-
-	/* \0 terminate it */
-	buf[total] = '\0';
+	if(fgets(buf, sizeof(buf), file) == NULL)
+		return BACKEND_RESPONSE_ERROR;
 
 	rc = atoi(buf);
 
 	return rc;
 }
-
-/*
- * local routines
- */
 
 /*
  * returns a filename that can be loaded from the file system
@@ -224,6 +219,10 @@ external_filename(MHEGBackend *t, OctetString *name)
 
 	return _external;
 }
+
+/*
+ * local routines
+ */
 
 /*
  * returns true if the file exists on the carousel
@@ -293,16 +292,6 @@ local_openFile(MHEGBackend *t, OctetString *name, char *mode)
 }
 
 /*
- * close a FILE opened with MHEGEngine_openFile()
- */
-
-int
-local_closeFile(MHEGBackend *t, FILE *file)
-{
-	return fclose(file);
-}
-
-/*
  * remote routines
  */
 
@@ -314,17 +303,17 @@ bool
 remote_checkContentRef(MHEGBackend *t, ContentReference *name)
 {
 	char cmd[PATH_MAX];
-	int sock;
+	FILE *sock;
 	bool exists;
 
 	snprintf(cmd, sizeof(cmd), "check %s\n", MHEGEngine_absoluteFilename(name));
 
-	if((sock = remote_command(t, cmd)) < 0)
+	if((sock = remote_command(t, cmd)) == NULL)
 		return false;
 
 	exists = (remote_response(sock) == BACKEND_RESPONSE_OK);
 
-	close(sock);
+	fclose(sock);
 
 	return exists;
 }
@@ -339,14 +328,14 @@ bool
 remote_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 {
 	char cmd[PATH_MAX];
-	int sock;
+	FILE *sock;
 	char buf[8 * 1024];
-	ssize_t nread;
+	size_t nread;
 	bool success = false;
 
 	snprintf(cmd, sizeof(cmd), "file %s\n", MHEGEngine_absoluteFilename(name));
 
-	if((sock = remote_command(t, cmd)) < 0)
+	if((sock = remote_command(t, cmd)) == NULL)
 		return false;
 
 	/* does it exist */
@@ -354,16 +343,17 @@ remote_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 	{
 		verbose("Loading '%.*s'", name->size, name->data);
 		/* read from the socket until EOF */
-		do
+		while(!feof(sock))
 		{
-			if((nread = read(sock, buf, sizeof(buf))) > 0)
+/* TODO */
+/* could read straight into out->data rather than doing memcpy */
+			if((nread = fread(buf, 1, sizeof(buf), sock)) > 0)
 			{
 				out->data = safe_realloc(out->data, out->size + nread);
 				memcpy(out->data + out->size, buf, nread);
 				out->size += nread;
 			}
 		}
-		while(nread > 0);
 		success = true;
 	}
 	else
@@ -371,7 +361,7 @@ remote_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 		error("Unable to load '%.*s'", name->size, name->data);
 	}
 
-	close(sock);
+	fclose(sock);
 
 	return success;
 }
@@ -380,58 +370,48 @@ FILE *
 remote_openFile(MHEGBackend *t, OctetString *name, char *mode)
 {
 	char cmd[PATH_MAX];
-	int sock;
+	FILE *sock;
 	char buf[8 * 1024];
-	ssize_t nread;
+	size_t nread;
 	size_t nwritten;
-	FILE *file = NULL;
+	FILE *out = NULL;
 
 	snprintf(cmd, sizeof(cmd), "file %s\n", MHEGEngine_absoluteFilename(name));
 
-	if((sock = remote_command(t, cmd)) < 0)
+	if((sock = remote_command(t, cmd)) == NULL)
 		return NULL;
 
 	/* does it exist */
 	if(remote_response(sock) == BACKEND_RESPONSE_OK)
 	{
-		if((file = tmpfile()) != NULL)
+		/* tmpfile() will delete the file when we fclose() it */
+		if((out = tmpfile()) != NULL)
 		{
 			/* read from the socket until EOF */
 			do
 			{
-				if((nread = read(sock, buf, sizeof(buf))) > 0)
-					nwritten = fwrite(buf, 1, nread, file);
+				if((nread = fread(buf, 1, sizeof(buf), sock)) > 0)
+					nwritten = fwrite(buf, 1, nread, out);
 				else
 					nwritten = 0;
 			}
-			while(nread > 0 && nread == nwritten);
+			while(!feof(sock) && nread == nwritten);
 			/* could we write the file ok */
 			if(nread != nwritten)
 			{
 				error("Unable to write to local file");
-				fclose(file);
-				file = NULL;
+				fclose(out);
+				out = NULL;
 			}
 		}
 	}
 
-	close(sock);
+	fclose(sock);
 
 	/* rewind the file */
-	if(file != NULL)
-		rewind(file);
+	if(out != NULL)
+		rewind(out);
 
-	return file;
-}
-
-/*
- * close a FILE opened with MHEGEngine_openFile()
- */
-
-int
-remote_closeFile(MHEGBackend *t, FILE *file)
-{
-	/* tmpfile() will delete the file for us */
-	return fclose(file);
+	return out;
 }
 

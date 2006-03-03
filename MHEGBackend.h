@@ -22,7 +22,6 @@ typedef struct MHEGBackend
 		bool (*checkContentRef)(struct MHEGBackend *, ContentReference *);	/* check a file exists */
 		bool (*loadFile)(struct MHEGBackend *, OctetString *, OctetString *);	/* load a file */
 		FILE *(*openFile)(struct MHEGBackend *, OctetString *, char *);		/* open a file */
-		int (*closeFile)(struct MHEGBackend *, FILE *);				/* close a file */
 	} *fns;
 } MHEGBackend;
 

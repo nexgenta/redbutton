@@ -1332,16 +1332,6 @@ MHEGEngine_openFile(OctetString *name, char *mode)
 }
 
 /*
- * close a FILE opened with MHEGEngine_openFile()
- */
-
-int
-MHEGEngine_closeFile(FILE *file)
-{
-	return (*(engine.backend.fns->closeFile))(&engine.backend, file);
-}
-
-/*
  * returns the absolute group ID, ie it always starts with "~//"
  * returns a ptr to static string that will be overwritten by the next call to this routine
  * section 8.3.2 of the UK MHEG Profile says the filename prefixes are:

@@ -221,7 +221,7 @@ void MHEGEngine_pollMissingContent(void);
 bool MHEGEngine_checkContentRef(ContentReference *);
 bool MHEGEngine_loadFile(OctetString *, OctetString *);
 FILE *MHEGEngine_openFile(OctetString *, char *);
-int MHEGEngine_closeFile(FILE *);
+
 char *MHEGEngine_absoluteFilename(OctetString *);
 
 /* convert PNG to internal format */

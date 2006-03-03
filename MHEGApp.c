@@ -76,7 +76,7 @@ MHEGApp_loadApplication(MHEGApp *m, OctetString *derfile)
 	len = ftell(der);
 	rewind(der);
 	rc = der_decode_InterchangedObject(der, m->app, len);
-	MHEGEngine_closeFile(der);
+	fclose(der);
 
 	if(rc < 0 || m->app->choice != InterchangedObject_application)
 	{
@@ -131,7 +131,7 @@ MHEGApp_loadScene(MHEGApp *m, OctetString *derfile)
 	len = ftell(der);
 	rewind(der);
 	rc = der_decode_InterchangedObject(der, m->scene, len);
-	MHEGEngine_closeFile(der);
+	fclose(der);
 
 	if(rc < 0 || m->scene->choice != InterchangedObject_scene)
 	{
