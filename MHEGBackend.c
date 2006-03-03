@@ -16,25 +16,29 @@
 /* local backend funcs */
 bool local_checkContentRef(MHEGBackend *, ContentReference *);
 bool local_loadFile(MHEGBackend *, OctetString *, OctetString *);
-FILE *local_openFile(MHEGBackend *, OctetString *, char *);
+FILE *local_openFile(MHEGBackend *, OctetString *);
+FILE *local_openStream(MHEGBackend *, bool, int, bool, int);
 
 static struct MHEGBackendFns local_backend_fns =
 {
 	local_checkContentRef,	/* checkContentRef */
 	local_loadFile,		/* loadFile */
 	local_openFile,		/* openFile */
+	local_openStream,	/* openStream */
 };
 
 /* remote backend funcs */
 bool remote_checkContentRef(MHEGBackend *, ContentReference *);
 bool remote_loadFile(MHEGBackend *, OctetString *, OctetString *);
-FILE *remote_openFile(MHEGBackend *, OctetString *, char *);
+FILE *remote_openFile(MHEGBackend *, OctetString *);
+FILE *remote_openStream(MHEGBackend *, bool, int, bool, int);
 
 static struct MHEGBackendFns remote_backend_fns =
 {
 	remote_checkContentRef,	/* checkContentRef */
 	remote_loadFile,	/* loadFile */
 	remote_openFile,	/* openFile */
+	remote_openStream,	/* openStream */
 };
 
 /* internal functions */
@@ -283,12 +287,39 @@ local_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 	return (out->data != NULL);
 }
 
+/*
+ * return a read-only FILE handle for the given carousel file
+ * returns NULL on error
+ */
+
 FILE *
-local_openFile(MHEGBackend *t, OctetString *name, char *mode)
+local_openFile(MHEGBackend *t, OctetString *name)
 {
 	char *external = external_filename(t, name);
 
-	return fopen(external, mode);
+	return fopen(external, "r");
+}
+
+/*
+ * return a read-only FILE handle for an MPEG Transport Stream
+ * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
+ * the audio_tag and video_tag numbers refer to Component/Association Tag values from the DVB PMT
+ * if audio_tag or video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * returns NULL on error
+ */
+
+FILE *
+local_openStream(MHEGBackend *t, bool have_audio, int audio_tag, bool have_video, int video_tag)
+{
+	/*
+	 * we need to convert the audio/video_tag into PIDs
+	 * we could either:
+	 * 1. parse the PMT ourselves, and open the DVB device ourselves
+	 * 2. have a backend command to convert Component Tags to PIDs, then open the DVB device ourselves
+	 * 3. just stream the TS from the backend
+	 * we choose 3, to avoid duplicating code and having to pass "-d <device>" options etc
+	 */
+	return remote_openStream(t, have_audio, audio_tag, have_video, video_tag);
 }
 
 /*
@@ -366,8 +397,13 @@ remote_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 	return success;
 }
 
+/*
+ * return a read-only FILE handle for the given carousel file
+ * returns NULL on error
+ */
+
 FILE *
-remote_openFile(MHEGBackend *t, OctetString *name, char *mode)
+remote_openFile(MHEGBackend *t, OctetString *name)
 {
 	char cmd[PATH_MAX];
 	FILE *sock;
@@ -413,5 +449,45 @@ remote_openFile(MHEGBackend *t, OctetString *name, char *mode)
 		rewind(out);
 
 	return out;
+}
+
+/*
+ * return a read-only FILE handle for an MPEG Transport Stream
+ * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
+ * the audio_tag and video_tag numbers refer to Component/Association Tag values from the DVB PMT
+ * if audio_tag or video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * returns NULL on error
+ */
+
+FILE *
+remote_openStream(MHEGBackend *t, bool have_audio, int audio_tag, bool have_video, int video_tag)
+{
+	char cmd[PATH_MAX];
+	FILE *sock;
+
+	/* no PIDs required */
+	if(!have_audio && !have_video)
+		return NULL;
+	/* video and audio */
+	else if(have_audio && have_video)
+		snprintf(cmd, sizeof(cmd), "avstream %d %d\n", audio_tag, video_tag);
+	/* audio only */
+	else if(have_audio)
+		snprintf(cmd, sizeof(cmd), "astream %d\n", audio_tag);
+	/* video only */
+	else
+		snprintf(cmd, sizeof(cmd), "vstream %d\n", video_tag);
+
+	if((sock = remote_command(t, cmd)) == NULL)
+		return NULL;
+
+	/* did it work */
+	if(remote_response(sock) != BACKEND_RESPONSE_OK)
+	{
+		fclose(sock);
+		sock = NULL;
+	}
+
+	return sock;
 }
 

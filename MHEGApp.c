@@ -61,7 +61,7 @@ MHEGApp_loadApplication(MHEGApp *m, OctetString *derfile)
 		m->app = safe_malloc(sizeof(InterchangedObject));
 	bzero(m->app, sizeof(InterchangedObject));
 
-	if((der = MHEGEngine_openFile(derfile, "r")) == NULL)
+	if((der = MHEGEngine_openFile(derfile)) == NULL)
 	{
 		error("Unable to open '%.*s'", derfile->size, derfile->data);
 		safe_free(m->app);
@@ -116,7 +116,7 @@ MHEGApp_loadScene(MHEGApp *m, OctetString *derfile)
 		m->scene = safe_malloc(sizeof(InterchangedObject));
 	bzero(m->scene, sizeof(InterchangedObject));
 
-	if((der = MHEGEngine_openFile(derfile, "r")) == NULL)
+	if((der = MHEGEngine_openFile(derfile)) == NULL)
 	{
 		error("Unable to open '%.*s'", derfile->size, derfile->data);
 		safe_free(m->scene);

@@ -1320,15 +1320,14 @@ MHEGEngine_loadFile(OctetString *name, OctetString *out)
 }
 
 /*
- * returns a FILE handle for the given carousel file
- * mode is an fopen() mode, ie "r", "w", etc
+ * returns a read-only FILE handle for the given carousel file
  * returns NULL on error
  */
 
 FILE *
-MHEGEngine_openFile(OctetString *name, char *mode)
+MHEGEngine_openFile(OctetString *name)
 {
-	return (*(engine.backend.fns->openFile))(&engine.backend, name, mode);
+	return (*(engine.backend.fns->openFile))(&engine.backend, name);
 }
 
 /*
