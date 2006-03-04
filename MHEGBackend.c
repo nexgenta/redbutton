@@ -56,13 +56,15 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 {
 	bzero(b, sizeof(MHEGBackend));
 
+	/* default backend is on the loopback */
+	b->addr.sin_family = AF_INET;
+	b->addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	b->addr.sin_port = htons(DEFAULT_REMOTE_PORT);
+
 	if(remote)
 	{
 		/* backend is on a different host, srg_loc is the remote host[:port] */
 		b->fns = &remote_backend_fns;
-		b->addr.sin_family = AF_INET;
-		b->addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-		b->addr.sin_port = htons(DEFAULT_REMOTE_PORT);
 		if(parse_addr(srg_loc, &b->addr.sin_addr, &b->addr.sin_port) < 0)
 			fatal("Unable to resolve host %s", srg_loc);
 		verbose("Remote backend at %s:%u", inet_ntoa(b->addr.sin_addr), ntohs(b->addr.sin_port));
