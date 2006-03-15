@@ -162,7 +162,7 @@ cmd_astream(struct listen_data *listen_data, int client_sock, int argc, char *ar
 	}
 
 	/* we can now read a transport stream from the dvr device */
-	if((ts_fd = open(car->dvr_device, O_RDONLY | O_NONBLOCK)) < 0)
+	if((ts_fd = open(car->dvr_device, O_RDONLY)) < 0)
 	{
 		SEND_RESPONSE(500, "Unable to open DVB device");
 		close(audio_fd);
@@ -222,7 +222,7 @@ cmd_vstream(struct listen_data *listen_data, int client_sock, int argc, char *ar
 	}
 
 	/* we can now read a transport stream from the dvr device */
-	if((ts_fd = open(car->dvr_device, O_RDONLY | O_NONBLOCK)) < 0)
+	if((ts_fd = open(car->dvr_device, O_RDONLY)) < 0)
 	{
 		SEND_RESPONSE(500, "Unable to open DVB device");
 		close(video_fd);
@@ -297,7 +297,7 @@ cmd_avstream(struct listen_data *listen_data, int client_sock, int argc, char *a
 	}
 
 	/* we can now read a transport stream from the dvr device */
-	if((ts_fd = open(car->dvr_device, O_RDONLY | O_NONBLOCK)) < 0)
+	if((ts_fd = open(car->dvr_device, O_RDONLY)) < 0)
 	{
 		SEND_RESPONSE(500, "Unable to open DVB device");
 		close(audio_fd);

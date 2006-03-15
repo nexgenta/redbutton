@@ -54,8 +54,10 @@ stream_ts(int ts_fd, int client_sock)
 		nread = read(ts_fd, _ts_buf, sizeof(_ts_buf));
 		if(nread > 0)
 			nwritten = write(client_sock, _ts_buf, nread);
+		else
+			nwritten = nread;
 	}
-	while(nread > 0 && nread == nwritten);
+	while(nread == nwritten);
 
 	return;
 }
