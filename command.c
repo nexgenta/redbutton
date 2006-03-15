@@ -144,7 +144,7 @@ cmd_astream(struct listen_data *listen_data, int client_sock, int argc, char *ar
 	int ts_fd;
 	char hdr[64];
 
-	CHECK_USAGE(1, "astream <ComponentTag>");
+	CHECK_USAGE(2, "astream <ComponentTag>");
 
 	tag = strtol(argv[1], NULL, 0);
 
@@ -204,7 +204,7 @@ cmd_vstream(struct listen_data *listen_data, int client_sock, int argc, char *ar
 	int ts_fd;
 	char hdr[64];
 
-	CHECK_USAGE(1, "vstream <ComponentTag>");
+	CHECK_USAGE(2, "vstream <ComponentTag>");
 
 	tag = strtol(argv[1], NULL, 0);
 
@@ -267,7 +267,7 @@ cmd_avstream(struct listen_data *listen_data, int client_sock, int argc, char *a
 	int ts_fd;
 	char hdr[64];
 
-	CHECK_USAGE(2, "avstream <AudioTag> <VideoTag>");
+	CHECK_USAGE(3, "avstream <AudioTag> <VideoTag>");
 
 	audio_tag = strtol(argv[1], NULL, 0);
 	video_tag = strtol(argv[2], NULL, 0);
