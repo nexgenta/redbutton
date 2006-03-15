@@ -41,7 +41,7 @@ add_demux_filter(char *demux_dev, uint16_t pid, dmx_pes_type_t pes_type)
 }
 
 /* don't want it on the stack */
-unsigned char _ts_buf[8 * 1024];
+static unsigned char _ts_buf[8 * 1024];
 
 void
 stream_ts(int ts_fd, int client_sock)
