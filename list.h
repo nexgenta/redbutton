@@ -23,7 +23,7 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
-void list_channels(char *, unsigned int);
+void list_channels(unsigned int, unsigned int);
 
 #endif	/* __LIST_H__ */
 

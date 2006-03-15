@@ -25,7 +25,7 @@
 
 #include <stdint.h>
 
-struct carousel *find_mheg(char *, unsigned int, uint16_t, int);
+struct carousel *find_mheg(unsigned int, unsigned int, uint16_t, int);
 
 #endif	/* __FINDMHEG_H__ */
 

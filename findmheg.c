@@ -72,7 +72,7 @@ struct language_descriptor
 static struct carousel _car;
 
 struct carousel *
-find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_id)
+find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
 {
 	unsigned char *pat;
 	uint16_t section_length;
@@ -88,7 +88,8 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 	uint16_t component_tag;
 
 	/* carousel data we know so far */
-	_car.device = device;
+	snprintf(_car.demux_device, sizeof(_car.demux_device), DEMUX_DEVICE, adapter);
+	snprintf(_car.dvr_device, sizeof(_car.dvr_device), DVR_DEVICE, adapter);
 	_car.timeout = timeout;
 	_car.service_id = service_id;
 
@@ -108,7 +109,7 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 	_car.modules = NULL;
 
 	/* get the PAT */
-	if((pat = read_table(device, PID_PAT, TID_PAT, timeout)) == NULL)
+	if((pat = read_table(_car.demux_device, PID_PAT, TID_PAT, timeout)) == NULL)
 		fatal("Unable to read PAT");
 
 	section_length = 3 + (((pat[1] & 0x0f) << 8) + pat[2]);
@@ -136,7 +137,7 @@ find_mheg(char *device, unsigned int timeout, uint16_t service_id, int carousel_
 //	printf("programme_map_PID: 0x%x\n", map_pid);
 
 	/* get the PMT */
-	if((pmt = read_table(device, map_pid, TID_PMT, timeout)) == NULL)
+	if((pmt = read_table(_car.demux_device, map_pid, TID_PMT, timeout)) == NULL)
 		fatal("Unable to read PMT");
 
 	section_length = 3 + (((pmt[1] & 0x0f) << 8) + pmt[2]);

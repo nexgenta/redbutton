@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
 
 #include "dsmcc.h"
 #include "assoc.h"
@@ -54,8 +55,9 @@ struct module
 /* the whole carousel */
 struct carousel
 {
-	char *device;			/* demux device */
-	unsigned int timeout;		/* timeout for the demux device */
+	char demux_device[PATH_MAX];	/* demux device path */
+	char dvr_device[PATH_MAX];	/* dvr device path */
+	unsigned int timeout;		/* timeout for the DVB devices */
 	uint16_t service_id;
 	uint32_t carousel_id;
 	uint16_t audio_pid;		/* PID of default audio stream for this service_id */

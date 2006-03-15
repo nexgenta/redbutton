@@ -31,6 +31,12 @@
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #endif
 
+/* DVB demux device - %u is card number */
+#define DEMUX_DEVICE  "/dev/dvb/adapter%u/demux0"
+
+/* DVB dvr device - %u is card number */
+#define DVR_DEVICE  "/dev/dvb/adapter%u/dvr0"
+
 void write_string(int, const char *);
 void write_all(int, const void *, size_t);
 

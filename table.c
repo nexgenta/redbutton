@@ -163,7 +163,7 @@ read_dsmcc_tables(struct carousel *car)
 		}
 		if(fd == -1)
 		{
-			error("Timeout reading %s", car->device);
+			error("Timeout reading %s", car->demux_device);
 			return NULL;
 		}
 		/* read the table */
@@ -205,8 +205,8 @@ add_dsmcc_pid(struct carousel *car, uint16_t pid)
 	fds->pid = pid;
 
 	/* open an fd to read the DSMCC control tables (DSI and DII) */
-	if((fds->fd_ctrl = open(car->device, O_RDWR)) < 0)
-		fatal("open '%s': %s", car->device, strerror(errno));
+	if((fds->fd_ctrl = open(car->demux_device, O_RDWR)) < 0)
+		fatal("open '%s': %s", car->demux_device, strerror(errno));
 
 	/* set the table filter */
 	memset(&sctFilterParams, 0, sizeof(sctFilterParams));
@@ -219,8 +219,8 @@ add_dsmcc_pid(struct carousel *car, uint16_t pid)
 		fatal("ioctl DMX_SET_FILTER: %s", strerror(errno));
 
 	/* open an fd to read the DSMCC data table (DDB) */
-	if((fds->fd_data = open(car->device, O_RDWR)) < 0)
-		fatal("open '%s': %s", car->device, strerror(errno));
+	if((fds->fd_data = open(car->demux_device, O_RDWR)) < 0)
+		fatal("open '%s': %s", car->demux_device, strerror(errno));
 
 	/* set the table filter */
 	memset(&sctFilterParams, 0, sizeof(sctFilterParams));

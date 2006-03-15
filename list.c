@@ -21,20 +21,22 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 
 #include "table.h"
 #include "utils.h"
 
 /* PID and TID we want */
-#define PID_SDT		0x0011	
+#define PID_SDT		0x0011
 #define TID_SDS		0x42
 
 /* service_descriptor tag */
 #define TAG_SERVICE_DESCRIPTOR	0x48
 
 void
-list_channels(char *device, unsigned int timeout)
+list_channels(unsigned int adapter, unsigned int timeout)
 {
+	char demux_dev[PATH_MAX];
 	unsigned char *sds;
 	uint16_t size;
 	uint16_t offset;
@@ -44,12 +46,14 @@ list_channels(char *device, unsigned int timeout)
 	uint8_t desc_length;
 	uint8_t name_len;
 
+	snprintf(demux_dev, sizeof(demux_dev), DEMUX_DEVICE, adapter);
+
 	printf("Channels on this mutiplex:\n\n");
 	printf("ID\tChannel\n");
 	printf("==\t=======\n");
 
 	/* grab the Service Description Section table */
-	if((sds = read_table(device, PID_SDT, TID_SDS, timeout)) == NULL)
+	if((sds = read_table(demux_dev, PID_SDT, TID_SDS, timeout)) == NULL)
 		fatal("Unable to read SDT");
 
 	/* 12 bit section_length field */

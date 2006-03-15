@@ -1,5 +1,5 @@
 /*
- * rb-download [-d <demux_device>] [-b <base_dir>] [-t <timeout>] [-l[<listen-addr>]] [-c <carousel_id>] [<service_id>]
+ * rb-download [-a <adapter>] [-b <base_dir>] [-t <timeout>] [-l[<listen-addr>]] [-c <carousel_id>] [<service_id>]
  *
  * Download the DVB Object Carousel for the given channel onto the local hard disc
  * files will be stored under the current dir if no -b option is given
@@ -9,6 +9,11 @@
  *
  * the default timeout is 10 seconds
  * if no DSMCC data is read after this time, it is assumed none is being broadcast
+ *
+ * the DVB devices used will be:
+ * /dev/dvb/adapter0/demux0
+ * /dev/dvb/adapter0/dvr0
+ * use the -a option to change the adapter number (eg "-a 1" will use /dev/dvb/adapter1/demux0 etc)
  *
  * if -l is given, rb-download listens on the network for commands from a remote rb-browser
  * the default IP to listen on is 0.0.0.0 (ie all interfaces), the default TCP port is 10101
@@ -60,9 +65,6 @@
 #include "listen.h"
 #include "utils.h"
 
-/* DVB demux device */
-#define DEFAULT_DEVICE	"/dev/dvb/adapter0/demux0"
-
 /* seconds before we assume no DSMCC data is available on this PID */
 #define DEFAULT_TIMEOUT	10
 
@@ -76,7 +78,7 @@ int
 main(int argc, char *argv[])
 {
 	char *prog_name = argv[0];
-	char *device = DEFAULT_DEVICE;
+	unsigned int adapter = 0;
 	unsigned int timeout = DEFAULT_TIMEOUT;
 	bool listen = false;
 	struct listen_data listen_data;
@@ -85,12 +87,12 @@ main(int argc, char *argv[])
 	struct carousel *car;
 	int arg;
 
-	while((arg = getopt(argc, argv, "d:b:t:l::c:")) != EOF)
+	while((arg = getopt(argc, argv, "a:b:t:l::c:")) != EOF)
 	{
 		switch(arg)
 		{
-		case 'd':
-			device = optarg;
+		case 'a':
+			adapter = strtoul(optarg, NULL, 0);
 			break;
 
 		case 'b':
@@ -124,12 +126,12 @@ main(int argc, char *argv[])
 
 	if(argc == optind)
 	{
-		list_channels(device, timeout);
+		list_channels(adapter, timeout);
 	}
 	else if(argc - optind == 1)
 	{
 		service_id = strtoul(argv[optind], NULL, 0);
-		car = find_mheg(device, timeout, service_id, carousel_id);
+		car = find_mheg(adapter, timeout, service_id, carousel_id);
 		printf("Carousel ID=%u\n", car->carousel_id);
 		printf("Video PID=%u\n", car->video_pid);
 		printf("Audio PID=%u\n", car->audio_pid);
@@ -151,7 +153,7 @@ main(int argc, char *argv[])
 void
 usage(char *prog_name)
 {
-	fatal("Usage: %s [-d <demux_device>] "
+	fatal("Usage: %s [-a <adapter>] "
 			"[-b <base_dir>] "
 			"[-t <timeout>] "
 			"[-l[<listen-addr>]] "
