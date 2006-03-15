@@ -6,6 +6,7 @@ OBJS=	rb-download.o	\
 	findmheg.o	\
 	listen.o	\
 	command.o	\
+	stream.o	\
 	assoc.o		\
 	carousel.o	\
 	module.o	\

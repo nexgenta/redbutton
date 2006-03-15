@@ -2,22 +2,30 @@
  * command.c
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <fcntl.h>
 
 #include "command.h"
+#include "assoc.h"
 #include "fs.h"
+#include "stream.h"
 #include "utils.h"
 
 /* max number of args that can be passed to a command (arbitrary) */
 #define ARGV_MAX	10
 
 /* the commands */
+bool cmd_astream(struct listen_data *, int, int, char **);
+bool cmd_avstream(struct listen_data *, int, int, char **);
 bool cmd_check(struct listen_data *, int, int, char **);
 bool cmd_file(struct listen_data *, int, int, char **);
 bool cmd_help(struct listen_data *, int, int, char **);
 bool cmd_quit(struct listen_data *, int, int, char **);
+bool cmd_vstream(struct listen_data *, int, int, char **);
 
 static struct
 {
@@ -27,11 +35,14 @@ static struct
 	char *help;
 } command[] =
 {
+	{ "astream", "<ComponentTag>",		cmd_astream,	"Stream the given audio component tag" },
+	{ "avstream", "<AudioTag> <VideoTag>",	cmd_avstream,	"Stream the given audio and video component tags" },
 	{ "check", "<ContentReference>",	cmd_check,	"Check if the given file exists on the carousel" },
 	{ "exit", "",				cmd_quit,	"Kill the programme" },
 	{ "file", "<ContentReference>",		cmd_file,	"Retrieve the given file from the carousel" },
 	{ "help", "",				cmd_help,	"List available commands" },
 	{ "quit", "",				cmd_quit,	"Kill the programme" },
+	{ "vstream", "<ComponentTag>",		cmd_vstream,	"Stream the given video component tag" },
 	{ NULL, NULL, NULL, NULL }
 };
 
@@ -113,6 +124,203 @@ if(argc != ARGC)				\
 {						\
 	SEND_RESPONSE(500, "Syntax: " SYNTAX);	\
 	return false;				\
+}
+
+/*
+ * astream <tag>
+ * send the given audio stream down the connection
+ * the tag should be an association/component_tag number as found in the PMT
+ * the tag is converted to a PID and that PID is sent as a MPEG Transport Stream down the connection
+ * if tag is -1, the default audio stream for the current service_id is sent
+ */
+
+bool
+cmd_astream(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+	int tag;
+	uint16_t pid;
+	int audio_fd;
+	int ts_fd;
+	char hdr[64];
+
+	CHECK_USAGE(1, "astream <ComponentTag>");
+
+	tag = strtol(argv[1], NULL, 0);
+
+	/* map the tag to a PID, or use the default */
+	if(tag == -1)
+		pid = car->audio_pid;
+	else
+		pid = stream2pid(&car->assoc, tag);
+
+	/* add the PID to the demux device */
+	if((audio_fd = add_demux_filter(car->demux_device, pid, DMX_PES_AUDIO)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open audio PID");
+		return false;
+	}
+
+	/* we can now read a transport stream from the dvr device */
+	if((ts_fd = open(car->dvr_device, O_RDONLY | O_NONBLOCK)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open DVB device");
+		close(audio_fd);
+		return false;
+	}
+
+	/* send the OK code */
+	SEND_RESPONSE(200, "OK");
+
+	/* tell the client what PID the component tag resolved to */
+	snprintf(hdr, sizeof(hdr), "AudioPID %u\n", pid);
+	write_string(client_sock, hdr);
+
+	/* shovel the transport stream down client_sock until the client closes it or we get an error */
+	stream_ts(ts_fd, client_sock);
+
+	/* clean up */
+	close(ts_fd);
+	close(audio_fd);
+
+	return false;
+}
+
+/*
+ * vstream <tag>
+ * send the given video stream down the connection
+ * the tag should be an association/component_tag number as found in the PMT
+ * the tag is converted to a PID and that PID is sent as a MPEG Transport Stream down the connection
+ * if tag is -1, the default video stream for the current service_id is sent
+ */
+
+bool
+cmd_vstream(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+	int tag;
+	uint16_t pid;
+	int video_fd;
+	int ts_fd;
+	char hdr[64];
+
+	CHECK_USAGE(1, "vstream <ComponentTag>");
+
+	tag = strtol(argv[1], NULL, 0);
+
+	/* map the tag to a PID, or use the default */
+	if(tag == -1)
+		pid = car->video_pid;
+	else
+		pid = stream2pid(&car->assoc, tag);
+
+	/* add the PID to the demux device */
+	if((video_fd = add_demux_filter(car->demux_device, pid, DMX_PES_VIDEO)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open video PID");
+		return false;
+	}
+
+	/* we can now read a transport stream from the dvr device */
+	if((ts_fd = open(car->dvr_device, O_RDONLY | O_NONBLOCK)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open DVB device");
+		close(video_fd);
+		return false;
+	}
+
+	/* send the OK code */
+	SEND_RESPONSE(200, "OK");
+
+	/* tell the client what PID the component tag resolved to */
+	snprintf(hdr, sizeof(hdr), "VideoPID %u\n", pid);
+	write_string(client_sock, hdr);
+
+	/* shovel the transport stream down client_sock until the client closes it or we get an error */
+	stream_ts(ts_fd, client_sock);
+
+	/* clean up */
+	close(ts_fd);
+	close(video_fd);
+
+	return false;
+}
+
+/*
+ * avstream <audio_tag> <video_tag>
+ * send the given audio and video streams down the connection
+ * the tags should be association/component_tag numbers as found in the PMT
+ * the tags are converted to PIDs and those PIDs are sent as a MPEG Transport Stream down the connection
+ * if a tag is -1, the default audio or video stream for the current service_id is sent
+ */
+
+bool
+cmd_avstream(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+	int audio_tag;
+	int video_tag;
+	uint16_t audio_pid;
+	uint16_t video_pid;
+	int audio_fd;
+	int video_fd;
+	int ts_fd;
+	char hdr[64];
+
+	CHECK_USAGE(2, "avstream <AudioTag> <VideoTag>");
+
+	audio_tag = strtol(argv[1], NULL, 0);
+	video_tag = strtol(argv[2], NULL, 0);
+
+	/* map the tags to PIDs, or use the defaults */
+	if(audio_tag == -1)
+		audio_pid = car->audio_pid;
+	else
+		audio_pid = stream2pid(&car->assoc, audio_tag);
+
+	if(video_tag == -1)
+		video_pid = car->video_pid;
+	else
+		video_pid = stream2pid(&car->assoc, video_tag);
+
+	/* add the PIDs to the demux device */
+	if((audio_fd = add_demux_filter(car->demux_device, audio_pid, DMX_PES_AUDIO)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open audio PID");
+		return false;
+	}
+	if((video_fd = add_demux_filter(car->demux_device, video_pid, DMX_PES_VIDEO)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open video PID");
+		close(audio_fd);
+		return false;
+	}
+
+	/* we can now read a transport stream from the dvr device */
+	if((ts_fd = open(car->dvr_device, O_RDONLY | O_NONBLOCK)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open DVB device");
+		close(audio_fd);
+		close(video_fd);
+		return false;
+	}
+
+	/* send the OK code */
+	SEND_RESPONSE(200, "OK");
+
+	/* tell the client what PIDs the component tags resolved to */
+	snprintf(hdr, sizeof(hdr), "AudioPID %u VideoPID %u\n", audio_pid, video_pid);
+	write_string(client_sock, hdr);
+
+	/* shovel the transport stream down client_sock until the client closes it or we get an error */
+	stream_ts(ts_fd, client_sock);
+
+	/* clean up */
+	close(ts_fd);
+	close(audio_fd);
+	close(video_fd);
+
+	return false;
 }
 
 /*
