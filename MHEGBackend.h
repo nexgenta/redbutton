@@ -22,7 +22,7 @@ typedef struct MHEGBackend
 		bool (*checkContentRef)(struct MHEGBackend *, ContentReference *);	/* check a carousel file exists */
 		bool (*loadFile)(struct MHEGBackend *, OctetString *, OctetString *);	/* load a carousel file */
 		FILE *(*openFile)(struct MHEGBackend *, OctetString *);			/* open a carousel file */
-		FILE *(*openStream)(struct MHEGBackend *, bool, int, bool, int);	/* open an MPEG Transport Stream */
+		FILE *(*openStream)(struct MHEGBackend *, bool, int *, bool, int *);	/* open an MPEG Transport Stream */
 	} *fns;
 } MHEGBackend;
 

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "MHEGEngine.h"
 #include "MHEGStreamPlayer.h"
 #include "utils.h"
 
@@ -35,6 +36,7 @@ MHEGStreamPlayer_setVideoTag(MHEGStreamPlayer *p, int tag)
 
 	p->have_video = true;
 	p->video_tag = tag;
+	p->video_pid = -1;
 
 	return;
 }
@@ -47,6 +49,7 @@ MHEGStreamPlayer_setAudioTag(MHEGStreamPlayer *p, int tag)
 
 	p->have_audio = true;
 	p->audio_tag = tag;
+	p->audio_pid = -1;
 
 	return;
 }
@@ -54,10 +57,14 @@ MHEGStreamPlayer_setAudioTag(MHEGStreamPlayer *p, int tag)
 void
 MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 {
+	verbose("MHEGStreamPlayer_play: audio_tag=%d video_tag=%d", p->audio_tag, p->video_tag);
+
+	p->audio_pid = p->audio_tag;
+	p->video_pid = p->video_tag;
+//	if((p->ts = MHEGEngine_openStream(p->have_audio, &p->audio_pid, p->have_video, &p->video_pid)) == NULL)
+//		error("Unable to open MPEG stream");
 /* TODO */
 printf("TODO: MHEGStreamPlayer_play: not yet implemented\n");
-if(p->have_audio) printf("TODO: audio tag=%d\n", p->audio_tag);
-if(p->have_video) printf("TODO: video tag=%d\n", p->video_tag);
 
 	return;
 }
@@ -65,8 +72,10 @@ if(p->have_video) printf("TODO: video tag=%d\n", p->video_tag);
 void
 MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 {
-/* TODO */
-printf("TODO: MHEGStreamPlayer_stop: not yet implemented\n");
+	verbose("MHEGStreamPlayer_stop");
+
+	if(p->ts != NULL)
+		fclose(p->ts);
 
 	return;
 }

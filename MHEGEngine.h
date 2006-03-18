@@ -221,6 +221,7 @@ void MHEGEngine_pollMissingContent(void);
 bool MHEGEngine_checkContentRef(ContentReference *);
 bool MHEGEngine_loadFile(OctetString *, OctetString *);
 FILE *MHEGEngine_openFile(OctetString *);
+FILE *MHEGEngine_openStream(bool, int *, bool, int *);
 
 char *MHEGEngine_absoluteFilename(OctetString *);
 

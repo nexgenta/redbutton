@@ -13,6 +13,9 @@ typedef struct
 	bool have_audio;	/* false if we have no audio stream */
 	int video_tag;		/* video stream component tag (-1 => default for current service ID) */
 	int audio_tag;		/* audio stream component tag (-1 => default for current service ID) */
+	int video_pid;		/* PID in MPEG Transport Stream (-1 => not yet known) */
+	int audio_pid;		/* PID in MPEG Transport Stream (-1 => not yet known) */
+	FILE *ts;		/* MPEG Transport Stream */
 } MHEGStreamPlayer;
 
 void MHEGStreamPlayer_init(MHEGStreamPlayer *);

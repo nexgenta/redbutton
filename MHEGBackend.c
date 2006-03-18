@@ -17,7 +17,7 @@
 bool local_checkContentRef(MHEGBackend *, ContentReference *);
 bool local_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *local_openFile(MHEGBackend *, OctetString *);
-FILE *local_openStream(MHEGBackend *, bool, int, bool, int);
+FILE *local_openStream(MHEGBackend *, bool, int *, bool, int *);
 
 static struct MHEGBackendFns local_backend_fns =
 {
@@ -31,7 +31,7 @@ static struct MHEGBackendFns local_backend_fns =
 bool remote_checkContentRef(MHEGBackend *, ContentReference *);
 bool remote_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *remote_openFile(MHEGBackend *, OctetString *);
-FILE *remote_openStream(MHEGBackend *, bool, int, bool, int);
+FILE *remote_openStream(MHEGBackend *, bool, int *, bool, int *);
 
 static struct MHEGBackendFns remote_backend_fns =
 {
@@ -305,13 +305,14 @@ local_openFile(MHEGBackend *t, OctetString *name)
 /*
  * return a read-only FILE handle for an MPEG Transport Stream
  * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
- * the audio_tag and video_tag numbers refer to Component/Association Tag values from the DVB PMT
- * if audio_tag or video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
+ * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
  * returns NULL on error
  */
 
 FILE *
-local_openStream(MHEGBackend *t, bool have_audio, int audio_tag, bool have_video, int video_tag)
+local_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, bool have_video, int *video_tag)
 {
 	/*
 	 * we need to convert the audio/video_tag into PIDs
@@ -456,35 +457,62 @@ remote_openFile(MHEGBackend *t, OctetString *name)
 /*
  * return a read-only FILE handle for an MPEG Transport Stream
  * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
- * the audio_tag and video_tag numbers refer to Component/Association Tag values from the DVB PMT
- * if audio_tag or video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
+ * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
  * returns NULL on error
  */
 
 FILE *
-remote_openStream(MHEGBackend *t, bool have_audio, int audio_tag, bool have_video, int video_tag)
+remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, bool have_video, int *video_tag)
 {
 	char cmd[PATH_MAX];
 	FILE *sock;
+	char pids[128];
+	unsigned int audio_pid = 0;
+	unsigned int video_pid = 0;
+	bool err;
 
 	/* no PIDs required */
 	if(!have_audio && !have_video)
 		return NULL;
 	/* video and audio */
 	else if(have_audio && have_video)
-		snprintf(cmd, sizeof(cmd), "avstream %d %d\n", audio_tag, video_tag);
+		snprintf(cmd, sizeof(cmd), "avstream %d %d\n", *audio_tag, *video_tag);
 	/* audio only */
 	else if(have_audio)
-		snprintf(cmd, sizeof(cmd), "astream %d\n", audio_tag);
+		snprintf(cmd, sizeof(cmd), "astream %d\n", *audio_tag);
 	/* video only */
 	else
-		snprintf(cmd, sizeof(cmd), "vstream %d\n", video_tag);
+		snprintf(cmd, sizeof(cmd), "vstream %d\n", *video_tag);
 
 	if((sock = remote_command(t, cmd)) == NULL)
 		return NULL;
 
 	/* did it work */
-	if(remote_response(sock) != BACKEND_RESPONSE_OK)
+	if(remote_response(sock) != BACKEND_RESPONSE_OK
+	|| fgets(pids, sizeof(pids), sock) == NULL)
+	{
+		fclose(sock);
+		sock = NULL;
+	}
+
+	/* update the PID variables */
+	if(have_audio && have_video)
+		err = (sscanf(pids, "AudioPID %u VideoPID %u", &audio_pid, &video_pid) != 2);
+	else if(have_audio)
+		err = (sscanf(pids, "AudioPID %u", &audio_pid) != 1);
+	else
+		err = (sscanf(pids, "VideoPID %u", &video_pid) != 1);
+
+	if(!err)
+	{
+		if(have_audio)
+			*audio_tag = audio_pid;
+		if(have_video)
+			*video_tag = video_pid;
+	}
+	else
 	{
 		fclose(sock);
 		sock = NULL;

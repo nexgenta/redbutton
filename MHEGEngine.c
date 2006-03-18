@@ -1331,6 +1331,21 @@ MHEGEngine_openFile(OctetString *name)
 }
 
 /*
+ * return a read-only FILE handle for an MPEG Transport Stream
+ * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
+ * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
+ * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
+ * returns NULL on error
+ */
+
+FILE *
+MHEGEngine_openStream(bool have_audio, int *audio_tag, bool have_video, int *video_tag)
+{
+	return (*(engine.backend.fns->openStream))(&engine.backend, have_audio, audio_tag, have_video, video_tag);
+}
+
+/*
  * returns the absolute group ID, ie it always starts with "~//"
  * returns a ptr to static string that will be overwritten by the next call to this routine
  * section 8.3.2 of the UK MHEG Profile says the filename prefixes are:
