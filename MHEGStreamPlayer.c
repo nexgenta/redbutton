@@ -75,7 +75,10 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 	verbose("MHEGStreamPlayer_stop");
 
 	if(p->ts != NULL)
+	{
 		fclose(p->ts);
+		p->ts = NULL;
+	}
 
 	return;
 }
