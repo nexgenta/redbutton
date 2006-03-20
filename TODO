@@ -1,3 +1,5 @@
+be able to read from a file
+
 have a verbose flag
 
 use a linked list of modules rather than an array in struct carousel
