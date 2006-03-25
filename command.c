@@ -367,6 +367,9 @@ cmd_file(struct listen_data *listen_data, int client_sock, int argc, char *argv[
 {
 	char *filename;
 	FILE *file;
+	long size;
+	char hdr[64];
+	long left;
 	size_t nread;
 	char buff[1024 * 8];
 
@@ -384,15 +387,29 @@ cmd_file(struct listen_data *listen_data, int client_sock, int argc, char *argv[
 		return false;
 	}
 
+	/* find the file length */
+	if(fseek(file, 0, SEEK_END) < 0
+	|| (size = ftell(file)) < 0)
+	{
+		SEND_RESPONSE(500, "Error reading file");
+		return false;
+	}
+	rewind(file);
+
 	SEND_RESPONSE(200, "OK");
 
+	/* send the file length */
+	snprintf(hdr, sizeof(hdr), "Length %ld\n", size);
+	write_string(client_sock, hdr);
+
 	/* send the file contents */
-	do
+	left = size;
+	while(left > 0)
 	{
 		nread = fread(buff, 1, sizeof(buff), file);
 		write_all(client_sock, buff, nread);
+		left -= nread;
 	}
-	while(nread == sizeof(buff));
 
 	fclose(file);
 
