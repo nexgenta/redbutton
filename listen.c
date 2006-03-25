@@ -235,7 +235,7 @@ handle_connection(struct listen_data *listen_data, int client_sock, struct socka
 		{
 			/* strip off any trailing \n */
 			len = strlen(cmd);
-			len = (len > 0) ? len -1 : len;
+			len = (len > 0) ? len - 1 : len;
 			while(len > 0 && (cmd[len] == '\n' || cmd[len] == '\r'))
 				cmd[len--] = '\0';
 			/* process the command */
