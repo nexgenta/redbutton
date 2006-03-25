@@ -38,10 +38,10 @@ static struct
 	{ "astream", "<ComponentTag>",		cmd_astream,	"Stream the given audio component tag" },
 	{ "avstream", "<AudioTag> <VideoTag>",	cmd_avstream,	"Stream the given audio and video component tags" },
 	{ "check", "<ContentReference>",	cmd_check,	"Check if the given file exists on the carousel" },
-	{ "exit", "",				cmd_quit,	"close the connection" },
+	{ "exit", "",				cmd_quit,	"Close the connection" },
 	{ "file", "<ContentReference>",		cmd_file,	"Retrieve the given file from the carousel" },
 	{ "help", "",				cmd_help,	"List available commands" },
-	{ "quit", "",				cmd_quit,	"close the connection" },
+	{ "quit", "",				cmd_quit,	"Close the connection" },
 	{ "vstream", "<ComponentTag>",		cmd_vstream,	"Stream the given video component tag" },
 	{ NULL, NULL, NULL, NULL }
 };
