@@ -363,41 +363,46 @@ remote_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 {
 	char cmd[PATH_MAX];
 	FILE *sock;
-	char buf[8 * 1024];
+	unsigned int size;
 	size_t nread;
-	bool success = false;
 
 	snprintf(cmd, sizeof(cmd), "file %s\n", MHEGEngine_absoluteFilename(name));
 
 	if((sock = remote_command(t, cmd)) == NULL)
 		return false;
 
-	/* does it exist */
-	if(remote_response(sock) == BACKEND_RESPONSE_OK)
-	{
-		verbose("Loading '%.*s'", name->size, name->data);
-		/* read from the socket until EOF */
-		while(!feof(sock))
-		{
-/* TODO */
-/* could read straight into out->data rather than doing memcpy */
-			if((nread = fread(buf, 1, sizeof(buf), sock)) > 0)
-			{
-				out->data = safe_realloc(out->data, out->size + nread);
-				memcpy(out->data + out->size, buf, nread);
-				out->size += nread;
-			}
-		}
-		success = true;
-	}
-	else
+	/* if it exists, read the file size */
+	if(remote_response(sock) != BACKEND_RESPONSE_OK
+	|| fgets(cmd, sizeof(cmd), sock) == NULL
+	|| sscanf(cmd, "Length %u", &size) != 1)
 	{
 		error("Unable to load '%.*s'", name->size, name->data);
+		fclose(sock);
+		return false;
 	}
+
+	verbose("Loading '%.*s'", name->size, name->data);
+
+	out->size = size;
+	out->data = safe_malloc(size);
+
+	nread = 0;
+	while(!feof(sock) && nread < size)
+		nread += fread(out->data + nread, 1, size - nread, sock);
 
 	fclose(sock);
 
-	return success;
+	/* did we read it all */
+	if(nread < size)
+	{
+		error("Unable to load '%.*s'", name->size, name->data);
+		safe_free(out->data);
+		out->data = NULL;
+		out->size = 0;
+		return false;
+	}
+
+	return true;
 }
 
 /*
@@ -410,39 +415,38 @@ remote_openFile(MHEGBackend *t, OctetString *name)
 {
 	char cmd[PATH_MAX];
 	FILE *sock;
+	unsigned int size;
 	char buf[8 * 1024];
 	size_t nread;
-	size_t nwritten;
-	FILE *out = NULL;
+	FILE *out;
 
 	snprintf(cmd, sizeof(cmd), "file %s\n", MHEGEngine_absoluteFilename(name));
 
 	if((sock = remote_command(t, cmd)) == NULL)
 		return NULL;
 
-	/* does it exist */
-	if(remote_response(sock) == BACKEND_RESPONSE_OK)
+	/* if it exists, read the file size */
+	if(remote_response(sock) != BACKEND_RESPONSE_OK
+	|| fgets(cmd, sizeof(cmd), sock) == NULL
+	|| sscanf(cmd, "Length %u", &size) != 1)
 	{
-		/* tmpfile() will delete the file when we fclose() it */
-		if((out = tmpfile()) != NULL)
+		fclose(sock);
+		return NULL;
+	}
+
+	/* tmpfile() will delete the file when we fclose() it */
+	out = tmpfile();
+	while(out != NULL && size > 0)
+	{
+		nread = (size < sizeof(buf)) ? size : sizeof(buf);
+		nread = fread(buf, 1, nread, sock);
+		if(fwrite(buf, 1, nread, out) != nread)
 		{
-			/* read from the socket until EOF */
-			do
-			{
-				if((nread = fread(buf, 1, sizeof(buf), sock)) > 0)
-					nwritten = fwrite(buf, 1, nread, out);
-				else
-					nwritten = 0;
-			}
-			while(!feof(sock) && nread == nwritten);
-			/* could we write the file ok */
-			if(nread != nwritten)
-			{
-				error("Unable to write to local file");
-				fclose(out);
-				out = NULL;
-			}
+			error("Unable to write to local file");
+			fclose(out);
+			out = NULL;
 		}
+		size -= nread;
 	}
 
 	fclose(sock);
