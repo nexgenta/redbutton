@@ -37,9 +37,6 @@
 /* DVB dvr device - %u is card number */
 #define DVR_DEVICE  "/dev/dvb/adapter%u/dvr0"
 
-void write_string(int, const char *);
-void write_all(int, const void *, size_t);
-
 char *skip_ws(char *);
 
 char hex_digit(uint8_t);

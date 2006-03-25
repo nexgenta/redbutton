@@ -31,46 +31,6 @@
 #include "utils.h"
 
 /*
- * write the given string (ie upto \0) to the given fd
- */
-
-void
-write_string(int fd, const char *str)
-{
-	write_all(fd, str, strlen(str));
-
-	return;
-}
-
-/*
- * guarantee writing count bytes from buf to fd
- * W. Richard Stevens
- */
-
-void
-write_all(int fd, const void *buf, size_t count)
-{
-	size_t nwritten;
-	const char *buf_ptr;
-
-	buf_ptr = buf;
-	while(count > 0)
-	{
-		if((nwritten = write(fd, buf_ptr, count)) < 0)
-		{
-			if(errno == EINTR || errno == EAGAIN)
-				nwritten = 0;
-			else
-				fatal("write: %s\n", strerror(errno));
-		}
-		count -= nwritten;
-		buf_ptr += nwritten;
-	}
-
-	return;
-}
-
-/*
  * move str to the next non-white space character (or the end of the string)
  */
 

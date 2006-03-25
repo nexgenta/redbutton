@@ -25,7 +25,7 @@
 /* internal functions */
 static int get_host_addr(char *, struct in_addr *);
 
-static bool handle_connection(struct listen_data *, int, struct sockaddr_in *);
+static void handle_connection(struct listen_data *, int, struct sockaddr_in *);
 static void dead_child(int);
 
 /*
@@ -117,7 +117,6 @@ start_listener(struct listen_data *listen_data)
 	fd_set read_fds;
 	socklen_t addr_len;
 	struct sockaddr_in client_addr;
-	bool quit;
 
 	/*
 	 * fork:
@@ -189,10 +188,8 @@ start_listener(struct listen_data *listen_data)
 		{
 			/* child */
 			close(listen_sock);
-			quit = handle_connection(listen_data, accept_sock, &client_addr);
+			handle_connection(listen_data, accept_sock, &client_addr);
 			close(accept_sock);
-/* TODO */
-if(quit) printf("TODO: QUIT\n");
 			/* use _exit in child so stdio etc don't clean up twice */
 			_exit(EXIT_SUCCESS);
 		}
@@ -213,31 +210,44 @@ if(quit) printf("TODO: QUIT\n");
  * handle a connection from a remote rb-browser
  */
 
-static bool
+static void
 handle_connection(struct listen_data *listen_data, int client_sock, struct sockaddr_in *client_addr)
 {
+	FILE *client;
 	char cmd[1024];
-	ssize_t nread;
-	bool quit = false;
+	size_t len;
+	bool quit;
 
 	printf("Connection from %s:%d\n", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
 
-	/* read the command from the client */
-	if((nread = read(client_sock, cmd, sizeof(cmd)-1)) > 0)
+	if((client = fdopen(client_sock, "r+")) == NULL)
+		return;
+
+	/* read commands from the client */
+	quit = false;
+	while(!feof(client) && !quit)
 	{
-		/* \0 terminate the buffer */
-		cmd[nread] = '\0';
-		/* strip off any trailing \n */
-		nread --;
-		while(nread > 0 && (cmd[nread] == '\n' || cmd[nread] == '\r'))
-			cmd[nread--] = '\0';
-		/* process the command */
-		quit = process_command(listen_data, client_sock, cmd);
+		if(fgets(cmd, sizeof(cmd), client) == NULL)
+		{
+			quit = true;
+		}
+		else
+		{
+			/* strip off any trailing \n */
+			len = strlen(cmd);
+			len = (len > 0) ? len -1 : len;
+			while(len > 0 && (cmd[len] == '\n' || cmd[len] == '\r'))
+				cmd[len--] = '\0';
+			/* process the command */
+			quit = process_command(listen_data, client, cmd);
+		}
 	}
+
+	fclose(client);
 
 	printf("Connection from %s:%d closed\n", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
 
-	return quit;
+	return;
 }
 
 static void

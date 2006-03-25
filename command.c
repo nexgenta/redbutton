@@ -19,35 +19,35 @@
 #define ARGV_MAX	10
 
 /* the commands */
-bool cmd_astream(struct listen_data *, int, int, char **);
-bool cmd_avstream(struct listen_data *, int, int, char **);
-bool cmd_check(struct listen_data *, int, int, char **);
-bool cmd_file(struct listen_data *, int, int, char **);
-bool cmd_help(struct listen_data *, int, int, char **);
-bool cmd_quit(struct listen_data *, int, int, char **);
-bool cmd_vstream(struct listen_data *, int, int, char **);
+bool cmd_astream(struct listen_data *, FILE *, int, char **);
+bool cmd_avstream(struct listen_data *, FILE *, int, char **);
+bool cmd_check(struct listen_data *, FILE *, int, char **);
+bool cmd_file(struct listen_data *, FILE *, int, char **);
+bool cmd_help(struct listen_data *, FILE *, int, char **);
+bool cmd_quit(struct listen_data *, FILE *, int, char **);
+bool cmd_vstream(struct listen_data *, FILE *, int, char **);
 
 static struct
 {
 	char *name;
 	char *args;
-	bool (*proc)(struct listen_data *, int, int, char **);
+	bool (*proc)(struct listen_data *, FILE *, int, char **);
 	char *help;
 } command[] =
 {
 	{ "astream", "<ComponentTag>",		cmd_astream,	"Stream the given audio component tag" },
 	{ "avstream", "<AudioTag> <VideoTag>",	cmd_avstream,	"Stream the given audio and video component tags" },
 	{ "check", "<ContentReference>",	cmd_check,	"Check if the given file exists on the carousel" },
-	{ "exit", "",				cmd_quit,	"Kill the programme" },
+	{ "exit", "",				cmd_quit,	"close the connection" },
 	{ "file", "<ContentReference>",		cmd_file,	"Retrieve the given file from the carousel" },
 	{ "help", "",				cmd_help,	"List available commands" },
-	{ "quit", "",				cmd_quit,	"Kill the programme" },
+	{ "quit", "",				cmd_quit,	"close the connection" },
 	{ "vstream", "<ComponentTag>",		cmd_vstream,	"Stream the given video component tag" },
 	{ NULL, NULL, NULL, NULL }
 };
 
 /* send an OK/error code etc response down client_sock */
-#define SEND_RESPONSE(RC, MESSAGE)	write_string(client_sock, #RC " " MESSAGE "\n")
+#define SEND_RESPONSE(RC, MESSAGE)	fputs(#RC " " MESSAGE "\n", client)
 
 /* internal routines */
 char *external_filename(struct listen_data *, char *);
@@ -55,11 +55,11 @@ char *canonical_filename(char *);
 
 /*
  * process the given command
- * return true if we should quit the programme
+ * return true if we should close the connection
  */
 
 bool
-process_command(struct listen_data *listen_data, int client_sock, char *cmd)
+process_command(struct listen_data *listen_data, FILE *client, char *cmd)
 {
 	int argc;
 	char *argv[ARGV_MAX];
@@ -102,7 +102,7 @@ process_command(struct listen_data *listen_data, int client_sock, char *cmd)
 	for(i=0; command[i].name != NULL; i++)
 	{
 		if(strncmp(argv[0], command[i].name, cmd_len) == 0)
-			return (command[i].proc)(listen_data, client_sock, argc, argv);
+			return (command[i].proc)(listen_data, client, argc, argv);
 	}
 
 	SEND_RESPONSE(500, "Unrecognised command");
@@ -113,10 +113,10 @@ process_command(struct listen_data *listen_data, int client_sock, char *cmd)
 /*
  * the commands
  * listen_data is global data needed by listener commands
- * client_sock is where any response data should go
+ * client is where any response data should go
  * argc is the number of arguments passed to it
  * argv[0] is the command name (or the abreviation the user used)
- * return true if we should quit the programme
+ * return true if we should close the connection
  */
 
 #define CHECK_USAGE(ARGC, SYNTAX)		\
@@ -135,7 +135,7 @@ if(argc != ARGC)				\
  */
 
 bool
-cmd_astream(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+cmd_astream(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 {
 	struct carousel *car = listen_data->carousel;
 	int tag;
@@ -174,16 +174,17 @@ cmd_astream(struct listen_data *listen_data, int client_sock, int argc, char *ar
 
 	/* tell the client what PID the component tag resolved to */
 	snprintf(hdr, sizeof(hdr), "AudioPID %u\n", pid);
-	write_string(client_sock, hdr);
+	fputs(hdr, client);
 
-	/* shovel the transport stream down client_sock until the client closes it or we get an error */
-	stream_ts(ts_fd, client_sock);
+	/* shovel the transport stream to client until the client closes or we get an error */
+	stream_ts(ts_fd, client);
 
 	/* clean up */
 	close(ts_fd);
 	close(audio_fd);
 
-	return false;
+	/* close the connection */
+	return true;
 }
 
 /*
@@ -195,7 +196,7 @@ cmd_astream(struct listen_data *listen_data, int client_sock, int argc, char *ar
  */
 
 bool
-cmd_vstream(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+cmd_vstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 {
 	struct carousel *car = listen_data->carousel;
 	int tag;
@@ -234,16 +235,17 @@ cmd_vstream(struct listen_data *listen_data, int client_sock, int argc, char *ar
 
 	/* tell the client what PID the component tag resolved to */
 	snprintf(hdr, sizeof(hdr), "VideoPID %u\n", pid);
-	write_string(client_sock, hdr);
+	fputs(hdr, client);
 
 	/* shovel the transport stream down client_sock until the client closes it or we get an error */
-	stream_ts(ts_fd, client_sock);
+	stream_ts(ts_fd, client);
 
 	/* clean up */
 	close(ts_fd);
 	close(video_fd);
 
-	return false;
+	/* close the connection */
+	return true;
 }
 
 /*
@@ -255,7 +257,7 @@ cmd_vstream(struct listen_data *listen_data, int client_sock, int argc, char *ar
  */
 
 bool
-cmd_avstream(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 {
 	struct carousel *car = listen_data->carousel;
 	int audio_tag;
@@ -310,17 +312,18 @@ cmd_avstream(struct listen_data *listen_data, int client_sock, int argc, char *a
 
 	/* tell the client what PIDs the component tags resolved to */
 	snprintf(hdr, sizeof(hdr), "AudioPID %u VideoPID %u\n", audio_pid, video_pid);
-	write_string(client_sock, hdr);
+	fputs(hdr, client);
 
 	/* shovel the transport stream down client_sock until the client closes it or we get an error */
-	stream_ts(ts_fd, client_sock);
+	stream_ts(ts_fd, client);
 
 	/* clean up */
 	close(ts_fd);
 	close(audio_fd);
 	close(video_fd);
 
-	return false;
+	/* close the connection */
+	return true;
 }
 
 /*
@@ -330,7 +333,7 @@ cmd_avstream(struct listen_data *listen_data, int client_sock, int argc, char *a
  */
 
 bool
-cmd_check(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+cmd_check(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 {
 	char *filename;
 	FILE *file;
@@ -363,7 +366,7 @@ cmd_check(struct listen_data *listen_data, int client_sock, int argc, char *argv
  */
 
 bool
-cmd_file(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+cmd_file(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 {
 	char *filename;
 	FILE *file;
@@ -400,14 +403,14 @@ cmd_file(struct listen_data *listen_data, int client_sock, int argc, char *argv[
 
 	/* send the file length */
 	snprintf(hdr, sizeof(hdr), "Length %ld\n", size);
-	write_string(client_sock, hdr);
+	fputs(hdr, client);
 
 	/* send the file contents */
 	left = size;
 	while(left > 0)
 	{
 		nread = fread(buff, 1, sizeof(buff), file);
-		write_all(client_sock, buff, nread);
+		fwrite(buff, 1, nread, client);
 		left -= nread;
 	}
 
@@ -421,7 +424,7 @@ cmd_file(struct listen_data *listen_data, int client_sock, int argc, char *argv[
  */
 
 bool
-cmd_help(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+cmd_help(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 {
 	int i;
 	char name_args[64];
@@ -433,7 +436,7 @@ cmd_help(struct listen_data *listen_data, int client_sock, int argc, char *argv[
 	{
 		snprintf(name_args, sizeof(name_args), "%s %s", command[i].name, command[i].args);
 		snprintf(help_line, sizeof(help_line), "%-30s %s\n", name_args, command[i].help);
-		write_string(client_sock, help_line);
+		fputs(help_line, client);
 	}
 
 	return false;
@@ -444,7 +447,7 @@ cmd_help(struct listen_data *listen_data, int client_sock, int argc, char *argv[
  */
 
 bool
-cmd_quit(struct listen_data *listen_data, int client_sock, int argc, char *argv[])
+cmd_quit(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 {
 	return true;
 }

@@ -44,20 +44,20 @@ add_demux_filter(char *demux_dev, uint16_t pid, dmx_pes_type_t pes_type)
 static unsigned char _ts_buf[8 * 1024];
 
 void
-stream_ts(int ts_fd, int client_sock)
+stream_ts(int ts_fd, FILE *client)
 {
 	ssize_t nread;
-	ssize_t nwritten;
+	size_t nwritten;
 
 	do
 	{
 		nread = read(ts_fd, _ts_buf, sizeof(_ts_buf));
 		if(nread > 0)
-			nwritten = write(client_sock, _ts_buf, nread);
+			nwritten = fwrite(_ts_buf, 1, nread, client);
 		else
 			nwritten = nread;
 	}
-	while(nread == nwritten);
+	while(!feof(client) && nread == nwritten);
 
 	return;
 }

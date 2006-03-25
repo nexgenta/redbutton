@@ -7,6 +7,6 @@
 
 #include "listen.h"
 
-bool process_command(struct listen_data *, int, char *);
+bool process_command(struct listen_data *, FILE *, char *);
 
 #endif
