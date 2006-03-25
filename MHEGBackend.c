@@ -45,7 +45,7 @@ static struct MHEGBackendFns remote_backend_fns =
 static int parse_addr(char *, struct in_addr *, in_port_t *);
 static int get_host_addr(char *, struct in_addr *);
 
-static FILE *remote_command(MHEGBackend *, char *);
+static FILE *remote_command(MHEGBackend *, bool, char *);
 static unsigned int remote_response(FILE *);
 
 static char *external_filename(MHEGBackend *, OctetString *);
@@ -60,6 +60,9 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 	b->addr.sin_family = AF_INET;
 	b->addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	b->addr.sin_port = htons(DEFAULT_REMOTE_PORT);
+
+	/* no connection to the backend yet */
+	b->be_sock = NULL;
 
 	if(remote)
 	{
@@ -83,6 +86,11 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 void
 MHEGBackend_fini(MHEGBackend *b)
 {
+	/* send quit command */
+	if(b->be_sock != NULL
+	&& remote_command(b, true, "quit\n") != NULL)
+		fclose(b->be_sock);
+
 	return;
 }
 
@@ -142,23 +150,30 @@ get_host_addr(char *host, struct in_addr *output)
 
 /*
  * send the given command to the remote backend
+ * if reuse is true, reuse the existing connection to the backend
  * returns a socket FILE to read the response from
  * returns NULL if it can't contact the backend
  */
 
 static FILE *
-remote_command(MHEGBackend *t, char *cmd)
+remote_command(MHEGBackend *t, bool reuse, char *cmd)
 {
 	int sock;
 	FILE *file;
 
-	/* connect to the backend */
+	/* can we use the existing connection */
+	if(reuse && t->be_sock != NULL)
+	{
+		fputs(cmd, t->be_sock);
+		return t->be_sock;
+	}
+
+	/* need to connect to the backend */
 	if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		error("Unable to create backend socket: %s", strerror(errno));
 		return NULL;
 	}
-
 	if(connect(sock, (struct sockaddr *) &t->addr, sizeof(struct sockaddr_in)) < 0)
 	{
 		error("Unable to connect to backend: %s", strerror(errno));
@@ -177,6 +192,10 @@ remote_command(MHEGBackend *t, char *cmd)
 		error("Unable to buffer backend connection: %s", strerror(errno));
 		close(sock);
 	}
+
+	/* remember it if we need to reuse it */
+	if(reuse)
+		t->be_sock = file;
 
 	return file;
 }
@@ -342,12 +361,10 @@ remote_checkContentRef(MHEGBackend *t, ContentReference *name)
 
 	snprintf(cmd, sizeof(cmd), "check %s\n", MHEGEngine_absoluteFilename(name));
 
-	if((sock = remote_command(t, cmd)) == NULL)
+	if((sock = remote_command(t, true, cmd)) == NULL)
 		return false;
 
 	exists = (remote_response(sock) == BACKEND_RESPONSE_OK);
-
-	fclose(sock);
 
 	return exists;
 }
@@ -368,7 +385,7 @@ remote_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 
 	snprintf(cmd, sizeof(cmd), "file %s\n", MHEGEngine_absoluteFilename(name));
 
-	if((sock = remote_command(t, cmd)) == NULL)
+	if((sock = remote_command(t, true, cmd)) == NULL)
 		return false;
 
 	/* if it exists, read the file size */
@@ -377,7 +394,6 @@ remote_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 	|| sscanf(cmd, "Length %u", &size) != 1)
 	{
 		error("Unable to load '%.*s'", name->size, name->data);
-		fclose(sock);
 		return false;
 	}
 
@@ -389,8 +405,6 @@ remote_loadFile(MHEGBackend *t, OctetString *name, OctetString *out)
 	nread = 0;
 	while(!feof(sock) && nread < size)
 		nread += fread(out->data + nread, 1, size - nread, sock);
-
-	fclose(sock);
 
 	/* did we read it all */
 	if(nread < size)
@@ -422,7 +436,7 @@ remote_openFile(MHEGBackend *t, OctetString *name)
 
 	snprintf(cmd, sizeof(cmd), "file %s\n", MHEGEngine_absoluteFilename(name));
 
-	if((sock = remote_command(t, cmd)) == NULL)
+	if((sock = remote_command(t, true, cmd)) == NULL)
 		return NULL;
 
 	/* if it exists, read the file size */
@@ -430,7 +444,6 @@ remote_openFile(MHEGBackend *t, OctetString *name)
 	|| fgets(cmd, sizeof(cmd), sock) == NULL
 	|| sscanf(cmd, "Length %u", &size) != 1)
 	{
-		fclose(sock);
 		return NULL;
 	}
 
@@ -448,8 +461,6 @@ remote_openFile(MHEGBackend *t, OctetString *name)
 		}
 		size -= nread;
 	}
-
-	fclose(sock);
 
 	/* rewind the file */
 	if(out != NULL)
@@ -490,7 +501,8 @@ remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, bool have_vid
 	else
 		snprintf(cmd, sizeof(cmd), "vstream %d\n", *video_tag);
 
-	if((sock = remote_command(t, cmd)) == NULL)
+	/* false => create a new connection to the backend */
+	if((sock = remote_command(t, false, cmd)) == NULL)
 		return NULL;
 
 	/* did it work */

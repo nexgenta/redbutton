@@ -16,6 +16,7 @@ typedef struct MHEGBackend
 {
 	char *base_dir;			/* local Service Gateway root directory */
 	struct sockaddr_in addr;	/* remote backend IP and port */
+	FILE *be_sock;			/* connection to remote backend */
 	/* function pointers */
 	struct MHEGBackendFns
 	{
