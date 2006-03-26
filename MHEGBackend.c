@@ -510,7 +510,7 @@ remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, bool have_vid
 	|| fgets(pids, sizeof(pids), sock) == NULL)
 	{
 		fclose(sock);
-		sock = NULL;
+		return NULL;
 	}
 
 	/* update the PID variables */
