@@ -450,7 +450,7 @@ prog_FormatDate(LIST_OF(Parameter) *params, OctetString *caller_gid)
 	/* convert to UNIX time */
 	unix_time = ((mheg_date - MHEG_EPOCH_OFFSET) * (24 * 60 * 60)) + mheg_time;
 	/* let libc do all the hard work of working out the year etc */
-	tm = gmtime(&unix_time);
+	tm = localtime(&unix_time);
 
 	/* write it out */
 	dateString.size = 0;
