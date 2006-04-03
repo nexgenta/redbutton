@@ -116,7 +116,3 @@ tar:
 	make clean
 	(cd ..; tar zcvf ${TARDIR}-${DATE}.tar.gz ${TARDIR})
 
-disttar:
-	make clean
-	(cd ..; tar zcvf ${TARDIR}-${DATE}.tar.gz --exclude docs ${TARDIR})
-
