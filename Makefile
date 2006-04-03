@@ -110,9 +110,8 @@ clean:
 	rm -f rb-browser rb-keymap xsd2c dertest dertest-mheg.[ch] berdecode *.o ISO13522-MHEG-5.[ch] clone.[ch] rtti.h core
 
 TARDIR=`basename ${PWD}`
-DATE=`date +%Y%m%d`
 
 tar:
 	make clean
-	(cd ..; tar zcvf ${TARDIR}-${DATE}.tar.gz ${TARDIR})
+	(cd ..; tar zcvf ${TARDIR}.tar.gz --exclude .svn ${TARDIR})
 
