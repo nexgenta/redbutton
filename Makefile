@@ -19,7 +19,6 @@ OBJS=	rb-download.o	\
 LIBS=-lz
 
 TARDIR=`basename ${PWD}`
-DATE=`date +%Y%m%d`
 
 rb-download:	${OBJS}
 	${CC} ${CFLAGS} -o rb-download ${OBJS} ${LIBS}
@@ -32,6 +31,5 @@ clean:
 
 tar:
 	make clean
-	(cd ..; tar zcvf ${TARDIR}-${DATE}.tar.gz ${TARDIR})
-
+	(cd ..; tar zcvf ${TARDIR}.tar.gz --exclude .svn ${TARDIR})
 
