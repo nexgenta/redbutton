@@ -113,6 +113,16 @@ safe_malloc(size_t nbytes)
 	return buf;
 }
 
+void *
+safe_mallocz(size_t nbytes)
+{
+	void *buf = safe_malloc(nbytes);
+
+	bzero(buf, nbytes);
+
+	return buf;
+}
+
 /*
  * safe_realloc(NULL, n) == safe_malloc(n)
  * safe_realloc(x, 0) == safe_free(x) and returns NULL

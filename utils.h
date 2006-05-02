@@ -38,6 +38,7 @@ unsigned int char2hex(unsigned char);
 int next_utf8(unsigned char *, int, int *);
 
 void *safe_malloc(size_t);
+void *safe_mallocz(size_t);
 void *safe_realloc(void *, size_t);
 void safe_free(void *);
 
