@@ -216,7 +216,7 @@ read_packet(FILE *ts, uint8_t *buf)
 			nread += fread(buf + nread, 1, TS_PACKET_SIZE - nread, ts);
 		if(*buf != TS_SYNC_BYTE && !feof(ts))
 		{
-			printf("Bad sync byte: 0x%02x\n", *buf);
+			error("MPEG TS demux: bad sync byte: 0x%02x\n", *buf);
 			memmove(buf, buf + 1, TS_PACKET_SIZE - 1);
 			nread = TS_PACKET_SIZE - 1;
 		}
