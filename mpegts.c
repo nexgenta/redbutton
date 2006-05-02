@@ -116,19 +116,7 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 		if((pes = add_pes_stream(ctx, packet.stream_index)) == NULL)
 			fatal("mpegts_demux_frame: internal error");
 		/* is it the first packet of the next frame */
-		if(ctx->is_start != 0)
-		{
-			/* a new frame, remember its PTS (or calc from the previous one) */
-			if(packet.pts == AV_NOPTS_VALUE && pes->frame_pts != AV_NOPTS_VALUE)
-				pes->frame_pts += 3600;
-			else
-				pes->frame_pts = packet.pts;
-			if(packet.dts == AV_NOPTS_VALUE && pes->frame_dts != AV_NOPTS_VALUE)
-				pes->frame_dts += 3600;
-			else
-				pes->frame_dts = packet.dts;
-		}
-		else
+		if(ctx->is_start == 0)
 		{
 			/* not a new frame, add data to the exisiting one */
 			pes->frame_data = safe_realloc(pes->frame_data, pes->frame_size + packet.size);
@@ -141,7 +129,9 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 
 	/*
 	 * pes->frame_data contains the last frame
+	 * copy it into the output packet
 	 * packet contains the first packet of the next frame
+	 * copy it into the PES context for the stream
 	 */
 	if(av_new_packet(frame, pes->frame_size) != 0)
 		return -1;
@@ -155,6 +145,16 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 	pes->frame_data = safe_realloc(pes->frame_data, packet.size);
 	pes->frame_size = packet.size;
 	memcpy(pes->frame_data, packet.data, packet.size);
+
+	/* remember the new frame's PTS (or calc from the previous one) */
+	if(packet.pts == AV_NOPTS_VALUE && pes->frame_pts != AV_NOPTS_VALUE)
+		pes->frame_pts += 3600;
+	else
+		pes->frame_pts = packet.pts;
+	if(packet.dts == AV_NOPTS_VALUE && pes->frame_dts != AV_NOPTS_VALUE)
+		pes->frame_dts += 3600;
+	else
+		pes->frame_dts = packet.dts;
 
 	av_free_packet(&packet);
 
