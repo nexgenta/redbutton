@@ -134,7 +134,10 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 	 * copy it into the PES context for the stream
 	 */
 	if(av_new_packet(frame, pes->frame_size) != 0)
+	{
+		av_free_packet(&packet);
 		return -1;
+	}
 	memcpy(frame->data, pes->frame_data, pes->frame_size);
 
 	frame->stream_index = pes->pid;
