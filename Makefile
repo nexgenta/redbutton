@@ -3,7 +3,7 @@ CFLAGS=-Wall -O2
 
 #DEFS=-DDEBUG_ALLOC
 INCS=`freetype-config --cflags`
-LIBS=-lm -lz -L/usr/X11R6/lib -lX11 -lXt -lXrender -lXft -lpng -lmpeg2 -lmpeg2convert
+LIBS=-lm -lz -L/usr/X11R6/lib -lX11 -lXt -lXrender -lXft -lpng -lmpeg2 -lmpeg2convert -lavformat -lavcodec
 
 CLASSES=ActionClass.o	\
 	ApplicationClass.o	\
@@ -71,6 +71,7 @@ OBJS=	rb-browser.o		\
 	clone.o			\
 	si.o			\
 	readpng.o		\
+	mpegts.o		\
 	utils.o
 
 default: rb-browser rb-keymap
