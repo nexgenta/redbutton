@@ -188,14 +188,13 @@ mpegts_demux_packet(MpegTSContext *ctx, AVPacket *pkt)
 	ctx->pkt = pkt;
 
 	ctx->stop_parse = 0;
-	for(;;)
+	do
 	{
-		if(ctx->stop_parse)
-			break;
 		if((ret = read_packet(ctx->ts_stream, packet)) != 0)
 			return ret;
 		handle_packet(ctx, packet);
 	}
+	while(ctx->stop_parse == 0);
 
 	return 0;
 }
@@ -365,7 +364,7 @@ mpegts_push_data(PESContext *pes, const uint8_t *buf, int buf_size, int is_start
 					pes->state = MPEGTS_PESHEADER_FILL;
 					pes->total_size = (pes->header[4] << 8) | pes->header[5];
 					/* NOTE: a zero total size means the PES size is unbounded */
-					if (pes->total_size)
+					if(pes->total_size)
 						pes->total_size += 6;
 					pes->pes_header_size = pes->header[8] + 9;
 				}
