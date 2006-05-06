@@ -37,6 +37,8 @@
 
 #define TS_PACKET_SIZE	188
 #define NB_PID_MAX	2
+/* expands as necessary */
+#define INIT_FRAME_BUFF_SIZE	(128 * 1024)
 
 typedef struct PESContext PESContext;
 
@@ -77,7 +79,8 @@ struct PESContext
 	int64_t frame_pts;
 	int64_t frame_dts;
 	uint8_t *frame_data;
-	unsigned int frame_size;
+	unsigned int frame_size;	/* number of bytes of valid data in frame_data */
+	unsigned int alloc_size;	/* number of bytes malloc'ed to frame_data */
 };
 
 static int read_packet(FILE *, uint8_t *);
@@ -108,6 +111,7 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 {
 	AVPacket packet;
 	PESContext *pes;
+	uint8_t *frame_data;
 
 	do
 	{
@@ -119,7 +123,12 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 		if(ctx->is_start == 0)
 		{
 			/* not a new frame, add data to the exisiting one */
-			pes->frame_data = safe_realloc(pes->frame_data, pes->frame_size + packet.size);
+			if((frame_data = av_fast_realloc(pes->frame_data, &pes->alloc_size, pes->frame_size + packet.size)) == NULL)
+			{
+				av_free_packet(&packet);
+				return -1;
+			}
+			pes->frame_data = frame_data;
 			memcpy(pes->frame_data + pes->frame_size, packet.data, packet.size);
 			pes->frame_size += packet.size;
 			av_free_packet(&packet);
@@ -145,7 +154,13 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 	frame->dts = pes->frame_dts;
 
 	/* copy the first packet of the next frame into PES context */
-	pes->frame_data = safe_realloc(pes->frame_data, packet.size);
+	if((frame_data = av_fast_realloc(pes->frame_data, &pes->alloc_size, packet.size)) == NULL)
+	{
+		av_free_packet(&packet);
+		av_free_packet(frame);
+		return -1;
+	}
+	pes->frame_data = frame_data;
 	pes->frame_size = packet.size;
 	memcpy(pes->frame_data, packet.data, packet.size);
 
@@ -192,7 +207,7 @@ mpegts_close(MpegTSContext *ctx)
 
 	for(i=0; i<NB_PID_MAX; i++)
 	{
-		safe_free(ctx->pids[i]->frame_data);
+		av_free(ctx->pids[i]->frame_data);
 		av_free(ctx->pids[i]);
 	}
 	av_free(ctx);
@@ -292,6 +307,13 @@ add_pes_stream(MpegTSContext *ctx, int pid)
 		return NULL;
 	pes->ts = ctx;
 	pes->pid = pid;
+
+	pes->alloc_size = INIT_FRAME_BUFF_SIZE;
+	if((pes->frame_data = av_malloc(pes->alloc_size)) == NULL)
+	{
+		av_free(pes);
+		return NULL;
+	}
 
 	pes->frame_pts = AV_NOPTS_VALUE;
 	pes->frame_dts = AV_NOPTS_VALUE;
