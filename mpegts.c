@@ -115,7 +115,11 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 
 	do
 	{
-		mpegts_demux_packet(ctx, &packet);
+		if(mpegts_demux_packet(ctx, &packet) < 0)
+		{
+			av_free_packet(&packet);
+			return -1;
+		}
 		/* find the stream */
 		if((pes = add_pes_stream(ctx, packet.stream_index)) == NULL)
 			fatal("mpegts_demux_frame: internal error");
