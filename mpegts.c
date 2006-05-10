@@ -210,8 +210,11 @@ mpegts_close(MpegTSContext *ctx)
 
 	for(i=0; i<NB_PID_MAX; i++)
 	{
-		av_free(ctx->pids[i]->frame_data);
-		av_free(ctx->pids[i]);
+		if(ctx->pids[i])
+		{
+			av_free(ctx->pids[i]->frame_data);
+			av_free(ctx->pids[i]);
+		}
 	}
 	av_free(ctx);
 
