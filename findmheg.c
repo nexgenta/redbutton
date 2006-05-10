@@ -38,8 +38,9 @@
 #define TID_PMT		0x02
 
 /* stream_types we are interested in */
-#define STREAM_TYPE_VIDEO		0x02
-#define STREAM_TYPE_AUDIO		0x03
+#define STREAM_TYPE_VIDEO_MPEG2		0x02
+#define STREAM_TYPE_AUDIO_MPEG1		0x03
+#define STREAM_TYPE_AUDIO_MPEG2		0x04
 #define STREAM_TYPE_ISO13818_6_B	0x0b
 
 /* descriptors we want */
@@ -63,6 +64,20 @@ struct language_descriptor
 	char language_code[3];
 	uint8_t audio_type;
 } __attribute__((__packed__));
+
+bool
+is_audio_stream(uint8_t stream_type)
+{
+	switch(stream_type)
+	{
+	case STREAM_TYPE_AUDIO_MPEG1:
+	case STREAM_TYPE_AUDIO_MPEG2:
+		return true;
+
+	default:
+		return false;
+	}
+}
 
 /*
  * fills in a struct carousel based on the given service_id
@@ -157,7 +172,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 		elementary_pid = ((pmt[offset] & 0x1f) << 8) + pmt[offset+1];
 		offset += 2;
 		/* is it the default video stream for this service */
-		if(stream_type == STREAM_TYPE_VIDEO)
+		if(stream_type == STREAM_TYPE_VIDEO_MPEG2)
 			_car.video_pid = elementary_pid;
 		/* read the descriptors */
 		info_length = ((pmt[offset] & 0x0f) << 8) + pmt[offset+1];
@@ -187,7 +202,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 //				printf("pid=0x%x component_tag=0x%x\n", elementary_pid, component_tag);
 				add_assoc(&_car.assoc, elementary_pid, desc->component_tag);
 			}
-			else if(desc_tag == TAG_LANGUAGE_DESCRIPTOR && stream_type == STREAM_TYPE_AUDIO)
+			else if(desc_tag == TAG_LANGUAGE_DESCRIPTOR && is_audio_stream(stream_type))
 			{
 				struct language_descriptor *desc;
 				desc = (struct language_descriptor *) &pmt[offset];
