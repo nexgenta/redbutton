@@ -17,7 +17,7 @@
 bool local_checkContentRef(MHEGBackend *, ContentReference *);
 bool local_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *local_openFile(MHEGBackend *, OctetString *);
-FILE *local_openStream(MHEGBackend *, bool, int *, bool, int *);
+FILE *local_openStream(MHEGBackend *, bool, int *, int *, bool, int *, int *);
 
 static struct MHEGBackendFns local_backend_fns =
 {
@@ -31,7 +31,7 @@ static struct MHEGBackendFns local_backend_fns =
 bool remote_checkContentRef(MHEGBackend *, ContentReference *);
 bool remote_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *remote_openFile(MHEGBackend *, OctetString *);
-FILE *remote_openStream(MHEGBackend *, bool, int *, bool, int *);
+FILE *remote_openStream(MHEGBackend *, bool, int *, int *, bool, int *, int *);
 
 static struct MHEGBackendFns remote_backend_fns =
 {
@@ -327,11 +327,12 @@ local_openFile(MHEGBackend *t, OctetString *name)
  * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
  * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the current Service ID is used
  * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
+ * updates *audio_type and/or *video_type to the stream type IDs
  * returns NULL on error
  */
 
 FILE *
-local_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, bool have_video, int *video_tag)
+local_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
 {
 	/*
 	 * we need to convert the audio/video_tag into PIDs
@@ -341,7 +342,7 @@ local_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, bool have_vide
 	 * 3. just stream the TS from the backend
 	 * we choose 3, to avoid duplicating code and having to pass "-d <device>" options etc
 	 */
-	return remote_openStream(t, have_audio, audio_tag, have_video, video_tag);
+	return remote_openStream(t, have_audio, audio_tag, audio_type, have_video, video_tag, video_type);
 }
 
 /*
@@ -475,11 +476,12 @@ remote_openFile(MHEGBackend *t, OctetString *name)
  * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
  * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the current Service ID is used
  * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
+ * updates *audio_type and/or *video_type to the stream type IDs
  * returns NULL on error
  */
 
 FILE *
-remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, bool have_video, int *video_tag)
+remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
 {
 	char cmd[PATH_MAX];
 	FILE *sock;
@@ -515,11 +517,12 @@ remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, bool have_vid
 
 	/* update the PID variables */
 	if(have_audio && have_video)
-		err = (sscanf(pids, "AudioPID %u VideoPID %u", &audio_pid, &video_pid) != 2);
+		err = (sscanf(pids, "AudioPID %u AudioType %u VideoPID %u VideoType %u",
+		       &audio_pid, audio_type, &video_pid, video_type) != 4);
 	else if(have_audio)
-		err = (sscanf(pids, "AudioPID %u", &audio_pid) != 1);
+		err = (sscanf(pids, "AudioPID %u AudioType %u", &audio_pid, audio_type) != 2);
 	else
-		err = (sscanf(pids, "VideoPID %u", &video_pid) != 1);
+		err = (sscanf(pids, "VideoPID %u VideoType %u", &video_pid, video_type) != 2);
 
 	if(!err)
 	{

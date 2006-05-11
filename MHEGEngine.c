@@ -1340,9 +1340,11 @@ MHEGEngine_openFile(OctetString *name)
  */
 
 FILE *
-MHEGEngine_openStream(bool have_audio, int *audio_tag, bool have_video, int *video_tag)
+MHEGEngine_openStream(bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
 {
-	return (*(engine.backend.fns->openStream))(&engine.backend, have_audio, audio_tag, have_video, video_tag);
+	return (*(engine.backend.fns->openStream))(&engine.backend,
+						   have_audio, audio_tag, audio_type,
+						   have_video, video_tag, video_type);
 }
 
 /*
