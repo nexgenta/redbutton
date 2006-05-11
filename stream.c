@@ -43,7 +43,6 @@ add_demux_filter(char *demux_dev, uint16_t pid, dmx_pes_type_t pes_type)
 	if(ioctl(fd, DMX_SET_PES_FILTER, &pes_filter) < 0)
 	{
 		error("ioctl DMX_SET_PES_FILTER: %s", strerror(errno));
-error("pid=%d type=%d", pid, pes_type);
 		close(fd);
 		return -1;
 	}
