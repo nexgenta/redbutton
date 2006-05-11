@@ -61,7 +61,9 @@ struct carousel
 	uint16_t service_id;
 	uint32_t carousel_id;
 	uint16_t audio_pid;		/* PID of default audio stream for this service_id */
+	uint8_t audio_type;		/* type ID of default audio stream */
 	uint16_t video_pid;		/* PID of default video stream for this service_id */
+	uint8_t video_type;		/* type ID of default video stream */
 	uint16_t current_pid;		/* PID we downloaded the last table from */
 	struct assoc assoc;		/* map stream_id's to elementary_pid's */
 	int32_t npids;			/* PIDs we are reading data from */

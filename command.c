@@ -140,6 +140,7 @@ cmd_astream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	struct carousel *car = listen_data->carousel;
 	int tag;
 	uint16_t pid;
+	uint8_t type;
 	int audio_fd;
 	int ts_fd;
 	char hdr[64];
@@ -148,11 +149,17 @@ cmd_astream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 
 	tag = strtol(argv[1], NULL, 0);
 
-	/* map the tag to a PID, or use the default */
+	/* map the tag to a PID and stream type, or use the default */
 	if(tag == -1)
+	{
 		pid = car->audio_pid;
+		type = car->audio_type;
+	}
 	else
+	{
 		pid = stream2pid(&car->assoc, tag);
+		type = stream2type(&car->assoc, tag);
+	}
 
 	/* add the PID to the demux device */
 	if((audio_fd = add_demux_filter(car->demux_device, pid, DMX_PES_AUDIO)) < 0)
@@ -172,8 +179,8 @@ cmd_astream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	/* send the OK code */
 	SEND_RESPONSE(200, "OK");
 
-	/* tell the client what PID the component tag resolved to */
-	snprintf(hdr, sizeof(hdr), "AudioPID %u\n", pid);
+	/* tell the client what PID and stream type the component tag resolved to */
+	snprintf(hdr, sizeof(hdr), "AudioPID %u AudioType %u\n", pid, type);
 	fputs(hdr, client);
 
 	/* shovel the transport stream to client until the client closes or we get an error */
@@ -201,6 +208,7 @@ cmd_vstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	struct carousel *car = listen_data->carousel;
 	int tag;
 	uint16_t pid;
+	uint8_t type;
 	int video_fd;
 	int ts_fd;
 	char hdr[64];
@@ -209,11 +217,17 @@ cmd_vstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 
 	tag = strtol(argv[1], NULL, 0);
 
-	/* map the tag to a PID, or use the default */
+	/* map the tag to a PID and stream type, or use the default */
 	if(tag == -1)
+	{
 		pid = car->video_pid;
+		type = car->video_type;
+	}
 	else
+	{
 		pid = stream2pid(&car->assoc, tag);
+		type = stream2type(&car->assoc, tag);
+	}
 
 	/* add the PID to the demux device */
 	if((video_fd = add_demux_filter(car->demux_device, pid, DMX_PES_VIDEO)) < 0)
@@ -233,8 +247,8 @@ cmd_vstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	/* send the OK code */
 	SEND_RESPONSE(200, "OK");
 
-	/* tell the client what PID the component tag resolved to */
-	snprintf(hdr, sizeof(hdr), "VideoPID %u\n", pid);
+	/* tell the client what PID and stream type the component tag resolved to */
+	snprintf(hdr, sizeof(hdr), "VideoPID %u VideoType %u\n", pid, type);
 	fputs(hdr, client);
 
 	/* shovel the transport stream down client_sock until the client closes it or we get an error */
@@ -264,6 +278,8 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 	int video_tag;
 	uint16_t audio_pid;
 	uint16_t video_pid;
+	uint8_t audio_type;
+	uint8_t video_type;
 	int audio_fd;
 	int video_fd;
 	int ts_fd;
@@ -274,16 +290,28 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 	audio_tag = strtol(argv[1], NULL, 0);
 	video_tag = strtol(argv[2], NULL, 0);
 
-	/* map the tags to PIDs, or use the defaults */
+	/* map the tags to PIDs and stream types, or use the defaults */
 	if(audio_tag == -1)
+	{
 		audio_pid = car->audio_pid;
+		audio_type = car->audio_type;
+	}
 	else
+	{
 		audio_pid = stream2pid(&car->assoc, audio_tag);
+		audio_type = stream2type(&car->assoc, audio_tag);
+	}
 
 	if(video_tag == -1)
+	{
 		video_pid = car->video_pid;
+		video_type = car->video_type;
+	}
 	else
+	{
 		video_pid = stream2pid(&car->assoc, video_tag);
+		video_type = stream2type(&car->assoc, video_tag);
+	}
 
 	/* add the PIDs to the demux device */
 	if((audio_fd = add_demux_filter(car->demux_device, audio_pid, DMX_PES_AUDIO)) < 0)
@@ -310,8 +338,8 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 	/* send the OK code */
 	SEND_RESPONSE(200, "OK");
 
-	/* tell the client what PIDs the component tags resolved to */
-	snprintf(hdr, sizeof(hdr), "AudioPID %u VideoPID %u\n", audio_pid, video_pid);
+	/* tell the client what PIDs and stream types the component tags resolved to */
+	snprintf(hdr, sizeof(hdr), "AudioPID %u AudioType %u VideoPID %uVideoType %u\n", audio_pid, audio_type, video_pid, video_type);
 	fputs(hdr, client);
 
 	/* shovel the transport stream down client_sock until the client closes it or we get an error */

@@ -35,20 +35,23 @@ init_assoc(struct assoc *a)
 	a->nassocs = 0;
 	a->pids = NULL;
 	a->sids = NULL;
+	a->types = NULL;
 
 	return;
 }
 
 void
-add_assoc(struct assoc *a, uint16_t elementary_pid, uint16_t stream_id)
+add_assoc(struct assoc *a, uint16_t elementary_pid, uint16_t stream_id, uint8_t stream_type)
 {
 	a->nassocs ++;
 
 	a->pids = safe_realloc(a->pids, a->nassocs * sizeof(uint16_t));
 	a->sids = safe_realloc(a->sids, a->nassocs * sizeof(uint16_t));
+	a->types = safe_realloc(a->types, a->nassocs * sizeof(uint8_t));
 
 	a->pids[a->nassocs - 1] = elementary_pid;
 	a->sids[a->nassocs - 1] = stream_id;
+	a->types[a->nassocs - 1] = stream_type;
 
 	return;
 }
@@ -69,4 +72,19 @@ stream2pid(struct assoc *a, uint16_t stream_id)
 	return 0;
 }
 
+uint8_t
+stream2type(struct assoc *a, uint16_t stream_id)
+{
+	unsigned int i;
+
+	for(i=0; i<a->nassocs; i++)
+	{
+		if(a->sids[i] == stream_id)
+			return a->types[i];
+	}
+
+	error("Unknown stream type for association tag 0x%x", stream_id);
+
+	return 0;
+}
 

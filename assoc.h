@@ -32,12 +32,14 @@ struct assoc
 	unsigned int nassocs;
 	uint16_t *pids;
 	uint16_t *sids;
+	uint8_t *types;		/* stream type */
 };
 
 void init_assoc(struct assoc *);
-void add_assoc(struct assoc *, uint16_t, uint16_t);
+void add_assoc(struct assoc *, uint16_t, uint16_t, uint8_t);
 
 uint16_t stream2pid(struct assoc *, uint16_t);
+uint8_t stream2type(struct assoc *, uint16_t);
 
 #endif	/* __ASSOC_H__ */
 

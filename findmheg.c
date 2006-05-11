@@ -111,7 +111,9 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 	/* unknown */
 	_car.carousel_id = 0;
 	_car.audio_pid = 0;
+	_car.audio_type = 0;
 	_car.video_pid = 0;
+	_car.video_type = 0;
 	_car.current_pid = 0;
 	/* map between stream_id_descriptors and elementary_PIDs */
 	init_assoc(&_car.assoc);
@@ -173,7 +175,10 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 		offset += 2;
 		/* is it the default video stream for this service */
 		if(stream_type == STREAM_TYPE_VIDEO_MPEG2)
+		{
 			_car.video_pid = elementary_pid;
+			_car.video_type = stream_type;
+		}
 		/* read the descriptors */
 		info_length = ((pmt[offset] & 0x0f) << 8) + pmt[offset+1];
 		offset += 2;
@@ -200,7 +205,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 				desc = (struct stream_id_descriptor *) &pmt[offset];
 				component_tag = desc->component_tag;
 //				printf("pid=0x%x component_tag=0x%x\n", elementary_pid, component_tag);
-				add_assoc(&_car.assoc, elementary_pid, desc->component_tag);
+				add_assoc(&_car.assoc, elementary_pid, desc->component_tag, stream_type);
 			}
 			else if(desc_tag == TAG_LANGUAGE_DESCRIPTOR && is_audio_stream(stream_type))
 			{
@@ -208,7 +213,10 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 				desc = (struct language_descriptor *) &pmt[offset];
 				/* only remember the normal audio stream (not visually impaired stream) */
 				if(desc->audio_type == 0)
+				{
 					_car.audio_pid = elementary_pid;
+					_car.audio_type = stream_type;
+				}
 			}
 			offset += desc_length;
 			info_length -= desc_length;
