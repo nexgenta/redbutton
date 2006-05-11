@@ -37,7 +37,7 @@ add_demux_filter(char *demux_dev, uint16_t pid, dmx_pes_type_t pes_type)
 	 * on my Nova-T card, there is no hardware MPEG decoder so setting the pes_type to DMX_PES_VIDEO returns an error (sometimes!)
 	 * anyway, always setting it to DMX_PES_OTHER works for me
 	 */
-	pes_type=DMX_PES_OTHER;
+	pes_type = DMX_PES_OTHER;
 	pes_filter.pes_type = pes_type;
 
 	if(ioctl(fd, DMX_SET_PES_FILTER, &pes_filter) < 0)
