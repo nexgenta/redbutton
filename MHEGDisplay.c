@@ -15,6 +15,7 @@
 #include <X11/keysym.h>
 #include <mpeg2dec/mpeg2.h>
 #include <mpeg2dec/mpeg2convert.h>
+#include <ffmpeg/avformat.h>
 
 #include "MHEGEngine.h"
 #include "MHEGDisplay.h"
@@ -92,6 +93,9 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 		d->keymap = load_keymap(keymap);
 	else
 		d->keymap = default_keymap;
+
+	/* so X requests/replies in different threads don't get interleaved */
+	XInitThreads();
 
 	if((d->dpy = XOpenDisplay(NULL)) == NULL)
 		fatal("Unable to open display");
@@ -235,6 +239,9 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 	XtToolkitInitialize();
 	d->app = XtCreateApplicationContext();
 	XtDisplayInitialize(d->app, d->dpy, APP_NAME, APP_CLASS, NULL, 0, &argc, argv);
+
+	/* init ffmpeg */
+	av_register_all();
 
 	return;
 }

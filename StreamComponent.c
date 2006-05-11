@@ -109,7 +109,7 @@ StreamComponent_play(StreamComponent *s, MHEGStreamPlayer *player)
 		break;
 
 	case StreamComponent_video:
-		MHEGStreamPlayer_setVideoTag(player, s->u.video.component_tag);
+		MHEGStreamPlayer_setVideoTag(player, &s->u.video, s->u.video.component_tag);
 		break;
 
 	case StreamComponent_rtgraphics:

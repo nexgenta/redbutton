@@ -1,9 +1,10 @@
 CC=gcc
 CFLAGS=-Wall -O2
 
-#DEFS=-DDEBUG_ALLOC
+DEFS=-D_REENTRANT -D_GNU_SOURCE
+#DEFS=-DDEBUG_ALLOC -D_REENTRANT -D_GNU_SOURCE
 INCS=`freetype-config --cflags`
-LIBS=-lm -lz -L/usr/X11R6/lib -lX11 -lXt -lXrender -lXft -lpng -lmpeg2 -lmpeg2convert -lavformat -lavcodec
+LIBS=-lm -lz -L/usr/X11R6/lib -lX11 -lXt -lXrender -lXft -lpng -lmpeg2 -lmpeg2convert -lavformat -lavcodec -lpthread
 
 CLASSES=ActionClass.o	\
 	ApplicationClass.o	\
