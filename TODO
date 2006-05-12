@@ -1,3 +1,6 @@
+use -t timeout when searching for initial object to boot
+
+
 handle SIGPIPE - default handler terminates the process
 
 
