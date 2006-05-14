@@ -33,7 +33,7 @@ LIST_TYPE(VideoFrame) *new_VideoFrameListItem(double, enum PixelFormat, unsigned
 void free_VideoFrameListItem(LIST_TYPE(VideoFrame) *);
 
 /* player state */
-typedef struct
+typedef struct MHEGStreamPlayer
 {
 	bool playing;				/* true when our threads are active */
 	bool stop;				/* true => stop playback */
@@ -63,5 +63,7 @@ void MHEGStreamPlayer_setAudioTag(MHEGStreamPlayer *, int);
 
 void MHEGStreamPlayer_play(MHEGStreamPlayer *);
 void MHEGStreamPlayer_stop(MHEGStreamPlayer *);
+
+void MHEGStreamPlayer_drawCurrentFrame(MHEGStreamPlayer *);
 
 #endif	/* __MHEGSTREAMPLAYER_H__ */

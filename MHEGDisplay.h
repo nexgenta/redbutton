@@ -46,7 +46,8 @@ typedef struct
 	Visual *vis;				/* Visual (ie pixel format) used by the Window */
 	Colormap cmap;				/* None, unless we needed to create a Colormap for our Visual */
 	Pixmap contents;			/* current contents of the Window */
-	Picture contents_pic;			/* XRender wrapper for the contents, this is what we draw on */
+	Picture contents_pic;			/* XRender wrapper for the contents, this is what we composite on */
+	Picture overlay_pic;			/* draw MHEG objects on here and overlay it on any video */
 	Picture textfg_pic;			/* 1x1 solid foreground colour for text */
 	MHEGKeyMapEntry *keymap;		/* keyboard mapping */
 } MHEGDisplay;
@@ -61,6 +62,7 @@ void MHEGDisplay_refresh(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 /* drawing routines */
 void MHEGDisplay_drawHoriLine(MHEGDisplay *, XYPosition *, unsigned int, int, int, MHEGColour *);
 void MHEGDisplay_drawVertLine(MHEGDisplay *, XYPosition *, unsigned int, int, int, MHEGColour *);
+void MHEGDisplay_fillTransparentRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 void MHEGDisplay_fillRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *, MHEGColour *);
 void MHEGDisplay_drawBitmap(MHEGDisplay *, XYPosition *, OriginalBoxSize *, MHEGBitmap *, XYPosition *);
 void MHEGDisplay_drawTextElement(MHEGDisplay *, XYPosition *, MHEGFont *, MHEGTextElement *, bool);

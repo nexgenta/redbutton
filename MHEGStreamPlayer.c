@@ -73,6 +73,7 @@ MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 	p->videoq = NULL;
 
 	pthread_mutex_init(&p->current_frame_lock, NULL);
+	p->current_frame = NULL;
 
 	return;
 }
@@ -316,6 +317,9 @@ video_thread(void *arg)
 	uint8_t *tmpbuf_data = NULL;
 	unsigned int nframes = 0;
 
+	if(!p->have_video)
+		return NULL;
+
 	verbose("MHEGStreamPlayer: video thread started");
 
 	/* assert */
@@ -454,8 +458,6 @@ video_thread(void *arg)
 			pthread_mutex_lock(&p->current_frame_lock);
 			/* convert the next frame to RGB */
 			img_convert(&rgb_frame, out_format, yuv_frame, vf->pix_fmt, out_width, out_height);
-/* TODO */
-/* overlay any MHEG objects above it */
 			/* we've finished changing the RGB frame now */
 			pthread_mutex_unlock(&p->current_frame_lock);
 			/* wait until it's time to display the frame */
@@ -480,11 +482,10 @@ video_thread(void *arg)
 			last_pts = vf->pts;
 //now=av_gettime();
 //printf("display frame %d: pts=%f this_time=%lld real_time=%lld (diff=%lld)\n", ++nframes, vf->pts, last_time, now, now-last_time);
-/* TODO */
-/* take p->video size/position into account */
-/* redraw objects above the video */
-// disable output until we can overlay the MHEG objects
-//			XShmPutImage(d->dpy, d->win, d->win_gc, p->current_frame, 0, 0, 0, 0, out_width, out_height, False);
+			/* draw the current frame */
+			MHEGStreamPlayer_drawCurrentFrame(p);
+			/* redraw objects above the video */
+			MHEGDisplay_refresh(d, &p->video->inst.Position, &p->video->inst.BoxSize);
 			/* get it drawn straight away */
 			XFlush(d->dpy);
 		}
@@ -500,9 +501,14 @@ video_thread(void *arg)
 		safe_free(tmpbuf_data);
 	}
 
+	/* get rid of the current frame */
+	pthread_mutex_lock(&p->current_frame_lock);
 	/* the XImage data is our shared memory, make sure XDestroyImage doesn't try to free it */
 	p->current_frame->data = NULL;
 	XDestroyImage(p->current_frame);
+	/* make sure no-one tries to use it */
+	p->current_frame = NULL;
+	pthread_mutex_unlock(&p->current_frame_lock);
 
 	XShmDetach(d->dpy, &shm);
 	shmdt(shm.shmaddr);
@@ -511,6 +517,34 @@ video_thread(void *arg)
 	verbose("MHEGStreamPlayer: video thread stopped");
 
 	return NULL;
+}
+
+void
+MHEGStreamPlayer_drawCurrentFrame(MHEGStreamPlayer *p)
+{
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	int x, y;
+	unsigned int out_width;
+	unsigned int out_height;
+
+	pthread_mutex_lock(&p->current_frame_lock);
+	if(p->current_frame != NULL)
+	{
+/* TODO */
+/* take p->video size/position into account */
+/* remeber fullscreen scaling */
+		x = 0;		/* origin of p->video */
+		y = 0;
+		out_width = p->current_frame->width;
+		out_height = p->current_frame->height;
+		/* draw it onto the Window contents Pixmap */
+		XShmPutImage(d->dpy, d->contents, d->win_gc, p->current_frame, 0, 0, x, y, out_width, out_height, False);
+		/* get it drawn straight away */
+		XFlush(d->dpy);
+	}
+	pthread_mutex_unlock(&p->current_frame_lock);
+
+	return;
 }
 
 /*

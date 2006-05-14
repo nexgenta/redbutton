@@ -80,6 +80,7 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 	XGCValues gcvals;
 	XRenderPictFormat *pic_format;
 	XRenderPictureAttributes pa;
+	Pixmap overlay;
 	Pixmap textfg;
 	/* fake argc, argv for XtDisplayInitialize */
 	int argc = 0;
@@ -216,13 +217,21 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 	wm_delete_window = XInternAtom(d->dpy, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(d->dpy, d->win, &wm_delete_window, 1);
 
-	/* create an XRender Picture to do the drawing on */
-	d->contents = XCreatePixmap(d->dpy, d->win, d->xres, d->yres, d->depth);
+	/*
+	 * create an XRender Picture for the Window contents
+	 * we composite the video frame and the MHEG overlay onto this, then copy it onto the Window
+	 */
 	pic_format = XRenderFindVisualFormat(d->dpy, d->vis);
+	d->contents = XCreatePixmap(d->dpy, d->win, d->xres, d->yres, d->depth);
 	d->contents_pic = XRenderCreatePicture(d->dpy, d->contents, pic_format, 0, NULL);
 
+	/* create a 32-bit XRender Picture to draw the MHEG objects on */
+	pic_format = XRenderFindStandardFormat(d->dpy, PictStandardARGB32);
+	overlay = XCreatePixmap(d->dpy, d->win, d->xres, d->yres, 32);
+	d->overlay_pic = XRenderCreatePicture(d->dpy, overlay, pic_format, 0, NULL);
+
 	/* a 1x1 Picture to hold the text foreground colour */
-	textfg = XCreatePixmap(d->dpy, d->win, 1, 1, d->depth);
+	textfg = XCreatePixmap(d->dpy, d->win, 1, 1, 32);
 	pa.repeat = True;
 	d->textfg_pic = XRenderCreatePicture(d->dpy, textfg, pic_format, CPRepeat, &pa);
 
@@ -360,6 +369,14 @@ MHEGDisplay_refresh(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 	w = (box->x_length * d->xres) / MHEG_XRES;
 	h = (box->y_length * d->yres) / MHEG_YRES;
 
+	/*
+	 * if video is being displayed, the current frame will already be in d->contents
+	 * (drawn by the video thread or VideoClass_render)
+	 * overlay the MHEG objects onto the video in d->contents
+	 */
+	XRenderComposite(d->dpy, PictOpOver, d->overlay_pic, None, d->contents_pic, x, y, x, y, x, y, w, h);
+
+	/* copy the Window contents onto the screen */
 	XCopyArea(d->dpy, d->contents, d->win, d->win_gc, x, y, w, h, x, y);
 
 	return;
@@ -397,7 +414,7 @@ if(style != LineStyle_solid)
 printf("TODO: LineStyle %d\n", style);
 
 	/* draw a rectangle */
-	XRenderFillRectangle(d->dpy, PictOpOver, d->contents_pic, &rcol, x, y, w, h);
+	XRenderFillRectangle(d->dpy, PictOpOver, d->overlay_pic, &rcol, x, y, w, h);
 
 	return;
 }
@@ -434,7 +451,7 @@ if(style != LineStyle_solid)
 printf("TODO: LineStyle %d\n", style);
 
 	/* draw a rectangle */
-	XRenderFillRectangle(d->dpy, PictOpOver, d->contents_pic, &rcol, x, y, w, h);
+	XRenderFillRectangle(d->dpy, PictOpOver, d->overlay_pic, &rcol, x, y, w, h);
 
 	return;
 }
@@ -463,7 +480,31 @@ MHEGDisplay_fillRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box,
 	w = (box->x_length * d->xres) / MHEG_XRES;
 	h = (box->y_length * d->yres) / MHEG_YRES;
 
-	XRenderFillRectangle(d->dpy, PictOpOver, d->contents_pic, &rcol, x, y, w, h);
+	XRenderFillRectangle(d->dpy, PictOpOver, d->overlay_pic, &rcol, x, y, w, h);
+
+	return;
+}
+
+/*
+ * explicitly make a transparent rectangle in the MHEG overlay
+ * MHEGDisplay_fillRectangle() uses PictOpOver => it can't create a transparent box in the output
+ * this uses PictOpSrc
+ */
+
+void
+MHEGDisplay_fillTransparentRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
+{
+	XRenderColor rcol = {0, 0, 0, 0};
+	int x, y;
+	unsigned int w, h;
+
+	/* scale if fullscreen */
+	x = (pos->x_position * d->xres) / MHEG_XRES;
+	y = (pos->y_position * d->yres) / MHEG_YRES;
+	w = (box->x_length * d->xres) / MHEG_XRES;
+	h = (box->y_length * d->yres) / MHEG_YRES;
+
+	XRenderFillRectangle(d->dpy, PictOpSrc, d->overlay_pic, &rcol, x, y, w, h);
 
 	return;
 }
@@ -494,7 +535,7 @@ MHEGDisplay_drawBitmap(MHEGDisplay *d, XYPosition *src, OriginalBoxSize *box, MH
 	dst_x = (dst->x_position * d->xres) / MHEG_XRES;
 	dst_y = (dst->y_position * d->yres) / MHEG_YRES;
 
-	XRenderComposite(d->dpy, PictOpOver, bitmap->image_pic, None, d->contents_pic,
+	XRenderComposite(d->dpy, PictOpOver, bitmap->image_pic, None, d->overlay_pic,
 			 src_x, src_y, src_x, src_y, dst_x, dst_y, w, h);
 
 
@@ -594,7 +635,7 @@ MHEGDisplay_drawTextElement(MHEGDisplay *d, XYPosition *pos, MHEGFont *font, MHE
 		/* round up/down the X coord */
 		scrn_x = (x * d->xres) / MHEG_XRES;
 		scrn_x = (scrn_x + (face->units_per_EM / 2)) / face->units_per_EM;
-		XftGlyphRender(d->dpy, PictOpOver, d->textfg_pic, font->font, d->contents_pic,
+		XftGlyphRender(d->dpy, PictOpOver, d->textfg_pic, font->font, d->overlay_pic,
 			       0, 0, orig_x + scrn_x, y,
 			       &glyph, 1);
 		face = XftLockFace(font->font);

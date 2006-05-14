@@ -1,3 +1,10 @@
+check if default audio/video PID is 0 in rb-download
+if it is, avstream fails
+
+
+print avstream error message in rb-browser if openStream fails
+
+
 use -t timeout when searching for initial object to boot
 
 

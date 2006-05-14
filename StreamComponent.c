@@ -109,6 +109,7 @@ StreamComponent_play(StreamComponent *s, MHEGStreamPlayer *player)
 		break;
 
 	case StreamComponent_video:
+		VideoClass_setStreamPlayer(&s->u.video, player);
 		MHEGStreamPlayer_setVideoTag(player, &s->u.video, s->u.video.component_tag);
 		break;
 
@@ -127,6 +128,24 @@ StreamComponent_play(StreamComponent *s, MHEGStreamPlayer *player)
 void
 StreamComponent_stop(StreamComponent *s, MHEGStreamPlayer *player)
 {
+	switch(s->choice)
+	{
+	case StreamComponent_audio:
+		break;
+
+	case StreamComponent_video:
+		VideoClass_setStreamPlayer(&s->u.video, NULL);
+		break;
+
+	case StreamComponent_rtgraphics:
+		error("RTGraphics streams not supported");
+		break;
+
+	default:
+		error("Unknown StreamComponent type: %d", s->choice);
+		break;
+	}
+
 	return;
 }
 

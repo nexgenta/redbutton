@@ -354,6 +354,14 @@ printf("TODO: VideoClass_ScaleVideo not yet implemented\n");
 }
 
 void
+VideoClass_setStreamPlayer(VideoClass *t, MHEGStreamPlayer *p)
+{
+	t->inst.player = p;
+
+	return;
+}
+
+void
 VideoClass_render(VideoClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 {
 	XYPosition ins_pos;
@@ -364,13 +372,12 @@ VideoClass_render(VideoClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSiz
 	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
 		return;
 
-/* TODO */
-//printf("TODO: VideoClass_render; component_tag=%d\n", t->component_tag);
-/* so we can see where it is for now */
-{
-MHEGColour col = { 0, 255, 0, 0 };
-MHEGDisplay_fillRectangle(d, &ins_pos, &ins_box, &col);
-}
+	/* draw the video frame onto the Window contents Pixmap */
+	if(t->inst.player != NULL)
+		MHEGStreamPlayer_drawCurrentFrame(t->inst.player);
+
+	/* make a transparent hole in the MHEG overlay so we can see the video below it */
+	MHEGDisplay_fillTransparentRectangle(d, &ins_pos, &ins_box);
 
 	return;
 }
