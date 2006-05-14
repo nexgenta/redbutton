@@ -373,8 +373,10 @@ VideoClass_render(VideoClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSiz
 		return;
 
 	/* draw the video frame onto the Window contents Pixmap */
-	if(t->inst.player != NULL)
-		MHEGStreamPlayer_drawCurrentFrame(t->inst.player);
+// need to do the equivalent of this, but not here
+// => get rid of VideoClass.inst.player too
+//	if(t->inst.player != NULL)
+//		MHEGStreamPlayer_drawCurrentFrame(t->inst.player);
 
 	/* make a transparent hole in the MHEG overlay so we can see the video below it */
 	MHEGDisplay_fillTransparentRectangle(d, &ins_pos, &ins_box);
