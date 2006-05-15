@@ -412,10 +412,16 @@ printf("TODO: BitmapClass_GetBitmapDecodeOffset not yet implemented\n");
 void
 BitmapClass_ScaleBitmap(BitmapClass *t, ScaleBitmap *params, OctetString *caller_gid)
 {
+	int x_scale;
+	int y_scale;
+
 	verbose("BitmapClass: %s; ScaleBitmap", ExternalReference_name(&t->rootClass.inst.ref));
 
+	x_scale = GenericInteger_getInteger(&params->x_scale, caller_gid);
+	y_scale = GenericInteger_getInteger(&params->y_scale, caller_gid);
+
 /* TODO */
-printf("TODO: BitmapClass_ScaleBitmap not yet implemented\n");
+printf("TODO: BitmapClass_ScaleBitmap(%d, %d) not yet implemented\n", x_scale, y_scale);
 	return;
 }
 
