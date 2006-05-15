@@ -846,10 +846,13 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 	}
 
 	/* get X to draw the XImage onto a Pixmap */
-/* TODO */
-/* this should be the Visual that matches PictStandardARGB32, not d->vis (the Window Visual) */
-	if((ximg = XCreateImage(d->dpy, d->vis, 32, ZPixmap, 0, xdata, width, height, 32, 0)) == NULL)
+	if((ximg = XCreateImage(d->dpy, NULL, 32, ZPixmap, 0, xdata, width, height, 32, 0)) == NULL)
 		fatal("XCreateImage failed");
+	/* passed NULL Visual to XCreateImage, so set the rgb masks now */
+	ximg->red_mask = pic_format->direct.redMask;
+	ximg->green_mask = pic_format->direct.greenMask;
+	ximg->blue_mask = pic_format->direct.blueMask;
+	/* create the Pixmap */
 	bitmap->image = XCreatePixmap(d->dpy, d->win, width, height, 32);
 	gc = XCreateGC(d->dpy, bitmap->image, 0, NULL);
 	XPutImage(d->dpy, bitmap->image, gc, ximg, 0, 0, 0, 0, width, height);
