@@ -152,6 +152,12 @@ cmd_astream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	/* map the tag to a PID and stream type, or use the default */
 	if(tag == -1)
 	{
+		/* check we have a default stream */
+		if(car->audio_pid == 0)
+		{
+			SEND_RESPONSE(500, "Unable to find audio PID");
+			return false;
+		}
 		pid = car->audio_pid;
 		type = car->audio_type;
 	}
@@ -220,6 +226,12 @@ cmd_vstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	/* map the tag to a PID and stream type, or use the default */
 	if(tag == -1)
 	{
+		/* check we have a default stream */
+		if(car->video_pid == 0)
+		{
+			SEND_RESPONSE(500, "Unable to find video PID");
+			return false;
+		}
 		pid = car->video_pid;
 		type = car->video_type;
 	}
@@ -293,6 +305,12 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 	/* map the tags to PIDs and stream types, or use the defaults */
 	if(audio_tag == -1)
 	{
+		/* check we have a default stream */
+		if(car->audio_pid == 0)
+		{
+			SEND_RESPONSE(500, "Unable to find audio PID");
+			return false;
+		}
 		audio_pid = car->audio_pid;
 		audio_type = car->audio_type;
 	}
@@ -304,6 +322,12 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 
 	if(video_tag == -1)
 	{
+		/* check we have a default stream */
+		if(car->video_pid == 0)
+		{
+			SEND_RESPONSE(500, "Unable to find video PID");
+			return false;
+		}
 		video_pid = car->video_pid;
 		video_type = car->video_type;
 	}
