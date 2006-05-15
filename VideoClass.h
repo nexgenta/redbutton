@@ -25,7 +25,6 @@ void VideoClass_SetVideoDecodeOffset(VideoClass *, SetVideoDecodeOffset *, Octet
 void VideoClass_GetVideoDecodeOffset(VideoClass *, GetVideoDecodeOffset *, OctetString *);
 void VideoClass_ScaleVideo(VideoClass *, ScaleVideo *, OctetString *);
 
-void VideoClass_setStreamPlayer(VideoClass *, MHEGStreamPlayer *);
 void VideoClass_render(VideoClass *, MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 
 #endif	/* __VIDEOCLASS_H__ */

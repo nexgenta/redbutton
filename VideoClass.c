@@ -354,14 +354,6 @@ printf("TODO: VideoClass_ScaleVideo not yet implemented\n");
 }
 
 void
-VideoClass_setStreamPlayer(VideoClass *t, MHEGStreamPlayer *p)
-{
-	t->inst.player = p;
-
-	return;
-}
-
-void
 VideoClass_render(VideoClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 {
 	XYPosition ins_pos;
