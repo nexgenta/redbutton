@@ -846,6 +846,8 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 	}
 
 	/* get X to draw the XImage onto a Pixmap */
+/* TODO */
+/* this should be the Visual that matches PictStandardARGB32, not d->vis (the Window Visual) */
 	if((ximg = XCreateImage(d->dpy, d->vis, 32, ZPixmap, 0, xdata, width, height, 32, 0)) == NULL)
 		fatal("XCreateImage failed");
 	bitmap->image = XCreatePixmap(d->dpy, d->win, width, height, 32);
