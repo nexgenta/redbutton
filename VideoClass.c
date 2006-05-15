@@ -346,10 +346,16 @@ printf("TODO: VideoClass_GetVideoDecodeOffset not yet implemented\n");
 void
 VideoClass_ScaleVideo(VideoClass *t, ScaleVideo *params, OctetString *caller_gid)
 {
+	int x_scale;
+	int y_scale;
+
 	verbose("VideoClass: %s; ScaleVideo", ExternalReference_name(&t->rootClass.inst.ref));
 
+	x_scale = GenericInteger_getInteger(&params->x_scale, caller_gid);
+	y_scale = GenericInteger_getInteger(&params->y_scale, caller_gid);
+
 /* TODO */
-printf("TODO: VideoClass_ScaleVideo not yet implemented\n");
+printf("TODO: VideoClass_ScaleVideo(%d, %d) not yet implemented\n", x_scale, y_scale);
 	return;
 }
 
