@@ -530,11 +530,17 @@ MHEGStreamPlayer_drawCurrentFrame(MHEGStreamPlayer *p)
 	pthread_mutex_lock(&p->current_frame_lock);
 	if(p->current_frame != NULL)
 	{
-/* TODO */
-/* take p->video size/position into account */
-/* remeber fullscreen scaling */
-		x = 0;		/* origin of p->video */
-		y = 0;
+		/* origin of VideoClass */
+/* TODO should probably have a lock for this in case we are doing SetPosition in another thread */
+		x = p->video->inst.Position.x_position;
+		y = p->video->inst.Position.y_position;
+		/* scale if fullscreen */
+		if(d->fullscreen)
+		{
+			x = (x * d->xres) / MHEG_XRES;
+			y = (y * d->yres) / MHEG_YRES;
+		}
+		/* video frame is already scaled as needed */
 		out_width = p->current_frame->width;
 		out_height = p->current_frame->height;
 		/* draw it onto the Window contents Pixmap */
