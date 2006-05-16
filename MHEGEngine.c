@@ -645,13 +645,9 @@ MHEGEngine_redrawArea(XYPosition *pos, OriginalBoxSize *box)
 
 	app = MHEGEngine_getActiveApplication();
 
-printf("redrawArea: LockCount=%d\n", app->inst.LockCount);
-
 	/* only redraw if the display is not locked */
 	if(app->inst.LockCount > 0)
 		return;
-
-printf("redrawArea: %d: %d,%d %d,%d: start\n", time(NULL), pos->x_position, pos->y_position, box->x_length, box->y_length);
 
 /**************************************************************************************/
 /* could do: */
@@ -677,12 +673,8 @@ printf("redrawArea: %d: %d,%d %d,%d: start\n", time(NULL), pos->x_position, pos-
 		stack = stack->next;
 	}
 
-printf("redrawArea: refresh\n");
-
 	/* refresh the screen */
 	MHEGDisplay_refresh(&engine.display, pos, box);
-
-printf("redrawArea: end\n");
 
 	return;
 }
