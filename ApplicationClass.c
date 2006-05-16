@@ -456,17 +456,19 @@ ApplicationClass_UnlockScreen(ApplicationClass *t)
 
 	verbose("ApplicationClass: %s; UnlockScreen", ExternalReference_name(&t->rootClass.inst.ref));
 
+	/* if it is not already unlocked */
 	if(t->inst.LockCount > 0)
-		t->inst.LockCount --;
-
-	/* update the screen if it is now unlocked */
-	if(t->inst.LockCount == 0)
 	{
-		pos.x_position = 0;
-		pos.y_position = 0;
-		box.x_length = MHEG_XRES;
-		box.y_length = MHEG_YRES;
-		MHEGEngine_redrawArea(&pos, &box);
+		t->inst.LockCount --;
+		/* update the screen if it is now unlocked */
+		if(t->inst.LockCount == 0)
+		{
+			pos.x_position = 0;
+			pos.y_position = 0;
+			box.x_length = MHEG_XRES;
+			box.y_length = MHEG_YRES;
+			MHEGEngine_redrawArea(&pos, &box);
+		}
 	}
 
 	return;
