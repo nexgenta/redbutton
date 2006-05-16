@@ -1,5 +1,5 @@
-check if default audio/video PID is 0 in rb-download
-if it is, avstream fails
+in all VisibleClass objects
+only redraw them in SetPosition/SetBoxSize/etc if they actually move/change size/etc
 
 
 print avstream error message in rb-browser if openStream fails
