@@ -70,6 +70,7 @@ MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 	p->video = NULL;
 
 	pthread_mutex_init(&p->videoq_lock, NULL);
+	p->videoq_len = 0;
 	p->videoq = NULL;
 
 	pthread_mutex_init(&p->current_frame_lock, NULL);
@@ -168,6 +169,7 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 	pthread_join(p->video_tid, NULL);
 
 	/* clean up */
+	p->videoq_len = 0;
 	LIST_FREE(&p->videoq, VideoFrame, free_VideoFrameListItem);
 
 	if(p->ts != NULL)
@@ -258,6 +260,7 @@ decode_thread(void *arg)
 				pts = pkt.dts / video_time_base;
 				video_frame = new_VideoFrameListItem(pts, video_codec_ctx->pix_fmt, video_codec_ctx->width, video_codec_ctx->height, frame);
 				pthread_mutex_lock(&p->videoq_lock);
+				p->videoq_len ++;
 				LIST_APPEND(&p->videoq, video_frame);
 				pthread_mutex_unlock(&p->videoq_lock);
 //printf("decode: got video frame: pts=%f (real pts=%f) width=%d height=%d\n", pts, pkt.pts / video_time_base, video_codec_ctx->width, video_codec_ctx->height);
@@ -491,6 +494,10 @@ video_thread(void *arg)
 		}
 		/* we can delete the frame from the queue now */
 		pthread_mutex_lock(&p->videoq_lock);
+		/* assert */
+		if(p->videoq_len == 0)
+			fatal("video_thread: videoq_len is 0");
+		p->videoq_len --;
 		LIST_FREE_HEAD(&p->videoq, VideoFrame, free_VideoFrameListItem);
 		pthread_mutex_unlock(&p->videoq_lock);
 	}

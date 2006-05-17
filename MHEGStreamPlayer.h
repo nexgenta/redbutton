@@ -50,6 +50,7 @@ typedef struct
 	pthread_t decode_tid;			/* thread decoding the MPEG stream into frames */
 	pthread_t video_tid;			/* thread displaying frames on the screen */
 	pthread_mutex_t videoq_lock;		/* list of decoded video frames */
+	unsigned int videoq_len;		/* number of frames on the videoq */
 	LIST_OF(VideoFrame) *videoq;		/* head of list is next to be displayed */
 	pthread_mutex_t current_frame_lock;	/* locked when we are updating current frame */
 	XImage *current_frame;			/* frame we are currently displaying */
