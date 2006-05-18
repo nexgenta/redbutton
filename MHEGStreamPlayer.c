@@ -149,6 +149,13 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 	if(pthread_create(&p->video_tid, NULL, video_thread, p) != 0)
 		fatal("Unable to create video output thread");
 
+//{
+// whole machine locks up if you do this
+//	struct sched_param sp = {1};
+//	if(pthread_setschedparam(p->video_tid, SCHED_RR, &sp) != 0)
+//		error("MHEGStreamPlayer: unable to give video thread realtime priority");
+//}
+
 	return;
 }
 
@@ -262,8 +269,11 @@ decode_thread(void *arg)
 				pthread_mutex_lock(&p->videoq_lock);
 				p->videoq_len ++;
 				LIST_APPEND(&p->videoq, video_frame);
+//printf("decode_thread: add frame: len=%u\n", p->videoq_len);
 				pthread_mutex_unlock(&p->videoq_lock);
 //printf("decode: got video frame: pts=%f (real pts=%f) width=%d height=%d\n", pts, pkt.pts / video_time_base, video_codec_ctx->width, video_codec_ctx->height);
+				/* don't want one thread hogging the CPU time */
+				pthread_yield();
 			}
 		}
 		else
@@ -494,12 +504,15 @@ video_thread(void *arg)
 		}
 		/* we can delete the frame from the queue now */
 		pthread_mutex_lock(&p->videoq_lock);
+//printf("video_thread: free frame: len=%u\n", p->videoq_len);
 		/* assert */
 		if(p->videoq_len == 0)
 			fatal("video_thread: videoq_len is 0");
 		p->videoq_len --;
 		LIST_FREE_HEAD(&p->videoq, VideoFrame, free_VideoFrameListItem);
 		pthread_mutex_unlock(&p->videoq_lock);
+		/* don't want one thread hogging the CPU time */
+		pthread_yield();
 	}
 
 	if(resize_ctx != NULL)
