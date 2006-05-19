@@ -34,6 +34,7 @@
 
 #include "mpegts.h"
 #include "utils.h"
+#include "MHEGEngine.h"
 
 #define TS_PACKET_SIZE	188
 #define NB_PID_MAX	2
@@ -230,8 +231,10 @@ static int
 read_packet(FILE *ts, uint8_t *buf)
 {
 	size_t nread;
+	unsigned int resync;
 
 	/* find the next sync byte */
+	resync = 0;
 	nread = 0;
 	do
 	{
@@ -240,7 +243,7 @@ read_packet(FILE *ts, uint8_t *buf)
 			nread += fread(buf + nread, 1, TS_PACKET_SIZE - nread, ts);
 		if(*buf != TS_SYNC_BYTE && !feof(ts))
 		{
-			error("MPEG TS demux: bad sync byte: 0x%02x", *buf);
+			resync ++;
 			memmove(buf, buf + 1, TS_PACKET_SIZE - 1);
 			nread = TS_PACKET_SIZE - 1;
 		}
@@ -249,6 +252,9 @@ read_packet(FILE *ts, uint8_t *buf)
 
 	if(feof(ts))
 		return -1;
+
+	if(resync > 0)
+		verbose("MPEG TS demux: lost sync; skipped %u bytes", resync);
 
 	return 0;
 }
