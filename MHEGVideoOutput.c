@@ -20,6 +20,7 @@ void x11_shm_prepareFrame(MHEGVideoOutput *, VideoFrame *, unsigned int, unsigne
 void x11_shm_drawFrame(MHEGVideoOutput *, int, int);
 
 static void x11_shm_create_frame(MHEGVideoOutput *, unsigned int, unsigned int);
+static void x11_shm_resize_frame(MHEGVideoOutput *, unsigned int, unsigned int);
 static void x11_shm_destroy_frame(MHEGVideoOutput *);
 
 static enum PixelFormat find_av_pix_fmt(int, unsigned long, unsigned long, unsigned long);
@@ -85,18 +86,19 @@ x11_shm_prepareFrame(MHEGVideoOutput *v, VideoFrame *f, unsigned int out_width, 
 	AVPicture *yuv_frame;
 	int tmpbuf_size;
 
-	/* see if the output size has changed since the last frame */
-/* TODO if it has, delete the old one or just resize shm etc */
-/* will also need to delete resize_ctx */
-
+	/* have we create the output frame yet */
 	if(v->current_frame == NULL)
 		x11_shm_create_frame(v, out_width, out_height);
+
+	/* see if the output size has changed since the last frame */
+	if(v->current_frame->width != out_width || v->current_frame->height != out_height)
+		x11_shm_resize_frame(v, out_width, out_height);
 
 	/* see if the input size is different than the output size */
 	if(f->width != out_width || f->height != out_height)
 	{
 /* TODO */
-/* need to change resize_ctx if vf->width or vf->height have changed since last time */
+/* need to change resize_ctx if the input or output sizes have changed since last time */
 /* dont forget: img_resample_close(resize_ctx); */
 /* and to free or realloc tmpbuf_data */
 		if(v->resize_ctx == NULL)
@@ -177,6 +179,21 @@ x11_shm_create_frame(MHEGVideoOutput *v, unsigned int out_width, unsigned int ou
 	/* we made sure these pixel formats are the same */
 	v->current_frame->data = v->shm.shmaddr;
 	avpicture_fill(&v->rgb_frame, v->shm.shmaddr, v->out_format, out_width, out_height);
+
+	return;
+}
+
+static void
+x11_shm_resize_frame(MHEGVideoOutput *v, unsigned int out_width, unsigned int out_height)
+{
+/* TODO */
+/* better if create_frame makes the max size shm we will need (ie d->xres, d->yres) */
+/* then this just updates the XImage and AVFrame params in current_frame and rgb_frame */
+
+	if(v->current_frame != NULL)
+		x11_shm_destroy_frame(v);
+
+	x11_shm_create_frame(v, out_width, out_height);
 
 	return;
 }
