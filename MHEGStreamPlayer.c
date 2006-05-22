@@ -354,19 +354,6 @@ video_thread(void *arg)
 	/* initialise the video output method */
 	MHEGVideoOutput_init(&vo);
 
-	/* size of first frame, no need to lock as item won't change */
-	out_width = p->videoq->item.width;
-	out_height = p->videoq->item.height;
-/* TODO */
-/* use scaled values if ScaleVideo has been called */
-	/* scale up if fullscreen */
-	if(d->fullscreen)
-	{
-		out_width = (out_width * d->xres) / MHEG_XRES;
-		out_height = (out_height * d->yres) / MHEG_YRES;
-	}
-
-
 	/* the time that we displayed the previous frame */
 	last_time = 0;
 	last_pts = 0;
@@ -413,6 +400,16 @@ video_thread(void *arg)
 		if(!drop_frame)
 		{
 			/* scale the next frame if necessary */
+			out_width = vf->width;
+			out_height = vf->height;
+/* TODO */
+/* use scaled values if ScaleVideo has been called */
+			/* scale up if fullscreen */
+			if(d->fullscreen)
+			{
+				out_width = (out_width * d->xres) / MHEG_XRES;
+				out_height = (out_height * d->yres) / MHEG_YRES;
+			}
 			MHEGVideoOutput_prepareFrame(&vo, vf, out_width, out_height);
 			/* wait until it's time to display the frame */
 			now = av_gettime();
