@@ -1,5 +1,5 @@
 /*
- * MHEGVideoOutput.h
+ * MHEGVideoOutput.c
  */
 
 #include <sys/ipc.h>
