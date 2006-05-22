@@ -400,11 +400,19 @@ video_thread(void *arg)
 		if(!drop_frame)
 		{
 			/* scale the next frame if necessary */
-			out_width = vf->width;
-			out_height = vf->height;
-/* TODO */
-/* use scaled values if ScaleVideo has been called */
-/* have a lock incase we are doing ScaleVideo in another thread */
+			pthread_mutex_lock(&p->video->inst.scaled_lock);
+			/* use scaled values if ScaleVideo has been called */
+			if(p->video->inst.scaled)
+			{
+				out_width = p->video->inst.scaled_width;
+				out_height = p->video->inst.scaled_height;
+			}
+			else
+			{
+				out_width = vf->width;
+				out_height = vf->height;
+			}
+			pthread_mutex_unlock(&p->video->inst.scaled_lock);
 			/* scale up if fullscreen */
 			if(d->fullscreen)
 			{
@@ -435,9 +443,10 @@ video_thread(void *arg)
 //now=av_gettime();
 //printf("display frame %d: pts=%f this_time=%lld real_time=%lld (diff=%lld)\n", nframes, vf->pts, last_time, now, now-last_time);
 			/* origin of VideoClass */
-/* TODO should probably have a lock for this in case we are doing SetPosition in another thread */
+			pthread_mutex_lock(&p->video->inst.bbox_lock);
 			out_x = p->video->inst.Position.x_position;
 			out_y = p->video->inst.Position.y_position;
+			pthread_mutex_unlock(&p->video->inst.bbox_lock);
 			/* scale if fullscreen */
 			if(d->fullscreen)
 			{
@@ -447,7 +456,9 @@ video_thread(void *arg)
 			/* draw the current frame */
 			MHEGVideoOutput_drawFrame(&vo, out_x, out_y);
 			/* redraw objects above the video */
+			pthread_mutex_lock(&p->video->inst.bbox_lock);
 			MHEGDisplay_refresh(d, &p->video->inst.Position, &p->video->inst.BoxSize);
+			pthread_mutex_unlock(&p->video->inst.bbox_lock);
 			/* get it drawn straight away */
 			XFlush(d->dpy);
 		}

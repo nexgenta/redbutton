@@ -30,6 +30,10 @@ default_VideoClassInstanceVars(VideoClass *t, VideoClassInstanceVars *v)
 	v->VideoDecodeOffset.x_position = 0;
 	v->VideoDecodeOffset.y_position = 0;
 
+	pthread_mutex_init(&v->bbox_lock, NULL);
+	pthread_mutex_init(&v->scaled_lock, NULL);
+	v->scaled = false;
+
 	return;
 }
 
@@ -38,6 +42,9 @@ free_VideoClassInstanceVars(VideoClassInstanceVars *v)
 {
 	if(v->have_PaletteRef)
 		free_ObjectReference(&v->PaletteRef);
+
+	pthread_mutex_destroy(&v->bbox_lock);
+	pthread_mutex_destroy(&v->scaled_lock);
 
 	return;
 }
@@ -137,8 +144,10 @@ VideoClass_SetPosition(VideoClass *t, SetPosition *params, OctetString *caller_g
 	old.x_position = t->inst.Position.x_position;
 	old.y_position = t->inst.Position.y_position;
 
+	pthread_mutex_lock(&t->inst.bbox_lock);
 	t->inst.Position.x_position = GenericInteger_getInteger(&params->new_x_position, caller_gid);
 	t->inst.Position.y_position = GenericInteger_getInteger(&params->new_y_position, caller_gid);
+	pthread_mutex_unlock(&t->inst.bbox_lock);
 
 	/* if it is active, redraw it */
 	if(t->rootClass.inst.RunningStatus)
@@ -196,8 +205,10 @@ VideoClass_SetBoxSize(VideoClass *t, SetBoxSize *params, OctetString *caller_gid
 	old.x_length = t->inst.BoxSize.x_length;
 	old.y_length = t->inst.BoxSize.y_length;
 
+	pthread_mutex_lock(&t->inst.bbox_lock);
 	t->inst.BoxSize.x_length = GenericInteger_getInteger(&params->x_new_box_size, caller_gid);
 	t->inst.BoxSize.y_length = GenericInteger_getInteger(&params->y_new_box_size, caller_gid);
+	pthread_mutex_unlock(&t->inst.bbox_lock);
 
 	/* if it is active, redraw it */
 	if(t->rootClass.inst.RunningStatus)
@@ -346,16 +357,14 @@ printf("TODO: VideoClass_GetVideoDecodeOffset not yet implemented\n");
 void
 VideoClass_ScaleVideo(VideoClass *t, ScaleVideo *params, OctetString *caller_gid)
 {
-	int x_scale;
-	int y_scale;
-
 	verbose("VideoClass: %s; ScaleVideo", ExternalReference_name(&t->rootClass.inst.ref));
 
-	x_scale = GenericInteger_getInteger(&params->x_scale, caller_gid);
-	y_scale = GenericInteger_getInteger(&params->y_scale, caller_gid);
+	pthread_mutex_lock(&t->inst.scaled_lock);
+	t->inst.scaled = true;
+	t->inst.scaled_width = GenericInteger_getInteger(&params->x_scale, caller_gid);
+	t->inst.scaled_height = GenericInteger_getInteger(&params->y_scale, caller_gid);
+	pthread_mutex_unlock(&t->inst.scaled_lock);
 
-/* TODO */
-printf("TODO: VideoClass_ScaleVideo(%d, %d) not yet implemented\n", x_scale, y_scale);
 	return;
 }
 
