@@ -52,7 +52,6 @@ MHEGVideoOutput_drawFrame(MHEGVideoOutput *v, int x, int y)
 void
 x11_shm_init(MHEGVideoOutput *v)
 {
-	pthread_mutex_init(&v->current_frame_lock, NULL);
 	v->current_frame = NULL;
 
 	v->resize_ctx = NULL;
@@ -73,8 +72,6 @@ x11_shm_fini(MHEGVideoOutput *v)
 
 	if(v->current_frame != NULL)
 		x11_shm_destroy_frame(v);
-
-	pthread_mutex_destroy(&v->current_frame_lock);
 
 	return;
 }
@@ -116,9 +113,7 @@ x11_shm_prepareFrame(MHEGVideoOutput *v, VideoFrame *f, unsigned int out_width, 
 	}
 
 	/* convert the frame to RGB */
-	pthread_mutex_lock(&v->current_frame_lock);
 	img_convert(&v->rgb_frame, v->out_format, yuv_frame, f->pix_fmt, out_width, out_height);
-	pthread_mutex_unlock(&v->current_frame_lock);
 
 	return;
 }
@@ -130,9 +125,6 @@ x11_shm_drawFrame(MHEGVideoOutput *v, int x, int y)
 	unsigned int out_width;
 	unsigned int out_height;
 
-/* TODO */
-/* probably dont need this lock anymore, only we use v->current_frame */
-	pthread_mutex_lock(&v->current_frame_lock);
 	if(v->current_frame != NULL)
 	{
 		/* video frame is already scaled as needed */
@@ -143,7 +135,6 @@ x11_shm_drawFrame(MHEGVideoOutput *v, int x, int y)
 		/* get it drawn straight away */
 		XFlush(d->dpy);
 	}
-	pthread_mutex_unlock(&v->current_frame_lock);
 
 	return;
 }
@@ -203,13 +194,11 @@ x11_shm_destroy_frame(MHEGVideoOutput *v)
 	MHEGDisplay *d = MHEGEngine_getDisplay();
 
 	/* get rid of the current frame */
-	pthread_mutex_lock(&v->current_frame_lock);
 	/* the XImage data is our shared memory, make sure XDestroyImage doesn't try to free it */
 	v->current_frame->data = NULL;
 	XDestroyImage(v->current_frame);
 	/* make sure no-one tries to use it */
 	v->current_frame = NULL;
-	pthread_mutex_unlock(&v->current_frame_lock);
 
 	XShmDetach(d->dpy, &v->shm);
 	shmdt(v->shm.shmaddr);
