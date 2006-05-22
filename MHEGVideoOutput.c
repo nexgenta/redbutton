@@ -82,7 +82,6 @@ x11_shm_fini(MHEGVideoOutput *v)
 void
 x11_shm_prepareFrame(MHEGVideoOutput *v, VideoFrame *f, unsigned int out_width, unsigned int out_height)
 {
-	AVPicture resized_frame;
 	AVPicture *yuv_frame;
 	int tmpbuf_size;
 
@@ -106,10 +105,10 @@ x11_shm_prepareFrame(MHEGVideoOutput *v, VideoFrame *f, unsigned int out_width, 
 			v->resize_ctx = img_resample_init(out_width, out_height, f->width, f->height);
 			tmpbuf_size = avpicture_get_size(f->pix_fmt, out_width, out_height);
 			v->tmpbuf_data = safe_malloc(tmpbuf_size);
-			avpicture_fill(&resized_frame, v->tmpbuf_data, f->pix_fmt, out_width, out_height);
+			avpicture_fill(&v->resized_frame, v->tmpbuf_data, f->pix_fmt, out_width, out_height);
 		}
-		img_resample(v->resize_ctx, &resized_frame, &f->frame);
-		yuv_frame = &resized_frame;
+		img_resample(v->resize_ctx, &v->resized_frame, &f->frame);
+		yuv_frame = &v->resized_frame;
 	}
 	else
 	{

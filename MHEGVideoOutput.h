@@ -11,6 +11,7 @@ typedef struct
 	AVPicture rgb_frame;
 	enum PixelFormat out_format;
 	ImgReSampleContext *resize_ctx;
+	AVPicture resized_frame;
 	uint8_t *tmpbuf_data;
 	pthread_mutex_t current_frame_lock;	/* locked when we are updating current frame */
 	XImage *current_frame;			/* frame we are currently displaying */
