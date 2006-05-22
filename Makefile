@@ -66,6 +66,7 @@ OBJS=	rb-browser.o		\
 	MHEGFont.o		\
 	MHEGTimer.o		\
 	MHEGStreamPlayer.o	\
+	MHEGVideoOutput.o	\
 	${CLASSES}		\
 	ISO13522-MHEG-5.o	\
 	der_decode.o		\

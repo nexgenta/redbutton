@@ -35,25 +35,23 @@ void free_VideoFrameListItem(LIST_TYPE(VideoFrame) *);
 /* player state */
 typedef struct
 {
-	bool playing;				/* true when our threads are active */
-	bool stop;				/* true => stop playback */
-	bool have_video;			/* false if we have no video stream */
-	bool have_audio;			/* false if we have no audio stream */
-	int video_tag;				/* video stream component tag (-1 => default for current service ID) */
-	int video_pid;				/* PID in MPEG Transport Stream (-1 => not yet known) */
-	int video_type;				/* video stream type (-1 => not yet known) */
-	int audio_tag;				/* audio stream component tag (-1 => default for current service ID) */
-	int audio_pid;				/* PID in MPEG Transport Stream (-1 => not yet known) */
-	int audio_type;				/* audio stream type (-1 => not yet known) */
-	FILE *ts;				/* MPEG Transport Stream */
-	VideoClass *video;			/* output size/position, maybe NULL if audio only */
-	pthread_t decode_tid;			/* thread decoding the MPEG stream into frames */
-	pthread_t video_tid;			/* thread displaying frames on the screen */
-	pthread_mutex_t videoq_lock;		/* list of decoded video frames */
-	unsigned int videoq_len;		/* number of frames on the videoq */
-	LIST_OF(VideoFrame) *videoq;		/* head of list is next to be displayed */
-	pthread_mutex_t current_frame_lock;	/* locked when we are updating current frame */
-	XImage *current_frame;			/* frame we are currently displaying */
+	bool playing;			/* true when our threads are active */
+	bool stop;			/* true => stop playback */
+	bool have_video;		/* false if we have no video stream */
+	bool have_audio;		/* false if we have no audio stream */
+	int video_tag;			/* video stream component tag (-1 => default for current service ID) */
+	int video_pid;			/* PID in MPEG Transport Stream (-1 => not yet known) */
+	int video_type;			/* video stream type (-1 => not yet known) */
+	int audio_tag;			/* audio stream component tag (-1 => default for current service ID) */
+	int audio_pid;			/* PID in MPEG Transport Stream (-1 => not yet known) */
+	int audio_type;			/* audio stream type (-1 => not yet known) */
+	FILE *ts;			/* MPEG Transport Stream */
+	VideoClass *video;		/* output size/position, maybe NULL if audio only */
+	pthread_t decode_tid;		/* thread decoding the MPEG stream into frames */
+	pthread_t video_tid;		/* thread displaying frames on the screen */
+	pthread_mutex_t videoq_lock;	/* list of decoded video frames */
+	unsigned int videoq_len;	/* number of frames on the videoq */
+	LIST_OF(VideoFrame) *videoq;	/* head of list is next to be displayed */
 } MHEGStreamPlayer;
 
 void MHEGStreamPlayer_init(MHEGStreamPlayer *);

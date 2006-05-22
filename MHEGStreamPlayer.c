@@ -4,13 +4,12 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
 
 #include "MHEGEngine.h"
 #include "MHEGStreamPlayer.h"
+#include "MHEGVideoOutput.h"
 #include "mpegts.h"
 #include "utils.h"
 
@@ -19,7 +18,6 @@ static void *decode_thread(void *);
 static void *video_thread(void *);
 
 static void thread_usleep(unsigned long);
-static enum PixelFormat find_av_pix_fmt(int, unsigned long, unsigned long, unsigned long);
 static enum CodecID find_av_codec_id(int);
 
 LIST_TYPE(VideoFrame) *
@@ -73,9 +71,6 @@ MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 	p->videoq_len = 0;
 	p->videoq = NULL;
 
-	pthread_mutex_init(&p->current_frame_lock, NULL);
-	p->current_frame = NULL;
-
 	return;
 }
 
@@ -85,7 +80,6 @@ MHEGStreamPlayer_fini(MHEGStreamPlayer *p)
 	MHEGStreamPlayer_stop(p);
 
 	pthread_mutex_destroy(&p->videoq_lock);
-	pthread_mutex_destroy(&p->current_frame_lock);
 
 	return;
 }
@@ -311,23 +305,17 @@ video_thread(void *arg)
 {
 	MHEGStreamPlayer *p = (MHEGStreamPlayer *) arg;
 	MHEGDisplay *d = MHEGEngine_getDisplay();
-	unsigned int out_width = 0;	/* keep the compiler happy */
-	unsigned int out_height = 0;
+	MHEGVideoOutput vo;
+	int out_x;
+	int out_y;
+	unsigned int out_width;
+	unsigned int out_height;
 	VideoFrame *vf;
-	AVPicture rgb_frame;
-	int rgb_size;
-	XShmSegmentInfo shm;
-	enum PixelFormat out_format;
 	double buffered;
 	double last_pts;
 	int64_t last_time, this_time, now;
 	int usecs;
 	bool drop_frame;
-	ImgReSampleContext *resize_ctx = NULL;
-	AVPicture resized_frame;
-	AVPicture *yuv_frame;
-	int tmpbuf_size;
-	uint8_t *tmpbuf_data = NULL;
 	unsigned int nframes = 0;
 
 	if(!p->have_video)
@@ -363,41 +351,21 @@ video_thread(void *arg)
 	if(p->videoq == NULL)
 		fatal("video_thread: no frames!");
 
+	/* initialise the video output method */
+	MHEGVideoOutput_init(&vo);
+
 	/* size of first frame, no need to lock as item won't change */
 	out_width = p->videoq->item.width;
 	out_height = p->videoq->item.height;
 /* TODO */
-/* also scale if ScaleVideo has been called */
+/* use scaled values if ScaleVideo has been called */
+	/* scale up if fullscreen */
 	if(d->fullscreen)
 	{
 		out_width = (out_width * d->xres) / MHEG_XRES;
 		out_height = (out_height * d->yres) / MHEG_YRES;
 	}
 
-	if((p->current_frame = XShmCreateImage(d->dpy, d->vis, d->depth, ZPixmap, NULL, &shm, out_width, out_height)) == NULL)
-		fatal("XShmCreateImage failed");
-
-	/* work out what ffmpeg pixel format matches our XImage format */
-	if((out_format = find_av_pix_fmt(p->current_frame->bits_per_pixel,
-					 d->vis->red_mask, d->vis->green_mask, d->vis->blue_mask)) == PIX_FMT_NONE)
-		fatal("Unsupported XImage pixel format");
-
-	rgb_size = p->current_frame->bytes_per_line * out_height;
-
-	if(rgb_size != avpicture_get_size(out_format, out_width, out_height))
-		fatal("XImage and ffmpeg pixel formats differ");
-
-	if((shm.shmid = shmget(IPC_PRIVATE, rgb_size, IPC_CREAT | 0777)) == -1)
-		fatal("shmget failed");
-	if((shm.shmaddr = shmat(shm.shmid, NULL, 0)) == (void *) -1)
-		fatal("shmat failed");
-	shm.readOnly = True;
-	if(!XShmAttach(d->dpy, &shm))
-		fatal("XShmAttach failed");
-
-	/* we made sure these pixel formats are the same */
-	p->current_frame->data = shm.shmaddr;
-	avpicture_fill(&rgb_frame, shm.shmaddr, out_format, out_width, out_height);
 
 	/* the time that we displayed the previous frame */
 	last_time = 0;
@@ -444,35 +412,8 @@ video_thread(void *arg)
 //printf("dropped frame %d: pts=%f last_pts=%f last_time=%lld this_time=%lld usecs=%d\n", nframes, vf->pts, last_pts, last_time, this_time, usecs);
 		if(!drop_frame)
 		{
-			/* see if the output size has changed */
-/* TODO */
 			/* scale the next frame if necessary */
-			if(vf->width != out_width || vf->height != out_height)
-			{
-/* TODO */
-/* need to change resize_ctx if vf->width or vf->height have changed since last time */
-/* dont forget: img_resample_close(resize_ctx); */
-/* and to free or realloc tmpbuf_data */
-				if(resize_ctx == NULL)
-				{
-					resize_ctx = img_resample_init(out_width, out_height, vf->width, vf->height);
-					tmpbuf_size = avpicture_get_size(vf->pix_fmt, out_width, out_height);
-					tmpbuf_data = safe_malloc(tmpbuf_size);
-					avpicture_fill(&resized_frame, tmpbuf_data, vf->pix_fmt, out_width, out_height);
-				}
-				img_resample(resize_ctx, &resized_frame, &vf->frame);
-				yuv_frame = &resized_frame;
-			}
-			else
-			{
-				yuv_frame = &vf->frame;
-			}
-			/* make sure no-one else is using the RGB frame */
-			pthread_mutex_lock(&p->current_frame_lock);
-			/* convert the next frame to RGB */
-			img_convert(&rgb_frame, out_format, yuv_frame, vf->pix_fmt, out_width, out_height);
-			/* we've finished changing the RGB frame now */
-			pthread_mutex_unlock(&p->current_frame_lock);
+			MHEGVideoOutput_prepareFrame(&vo, vf, out_width, out_height);
 			/* wait until it's time to display the frame */
 			now = av_gettime();
 			/* don't wait if this is the first frame */
@@ -495,8 +436,18 @@ video_thread(void *arg)
 			last_pts = vf->pts;
 //now=av_gettime();
 //printf("display frame %d: pts=%f this_time=%lld real_time=%lld (diff=%lld)\n", ++nframes, vf->pts, last_time, now, now-last_time);
+			/* origin of VideoClass */
+/* TODO should probably have a lock for this in case we are doing SetPosition in another thread */
+			out_x = p->video->inst.Position.x_position;
+			out_y = p->video->inst.Position.y_position;
+			/* scale if fullscreen */
+			if(d->fullscreen)
+			{
+				out_x = (out_x * d->xres) / MHEG_XRES;
+				out_y = (out_y * d->yres) / MHEG_YRES;
+			}
 			/* draw the current frame */
-			MHEGStreamPlayer_drawCurrentFrame(p);
+			MHEGVideoOutput_drawFrame(&vo, out_x, out_y);
 			/* redraw objects above the video */
 			MHEGDisplay_refresh(d, &p->video->inst.Position, &p->video->inst.BoxSize);
 			/* get it drawn straight away */
@@ -515,62 +466,11 @@ video_thread(void *arg)
 		pthread_yield();
 	}
 
-	if(resize_ctx != NULL)
-	{
-		img_resample_close(resize_ctx);
-		safe_free(tmpbuf_data);
-	}
-
-	/* get rid of the current frame */
-	pthread_mutex_lock(&p->current_frame_lock);
-	/* the XImage data is our shared memory, make sure XDestroyImage doesn't try to free it */
-	p->current_frame->data = NULL;
-	XDestroyImage(p->current_frame);
-	/* make sure no-one tries to use it */
-	p->current_frame = NULL;
-	pthread_mutex_unlock(&p->current_frame_lock);
-
-	XShmDetach(d->dpy, &shm);
-	shmdt(shm.shmaddr);
-	shmctl(shm.shmid, IPC_RMID, NULL);
+	MHEGVideoOutput_fini(&vo);
 
 	verbose("MHEGStreamPlayer: video thread stopped");
 
 	return NULL;
-}
-
-void
-MHEGStreamPlayer_drawCurrentFrame(MHEGStreamPlayer *p)
-{
-	MHEGDisplay *d = MHEGEngine_getDisplay();
-	int x, y;
-	unsigned int out_width;
-	unsigned int out_height;
-
-	pthread_mutex_lock(&p->current_frame_lock);
-	if(p->current_frame != NULL)
-	{
-		/* origin of VideoClass */
-/* TODO should probably have a lock for this in case we are doing SetPosition in another thread */
-		x = p->video->inst.Position.x_position;
-		y = p->video->inst.Position.y_position;
-		/* scale if fullscreen */
-		if(d->fullscreen)
-		{
-			x = (x * d->xres) / MHEG_XRES;
-			y = (y * d->yres) / MHEG_YRES;
-		}
-		/* video frame is already scaled as needed */
-		out_width = p->current_frame->width;
-		out_height = p->current_frame->height;
-		/* draw it onto the Window contents Pixmap */
-		XShmPutImage(d->dpy, d->contents, d->win_gc, p->current_frame, 0, 0, x, y, out_width, out_height, False);
-		/* get it drawn straight away */
-		XFlush(d->dpy);
-	}
-	pthread_mutex_unlock(&p->current_frame_lock);
-
-	return;
 }
 
 /*
@@ -589,48 +489,6 @@ thread_usleep(unsigned long usecs)
 	nanosleep(&ts, NULL);
 
 	return;
-}
-
-/*
- * returns a PIX_FMT_xxx type that matches the given bits per pixel and RGB bit mask values
- * returns PIX_FMT_NONE if none match
- */
-
-static enum PixelFormat
-find_av_pix_fmt(int bpp, unsigned long rmask, unsigned long gmask, unsigned long bmask)
-{
-	enum PixelFormat fmt;
-
-	fmt = PIX_FMT_NONE;
-	switch(bpp)
-	{
-	case 32:
-		if(rmask == 0xff0000 && gmask == 0xff00 && bmask == 0xff)
-			fmt = PIX_FMT_RGBA32;
-		break;
-
-	case 24:
-		if(rmask == 0xff0000 && gmask == 0xff00 && bmask == 0xff)
-			fmt = PIX_FMT_RGB24;
-		else if(rmask == 0xff && gmask == 0xff00 && bmask == 0xff0000)
-			fmt = PIX_FMT_BGR24;
-		break;
-
-	case 16:
-		if(rmask == 0xf800 && gmask == 0x07e0 && bmask == 0x001f)
-			fmt = PIX_FMT_RGB565;
-		else if(rmask == 0x7c00 && gmask == 0x03e0 && bmask == 0x001f)
-			fmt = PIX_FMT_RGB555;
-		break;
-
-	default:
-		break;
-	}
-
-	if(fmt == PIX_FMT_NONE)
-		error("Unsupported pixel format (bpp=%d r=%lx g=%lx b=%lx)", bpp, rmask, gmask, bmask);
-
-	return fmt;
 }
 
 /*
