@@ -2,7 +2,6 @@
  * MHEGVideoOutput.h
  */
 
-#include <pthread.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <X11/Xlib.h>
@@ -37,11 +36,19 @@ MHEGVideoOutput_fini(MHEGVideoOutput *v)
 	return x11_shm_fini(v);
 }
 
+/*
+ * get ready to draw the given frame at the given output size
+ */
+
 void
 MHEGVideoOutput_prepareFrame(MHEGVideoOutput *v, VideoFrame *f, unsigned int out_width, unsigned int out_height)
 {
 	return x11_shm_prepareFrame(v, f, out_width, out_height);
 }
+
+/*
+ * draw the frame set up by MHEGVideoOutput_prepareFrame() at the given position on the contents Pixmap
+ */
 
 void
 MHEGVideoOutput_drawFrame(MHEGVideoOutput *v, int x, int y)
@@ -55,8 +62,7 @@ x11_shm_init(MHEGVideoOutput *v)
 	v->current_frame = NULL;
 
 	v->resize_ctx = NULL;
-
-	v->tmpbuf_data = NULL;
+	v->resized_data = NULL;
 
 	return;
 }
@@ -67,7 +73,7 @@ x11_shm_fini(MHEGVideoOutput *v)
 	if(v->resize_ctx != NULL)
 	{
 		img_resample_close(v->resize_ctx);
-		safe_free(v->tmpbuf_data);
+		safe_free(v->resized_data);
 	}
 
 	if(v->current_frame != NULL)
@@ -80,9 +86,9 @@ void
 x11_shm_prepareFrame(MHEGVideoOutput *v, VideoFrame *f, unsigned int out_width, unsigned int out_height)
 {
 	AVPicture *yuv_frame;
-	int tmpbuf_size;
+	int resized_size;
 
-	/* have we create the output frame yet */
+	/* have we created the output frame yet */
 	if(v->current_frame == NULL)
 		x11_shm_create_frame(v, out_width, out_height);
 
@@ -93,17 +99,28 @@ x11_shm_prepareFrame(MHEGVideoOutput *v, VideoFrame *f, unsigned int out_width, 
 	/* see if the input size is different than the output size */
 	if(f->width != out_width || f->height != out_height)
 	{
-/* TODO */
-/* need to change resize_ctx if the input or output sizes have changed since last time */
-/* dont forget: img_resample_close(resize_ctx); */
-/* and to free or realloc tmpbuf_data */
-		if(v->resize_ctx == NULL)
+		/* have the resize input or output dimensions changed */
+		if(v->resize_ctx == NULL
+		|| v->resize_in.width != f->width || v->resize_in.height != f->height
+		|| v->resize_out.width != out_width || v->resize_out.height != out_height)
 		{
-			v->resize_ctx = img_resample_init(out_width, out_height, f->width, f->height);
-			tmpbuf_size = avpicture_get_size(f->pix_fmt, out_width, out_height);
-			v->tmpbuf_data = safe_malloc(tmpbuf_size);
-			avpicture_fill(&v->resized_frame, v->tmpbuf_data, f->pix_fmt, out_width, out_height);
+			/* get rid of any existing resize context */
+			if(v->resize_ctx != NULL)
+				img_resample_close(v->resize_ctx);
+			if((v->resize_ctx = img_resample_init(out_width, out_height, f->width, f->height)) == NULL)
+				fatal("Out of memory");
+			/* remember the resize input and output dimensions */
+			v->resize_in.width = f->width;
+			v->resize_in.height = f->height;
+			v->resize_out.width = out_width;
+			v->resize_out.height = out_height;
+			/* somewhere to store the resized frame */
+			if((resized_size = avpicture_get_size(f->pix_fmt, out_width, out_height)) < 0)
+				fatal("x11_shm_prepareFrame: invalid frame size");
+			v->resized_data = safe_realloc(v->resized_data, resized_size);
+			avpicture_fill(&v->resized_frame, v->resized_data, f->pix_fmt, out_width, out_height);
 		}
+		/* resize it */
 		img_resample(v->resize_ctx, &v->resized_frame, &f->frame);
 		yuv_frame = &v->resized_frame;
 	}
@@ -200,6 +217,7 @@ x11_shm_destroy_frame(MHEGVideoOutput *v)
 	/* make sure no-one tries to use it */
 	v->current_frame = NULL;
 
+	/* get rid of the shared memory */
 	XShmDetach(d->dpy, &v->shm);
 	shmdt(v->shm.shmaddr);
 	shmctl(v->shm.shmid, IPC_RMID, NULL);

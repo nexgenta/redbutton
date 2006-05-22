@@ -404,6 +404,7 @@ video_thread(void *arg)
 			out_height = vf->height;
 /* TODO */
 /* use scaled values if ScaleVideo has been called */
+/* have a lock incase we are doing ScaleVideo in another thread */
 			/* scale up if fullscreen */
 			if(d->fullscreen)
 			{
@@ -432,7 +433,7 @@ video_thread(void *arg)
 			/* remember the time stamp for this frame */
 			last_pts = vf->pts;
 //now=av_gettime();
-//printf("display frame %d: pts=%f this_time=%lld real_time=%lld (diff=%lld)\n", ++nframes, vf->pts, last_time, now, now-last_time);
+//printf("display frame %d: pts=%f this_time=%lld real_time=%lld (diff=%lld)\n", nframes, vf->pts, last_time, now, now-last_time);
 			/* origin of VideoClass */
 /* TODO should probably have a lock for this in case we are doing SetPosition in another thread */
 			out_x = p->video->inst.Position.x_position;

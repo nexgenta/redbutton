@@ -7,13 +7,21 @@
 
 typedef struct
 {
-	XShmSegmentInfo shm;
-	AVPicture rgb_frame;
-	enum PixelFormat out_format;
-	ImgReSampleContext *resize_ctx;
-	AVPicture resized_frame;
-	uint8_t *tmpbuf_data;
+	unsigned int width;
+	unsigned int height;
+} FrameSize;
+
+typedef struct
+{
 	XImage *current_frame;			/* frame we are currently displaying */
+	XShmSegmentInfo shm;			/* shared memory used by current_frame */
+	AVPicture rgb_frame;			/* ffmpeg wrapper for current_frame SHM data */
+	enum PixelFormat out_format;		/* rgb_frame ffmpeg pixel format */
+	ImgReSampleContext *resize_ctx;		/* NULL if we do not need to resize the frame */
+	FrameSize resize_in;			/* resize_ctx input dimensions */
+	FrameSize resize_out;			/* resize_ctx output dimensions */
+	AVPicture resized_frame;		/* resized output frame */
+	uint8_t *resized_data;			/* resized_frame data buffer */
 } MHEGVideoOutput;
 
 void MHEGVideoOutput_init(MHEGVideoOutput *);
