@@ -633,8 +633,11 @@ prog_Random(LIST_OF(Parameter) *params, OctetString *caller_gid)
 
 	num = GenericInteger_getInteger(num_par, caller_gid);
 
-	/* man page says low order bits are random */
-	rnd = 1 + (random() % num);
+	/* ITV like to get Random(0) */
+	if(num == 0)
+		rnd = 0;
+	else	/* man page says low order bits are random too */
+		rnd = 1 + (random() % num);
 	GenericInteger_setInteger(random_par, caller_gid, rnd);
 
 	verbose("ResidentProgram: Random(%u, %u)", num, rnd);
