@@ -633,9 +633,9 @@ prog_Random(LIST_OF(Parameter) *params, OctetString *caller_gid)
 
 	num = GenericInteger_getInteger(num_par, caller_gid);
 
-	/* ITV like to get Random(0) */
+	/* ITV like to get Random(0), returned value is supposed to be in the range 1..num */
 	if(num == 0)
-		rnd = 0;
+		rnd = 1;
 	else	/* man page says low order bits are random too */
 		rnd = 1 + (random() % num);
 	GenericInteger_setInteger(random_par, caller_gid, rnd);
