@@ -210,10 +210,16 @@ decode_thread(void *arg)
 	enum CodecID codec_id;
 	AVCodec *codec = NULL;
 	double video_time_base = 90000.0;
+	double audio_time_base = 90000.0;
 	double pts;
 	AVFrame *frame;
 	LIST_TYPE(VideoFrame) *video_frame;
 	int got_picture;
+	uint16_t audio_data[AVCODEC_MAX_AUDIO_FRAME_SIZE];
+	int audio_size;
+	int used;
+	unsigned char *data;
+	int size;
 
 	verbose("MHEGStreamPlayer: decode thread started");
 
@@ -256,9 +262,29 @@ decode_thread(void *arg)
 //if(pkt.pts == AV_NOPTS_VALUE) printf("NO PTS on PID %d!\n", pkt.stream_index);
 //printf("PTS=%lld DTS=%lld\n", pkt.pts, pkt.dts);
 		/* see what stream we got a packet for */
-		if(pkt.stream_index == p->audio_pid && pkt.dts != AV_NOPTS_VALUE)
+		if(pkt.stream_index == p->audio_pid && pkt.pts != AV_NOPTS_VALUE)
 		{
 //printf("decode: got audio packet\n");
+			pts = pkt.pts;
+			data = pkt.data;
+			size = pkt.size;
+			while(size > 0)
+			{
+				used = avcodec_decode_audio(audio_codec_ctx, audio_data, &audio_size, data, size);
+//printf("decode audio: pts=%f used=%d (size=%d) audio_size=%d\n", pts / audio_time_base, used, size, audio_size);
+				data += used;
+				size -= used;
+				if(audio_size > 0)
+				{
+					pts += ((audio_size * 1000.0) / (audio_codec_ctx->channels * 2) / audio_codec_ctx->sample_rate);
+//					audio_frame = new_AudioFrameListItem(pts / audio_time_base, audio_data, audio_size);
+//					pthread_mutex_lock(&opts->audioq_lock);
+//					LIST_APPEND(&opts->audioq, audio_frame);
+//					pthread_mutex_unlock(&opts->audioq_lock);
+				}
+			}
+			/* don't want one thread hogging the CPU time */
+			pthread_yield();
 		}
 		else if(pkt.stream_index == p->video_pid && pkt.dts != AV_NOPTS_VALUE)
 		{
