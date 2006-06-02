@@ -105,11 +105,11 @@ StreamComponent_play(StreamComponent *s, MHEGStreamPlayer *player)
 	switch(s->choice)
 	{
 	case StreamComponent_audio:
-		MHEGStreamPlayer_setAudioTag(player, s->u.audio.component_tag);
+		MHEGStreamPlayer_setAudioStream(player, &s->u.audio);
 		break;
 
 	case StreamComponent_video:
-		MHEGStreamPlayer_setVideoTag(player, &s->u.video, s->u.video.component_tag);
+		MHEGStreamPlayer_setVideoStream(player, &s->u.video);
 		break;
 
 	case StreamComponent_rtgraphics:

@@ -66,6 +66,7 @@ MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 	p->have_audio = false;
 
 	p->video = NULL;
+	p->audio = NULL;
 
 	pthread_mutex_init(&p->videoq_lock, NULL);
 	p->videoq_len = 0;
@@ -85,30 +86,37 @@ MHEGStreamPlayer_fini(MHEGStreamPlayer *p)
 }
 
 void
-MHEGStreamPlayer_setVideoTag(MHEGStreamPlayer *p, VideoClass *video, int tag)
+MHEGStreamPlayer_setVideoStream(MHEGStreamPlayer *p, VideoClass *video)
 {
 	if(p->have_video)
-		error("MHEGStreamPlayer: more than one video stream; only using the last one (%d)", tag);
+		error("MHEGStreamPlayer: more than one video stream; only using the last one (%d)", video->component_tag);
 
 	p->have_video = true;
-	p->video_tag = tag;
-	p->video_pid = -1;
-	p->video_type = -1;
 
 	/* output size/position */
 	p->video = video;
+
+	/* the backend will tell us the PID and stream type when we start streaming it */
+	p->video_tag = video->component_tag;
+	p->video_pid = -1;
+	p->video_type = -1;
 
 	return;
 }
 
 void
-MHEGStreamPlayer_setAudioTag(MHEGStreamPlayer *p, int tag)
+MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *p, AudioClass *audio)
 {
 	if(p->have_audio)
-		error("MHEGStreamPlayer: more than one audio stream; only using the last one (%d)", tag);
+		error("MHEGStreamPlayer: more than one audio stream; only using the last one (%d)", audio->component_tag);
 
 	p->have_audio = true;
-	p->audio_tag = tag;
+
+	/* volume */
+	p->audio = audio;
+
+	/* the backend will tell us the PID and stream type when we start streaming it */
+	p->audio_tag = audio->component_tag;
 	p->audio_pid = -1;
 	p->audio_type = -1;
 

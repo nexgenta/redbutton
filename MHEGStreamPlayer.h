@@ -39,6 +39,8 @@ typedef struct
 	bool stop;			/* true => stop playback */
 	bool have_video;		/* false if we have no video stream */
 	bool have_audio;		/* false if we have no audio stream */
+	VideoClass *video;		/* output size/position, maybe NULL if audio only */
+	AudioClass *audio;		/* output volume, maybe NULL if video only */
 	int video_tag;			/* video stream component tag (-1 => default for current service ID) */
 	int video_pid;			/* PID in MPEG Transport Stream (-1 => not yet known) */
 	int video_type;			/* video stream type (-1 => not yet known) */
@@ -46,7 +48,6 @@ typedef struct
 	int audio_pid;			/* PID in MPEG Transport Stream (-1 => not yet known) */
 	int audio_type;			/* audio stream type (-1 => not yet known) */
 	FILE *ts;			/* MPEG Transport Stream */
-	VideoClass *video;		/* output size/position, maybe NULL if audio only */
 	pthread_t decode_tid;		/* thread decoding the MPEG stream into frames */
 	pthread_t video_tid;		/* thread displaying frames on the screen */
 	pthread_mutex_t videoq_lock;	/* list of decoded video frames */
@@ -57,8 +58,8 @@ typedef struct
 void MHEGStreamPlayer_init(MHEGStreamPlayer *);
 void MHEGStreamPlayer_fini(MHEGStreamPlayer *);
 
-void MHEGStreamPlayer_setVideoTag(MHEGStreamPlayer *, VideoClass *, int);
-void MHEGStreamPlayer_setAudioTag(MHEGStreamPlayer *, int);
+void MHEGStreamPlayer_setVideoStream(MHEGStreamPlayer *, VideoClass *);
+void MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *, AudioClass *);
 
 void MHEGStreamPlayer_play(MHEGStreamPlayer *);
 void MHEGStreamPlayer_stop(MHEGStreamPlayer *);
