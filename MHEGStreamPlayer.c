@@ -276,7 +276,7 @@ decode_thread(void *arg)
 				size -= used;
 				if(audio_size > 0)
 				{
-					pts += ((audio_size * 1000.0) / (audio_codec_ctx->channels * 2) / audio_codec_ctx->sample_rate);
+					pts += (audio_size * 1000.0) / ((audio_codec_ctx->channels * 2) * audio_codec_ctx->sample_rate);
 //					audio_frame = new_AudioFrameListItem(pts / audio_time_base, audio_data, audio_size);
 //					pthread_mutex_lock(&opts->audioq_lock);
 //					LIST_APPEND(&opts->audioq, audio_frame);
