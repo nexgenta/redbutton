@@ -54,6 +54,26 @@ free_VideoFrameListItem(LIST_TYPE(VideoFrame) *vf)
 	return;
 }
 
+LIST_TYPE(AudioFrame) *
+new_AudioFrameListItem(void)
+{
+	LIST_TYPE(AudioFrame) *af = safe_malloc(sizeof(LIST_TYPE(AudioFrame)));
+
+	af->item.pts = AV_NOPTS_VALUE;
+
+	af->item.size = 0;
+
+	return af;
+}
+
+void
+free_AudioFrameListItem(LIST_TYPE(AudioFrame) *af)
+{
+	safe_free(af);
+
+	return;
+}
+
 void
 MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 {
@@ -72,6 +92,9 @@ MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 	p->videoq_len = 0;
 	p->videoq = NULL;
 
+	pthread_mutex_init(&p->audioq_lock, NULL);
+	p->audioq = NULL;
+
 	return;
 }
 
@@ -81,6 +104,7 @@ MHEGStreamPlayer_fini(MHEGStreamPlayer *p)
 	MHEGStreamPlayer_stop(p);
 
 	pthread_mutex_destroy(&p->videoq_lock);
+	pthread_mutex_destroy(&p->audioq_lock);
 
 	return;
 }
@@ -215,8 +239,8 @@ decode_thread(void *arg)
 	AVFrame *frame;
 	LIST_TYPE(VideoFrame) *video_frame;
 	int got_picture;
-	uint16_t audio_data[AVCODEC_MAX_AUDIO_FRAME_SIZE];
-	int audio_size;
+	LIST_TYPE(AudioFrame) *audio_frame;
+	AudioFrame *af;
 	int used;
 	unsigned char *data;
 	int size;
@@ -264,27 +288,35 @@ decode_thread(void *arg)
 		/* see what stream we got a packet for */
 		if(pkt.stream_index == p->audio_pid && pkt.pts != AV_NOPTS_VALUE)
 		{
+#if 0
 //printf("decode: got audio packet\n");
 			pts = pkt.pts;
 			data = pkt.data;
 			size = pkt.size;
 			while(size > 0)
 			{
-				used = avcodec_decode_audio(audio_codec_ctx, audio_data, &audio_size, data, size);
-//printf("decode audio: pts=%f used=%d (size=%d) audio_size=%d\n", pts / audio_time_base, used, size, audio_size);
+				audio_frame = new_AudioFrameListItem();
+				af = &audio_frame->item;
+				used = avcodec_decode_audio(audio_codec_ctx, af->data, &af->size, data, size);
+//printf("decode audio: pts=%f used=%d (size=%d) audio_size=%d\n", pts / audio_time_base, used, size, af->size);
 				data += used;
 				size -= used;
-				if(audio_size > 0)
+				if(af->size > 0)
 				{
-					pts += (audio_size * 1000.0) / ((audio_codec_ctx->channels * 2) * audio_codec_ctx->sample_rate);
-//					audio_frame = new_AudioFrameListItem(pts / audio_time_base, audio_data, audio_size);
-//					pthread_mutex_lock(&opts->audioq_lock);
-//					LIST_APPEND(&opts->audioq, audio_frame);
-//					pthread_mutex_unlock(&opts->audioq_lock);
+					pts += (af->size * 1000.0) / ((audio_codec_ctx->channels * 2) * audio_codec_ctx->sample_rate);
+					af->pts = pts / audio_time_base;
+					pthread_mutex_lock(&p->audioq_lock);
+					LIST_APPEND(&p->audioq, audio_frame);
+					pthread_mutex_unlock(&p->audioq_lock);
+				}
+				else
+				{
+					free_AudioFrameListItem(audio_frame);
 				}
 			}
 			/* don't want one thread hogging the CPU time */
 			pthread_yield();
+#endif
 		}
 		else if(pkt.stream_index == p->video_pid && pkt.dts != AV_NOPTS_VALUE)
 		{

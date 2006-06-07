@@ -32,6 +32,19 @@ DEFINE_LIST_OF(VideoFrame);
 LIST_TYPE(VideoFrame) *new_VideoFrameListItem(double, enum PixelFormat, unsigned int, unsigned int, AVFrame *);
 void free_VideoFrameListItem(LIST_TYPE(VideoFrame) *);
 
+/* list of decoded audio samples to play */
+typedef struct
+{
+	double pts;			/* presentation time stamp */
+	unsigned int size;		/* size of data in bytes (not uint16_t's) */
+	uint16_t data[AVCODEC_MAX_AUDIO_FRAME_SIZE];
+} AudioFrame;
+
+DEFINE_LIST_OF(AudioFrame);
+
+LIST_TYPE(AudioFrame) *new_AudioFrameListItem(void);
+void free_AudioFrameListItem(LIST_TYPE(AudioFrame) *);
+
 /* player state */
 typedef struct
 {
@@ -53,6 +66,8 @@ typedef struct
 	pthread_mutex_t videoq_lock;	/* list of decoded video frames */
 	unsigned int videoq_len;	/* number of frames on the videoq */
 	LIST_OF(VideoFrame) *videoq;	/* head of list is next to be displayed */
+	pthread_mutex_t audioq_lock;	/* list of decoded audio samples */
+	LIST_OF(AudioFrame) *audioq;	/* head of list is next to be played */
 } MHEGStreamPlayer;
 
 void MHEGStreamPlayer_init(MHEGStreamPlayer *);
