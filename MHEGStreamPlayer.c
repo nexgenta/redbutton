@@ -204,6 +204,7 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 	/* clean up */
 	p->videoq_len = 0;
 	LIST_FREE(&p->videoq, VideoFrame, free_VideoFrameListItem);
+	LIST_FREE(&p->audioq, AudioFrame, free_AudioFrameListItem);
 
 	if(p->ts != NULL)
 	{
