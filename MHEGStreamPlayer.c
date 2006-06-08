@@ -291,7 +291,7 @@ decode_thread(void *arg)
 		{
 #if 0
 //printf("decode: got audio packet\n");
-			pts = pkt.pts;
+			pts = pkt.pts / audio_time_base;
 			data = pkt.data;
 			size = pkt.size;
 			while(size > 0)
@@ -299,13 +299,14 @@ decode_thread(void *arg)
 				audio_frame = new_AudioFrameListItem();
 				af = &audio_frame->item;
 				used = avcodec_decode_audio(audio_codec_ctx, af->data, &af->size, data, size);
-//printf("decode audio: pts=%f used=%d (size=%d) audio_size=%d\n", pts / audio_time_base, used, size, af->size);
+//printf("decode audio: pts=%f used=%d (size=%d) audio_size=%d\n", pts, used, size, af->size);
 				data += used;
 				size -= used;
 				if(af->size > 0)
 				{
-					pts += (af->size * 1000.0) / ((audio_codec_ctx->channels * 2) * audio_codec_ctx->sample_rate);
-					af->pts = pts / audio_time_base;
+					af->pts = pts;
+					/* 16-bit samples, but af->size is in bytes */
+					pts += (af->size / 2.0) / (audio_codec_ctx->channels * audio_codec_ctx->sample_rate);
 					pthread_mutex_lock(&p->audioq_lock);
 					LIST_APPEND(&p->audioq, audio_frame);
 					pthread_mutex_unlock(&p->audioq_lock);
