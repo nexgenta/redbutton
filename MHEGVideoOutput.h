@@ -5,6 +5,11 @@
 #ifndef __MHEGVIDEOOUTPUT_H__
 #define __MHEGVIDEOOUTPUT_H__
 
+#include <stdint.h>
+#include <X11/Xlib.h>
+#include <X11/extensions/XShm.h>
+#include <ffmpeg/avcodec.h>
+
 typedef struct
 {
 	unsigned int width;

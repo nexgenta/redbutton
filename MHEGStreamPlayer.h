@@ -5,9 +5,9 @@
 #ifndef __MHEGSTREAMPLAYER_H__
 #define __MHEGSTREAMPLAYER_H__
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include <X11/Xlib.h>
 #include <ffmpeg/avformat.h>
 #include <ffmpeg/avcodec.h>
 
