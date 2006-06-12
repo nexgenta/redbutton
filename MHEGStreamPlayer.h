@@ -16,6 +16,10 @@
 /* seconds of video to buffer before we start playing it */
 #define INIT_VIDEO_BUFFER_WAIT	1.0
 
+/* seconds of audio to buffer before we start playing it (only used if we have no video) */
+//#define INIT_AUDIO_BUFFER_WAIT	1.0
+#define INIT_AUDIO_BUFFER_WAIT	0.5
+
 /* list of decoded video frames to be displayed */
 typedef struct
 {
@@ -60,12 +64,14 @@ typedef struct
 	int audio_tag;			/* audio stream component tag (-1 => default for current service ID) */
 	int audio_pid;			/* PID in MPEG Transport Stream (-1 => not yet known) */
 	int audio_type;			/* audio stream type (-1 => not yet known) */
+	AVCodecContext *audio_codec;	/* audio ouput params */
 	FILE *ts;			/* MPEG Transport Stream */
-	pthread_t decode_tid;		/* thread decoding the MPEG stream into frames */
-	pthread_t video_tid;		/* thread displaying frames on the screen */
+	pthread_t decode_tid;		/* thread decoding the MPEG stream into audio/video frames */
+	pthread_t video_tid;		/* thread displaying video frames on the screen */
+	pthread_t audio_tid;		/* thread feeding audio frames into the sound card */
 	pthread_mutex_t videoq_lock;	/* list of decoded video frames */
 	LIST_OF(VideoFrame) *videoq;	/* head of list is next to be displayed */
-	pthread_mutex_t audioq_lock;	/* list of decoded audio samples */
+	pthread_mutex_t audioq_lock;	/* list of decoded audio frames */
 	LIST_OF(AudioFrame) *audioq;	/* head of list is next to be played */
 } MHEGStreamPlayer;
 

@@ -9,12 +9,14 @@
 #include "MHEGEngine.h"
 #include "MHEGStreamPlayer.h"
 #include "MHEGVideoOutput.h"
+#include "MHEGAudioOutput.h"
 #include "mpegts.h"
 #include "utils.h"
 
 /* internal routines */
 static void *decode_thread(void *);
 static void *video_thread(void *);
+static void *audio_thread(void *);
 
 static void thread_usleep(unsigned long);
 static enum CodecID find_av_codec_id(int);
@@ -86,6 +88,8 @@ MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 
 	p->video = NULL;
 	p->audio = NULL;
+
+	p->audio_codec = NULL;
 
 	pthread_mutex_init(&p->videoq_lock, NULL);
 	p->videoq = NULL;
@@ -163,15 +167,19 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 	p->stop = false;
 
 	/*
-	 * we have two threads:
-	 * decode_thread reads MPEG data from the TS and decodes it into YUV video frames
+	 * we have three threads:
+	 * decode_thread reads MPEG data from the TS and decodes it into YUV video frames and audio samples
 	 * video_thread takes YUV frames off the videoq list, converts them to RGB and displays them on the screen
+	 * audio_thread takes audio samples off the audioq list and feeds them into the sound card
 	 */
 	if(pthread_create(&p->decode_tid, NULL, decode_thread, p) != 0)
 		fatal("Unable to create MPEG decoder thread");
 
 	if(pthread_create(&p->video_tid, NULL, video_thread, p) != 0)
 		fatal("Unable to create video output thread");
+
+	if(pthread_create(&p->audio_tid, NULL, audio_thread, p) != 0)
+		fatal("Unable to create audio output thread");
 
 //{
 // whole machine locks up if you do this
@@ -198,6 +206,7 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 	/* wait for them to finish */
 	pthread_join(p->decode_tid, NULL);
 	pthread_join(p->video_tid, NULL);
+	pthread_join(p->audio_tid, NULL);
 
 	/* clean up */
 	LIST_FREE(&p->videoq, VideoFrame, free_VideoFrameListItem);
@@ -217,8 +226,8 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 /*
  * decode_thread
  * reads the MPEG TS file
- * decodes the data into YUV video frames
- * adds them to the tail of the videoq list
+ * decodes the data into YUV video frames and audio samples
+ * adds them to the tail of the videoq and audioq lists
  */
 
 static void *
@@ -267,6 +276,8 @@ decode_thread(void *arg)
 		if(avcodec_open(audio_codec_ctx, codec) < 0)
 			fatal("Unable to open audio codec");
 		verbose("MHEGStreamPlayer: Audio: stream type=%d codec=%s\n", p->audio_type, codec->name);
+		/* let the audio ouput thread know what the sample rate, etc are */
+		p->audio_codec = audio_codec_ctx;
 	}
 
 	if((frame = avcodec_alloc_frame()) == NULL)
@@ -286,7 +297,6 @@ decode_thread(void *arg)
 		/* see what stream we got a packet for */
 		if(pkt.stream_index == p->audio_pid && pkt.pts != AV_NOPTS_VALUE)
 		{
-#if 0
 //printf("decode: got audio packet\n");
 			pts = pkt.pts / audio_time_base;
 			data = pkt.data;
@@ -315,7 +325,6 @@ decode_thread(void *arg)
 			}
 			/* don't want one thread hogging the CPU time */
 			pthread_yield();
-#endif
 		}
 		else if(pkt.stream_index == p->video_pid && pkt.dts != AV_NOPTS_VALUE)
 		{
@@ -399,7 +408,7 @@ video_thread(void *arg)
 		else
 			buffered = 0.0;
 		pthread_mutex_unlock(&p->videoq_lock);
-		verbose("MHEGStreamPlayer: buffered %f seconds", buffered);
+		verbose("MHEGStreamPlayer: buffered %f seconds of video", buffered);
 		/* let the decoder have a go */
 		if(buffered < INIT_VIDEO_BUFFER_WAIT)
 			pthread_yield();
@@ -536,6 +545,134 @@ video_thread(void *arg)
 	MHEGVideoOutput_fini(&vo);
 
 	verbose("MHEGStreamPlayer: video thread stopped");
+
+	return NULL;
+}
+
+/*
+ * audio thread
+ * takes audio samples of the audioq and feeds them into the sound card as fast as possible
+ * MHEGAudioOuput_addSamples() will block while the sound card buffer is full
+ */
+
+static void *
+audio_thread(void *arg)
+{
+	MHEGStreamPlayer *p = (MHEGStreamPlayer *) arg;
+	MHEGAudioOutput ao;
+	AudioFrame *af;
+	double buffered;
+	double base_pts;
+	int64_t base_time;
+	snd_pcm_format_t format = 0;	/* keep the compiler happy */
+	unsigned int rate;
+	unsigned int channels;
+//	int64_t now;
+//	unsigned int nframes = 0;
+
+	if(!p->have_audio)
+		return NULL;
+
+	verbose("MHEGStreamPlayer: audio thread started");
+
+	/* assert */
+	if(p->audio == NULL)
+		fatal("audio_thread: AudioClass is NULL");
+
+	/* do we need to sync the audio with the video */
+#if 0
+	if(p->have_video)
+	{
+		/* wait until the video thread tells us it has some frames buffered up */
+/* TODO */
+		/* get the video's first PTS and first actual time stamp values */
+/* TODO */
+/* video thread should set base_pts and base_time from the values for the first frame it displays */
+		base_time = p->base_time;
+		base_pts = p->base_pts;
+	}
+	else
+#endif
+	{
+		/* wait until we have some audio frames buffered up */
+		do
+		{
+			pthread_mutex_lock(&p->audioq_lock);
+			if(p->audioq != NULL)
+				buffered = p->audioq->prev->item.pts - p->audioq->item.pts;
+			else
+				buffered = 0.0;
+			pthread_mutex_unlock(&p->audioq_lock);
+			verbose("MHEGStreamPlayer: buffered %f seconds of audio", buffered);
+			/* let the decoder have a go */
+			if(buffered < INIT_AUDIO_BUFFER_WAIT)
+				pthread_yield();
+		}
+		while(!p->stop && buffered < INIT_AUDIO_BUFFER_WAIT);
+		/* the time that we played the first frame */
+		base_time = av_gettime();
+		pthread_mutex_lock(&p->audioq_lock);
+		base_pts = p->audioq->item.pts;
+		pthread_mutex_unlock(&p->audioq_lock);
+	}
+
+	/* even if this fails, we still need to consume the audioq */
+	(void) MHEGAudioOutput_init(&ao);
+
+	/* assert - if audioq is not empty then the codec cannot be NULL */
+	if(p->audio_codec == NULL)
+		fatal("audio_codec is NULL");
+
+	/* TODO will these be big endian on a big endian machine? */
+	if(p->audio_codec->sample_fmt == SAMPLE_FMT_S16)
+		format = SND_PCM_FORMAT_S16_LE;
+	else if(p->audio_codec->sample_fmt == SAMPLE_FMT_S32)
+		format = SND_PCM_FORMAT_S32_LE;
+	else
+		fatal("Unsupported audio sample format (%d)", p->audio_codec->sample_fmt);
+
+	rate = p->audio_codec->sample_rate;
+	channels = p->audio_codec->channels;
+
+	verbose("MHEGStreamPlayer: audio params: format=%d rate=%d channels=%d\n", format, rate, channels);
+
+/* TODO */
+/* hmmm... audio_time_base issue? */
+rate=(rate*10)/9;
+	(void) MHEGAudioOutput_setParams(&ao, format, rate, channels);
+
+	/* until we are told to stop */
+	while(!p->stop)
+	{
+		/* get the next audio frame */
+		pthread_mutex_lock(&p->audioq_lock);
+		af = (p->audioq != NULL) ? &p->audioq->item : NULL;
+		/* only we delete items from the audioq, so af will stay valid */
+		pthread_mutex_unlock(&p->audioq_lock);
+		if(af == NULL)
+		{
+			/* if audio init failed, we will get this a lot */
+//			verbose("MHEGStreamPlayer: audioq is empty");
+			/* give the decoder a bit of time to catch up */
+			pthread_yield();
+			continue;
+		}
+//now=av_gettime();
+//printf("audio: addSamples %d: pts=%f time=%lld\n", ++nframes, af->pts, now);
+/* TODO */
+/* need to make sure pts is what we expect */
+/* if we missed decoding a sample, play silence */
+		/* this will block until the sound card can take the data */
+		MHEGAudioOutput_addSamples(&ao, af->data, af->size);
+		/* we can delete the frame from the queue now */
+		pthread_mutex_lock(&p->audioq_lock);
+		LIST_FREE_HEAD(&p->audioq, AudioFrame, free_AudioFrameListItem);
+		pthread_mutex_unlock(&p->audioq_lock);
+	}
+
+	MHEGAudioOutput_fini(&ao);
+
+	verbose("MHEGStreamPlayer: audio thread stopped");
 
 	return NULL;
 }
