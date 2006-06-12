@@ -263,7 +263,7 @@ decode_thread(void *arg)
 			fatal("Unsupported video codec");
 		if(avcodec_open(video_codec_ctx, codec) < 0)
 			fatal("Unable to open video codec");
-		verbose("MHEGStreamPlayer: Video: stream type=%d codec=%s\n", p->video_type, codec->name);
+		verbose("MHEGStreamPlayer: Video: stream type=%d codec=%s", p->video_type, codec->name);
 	}
 
 	if(p->audio_pid != -1)
@@ -275,7 +275,7 @@ decode_thread(void *arg)
 			fatal("Unsupported audio codec");
 		if(avcodec_open(audio_codec_ctx, codec) < 0)
 			fatal("Unable to open audio codec");
-		verbose("MHEGStreamPlayer: Audio: stream type=%d codec=%s\n", p->audio_type, codec->name);
+		verbose("MHEGStreamPlayer: Audio: stream type=%d codec=%s", p->audio_type, codec->name);
 		/* let the audio ouput thread know what the sample rate, etc are */
 		p->audio_codec = audio_codec_ctx;
 	}
@@ -626,7 +626,7 @@ audio_thread(void *arg)
 	rate = p->audio_codec->sample_rate;
 	channels = p->audio_codec->channels;
 
-	verbose("MHEGStreamPlayer: audio params: format=%d rate=%d channels=%d\n", format, rate, channels);
+	verbose("MHEGStreamPlayer: audio params: format=%d rate=%d channels=%d", format, rate, channels);
 
 /* TODO */
 /* hmmm... audio_time_base issue? */
