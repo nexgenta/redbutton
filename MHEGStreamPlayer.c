@@ -628,9 +628,6 @@ audio_thread(void *arg)
 
 	verbose("MHEGStreamPlayer: audio params: format=%d rate=%d channels=%d", format, rate, channels);
 
-/* TODO */
-/* hmmm... audio_time_base issue? */
-rate=(rate*10)/9;
 	(void) MHEGAudioOutput_setParams(&ao, format, rate, channels);
 
 	/* until we are told to stop */
