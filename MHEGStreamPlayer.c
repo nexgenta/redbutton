@@ -616,6 +616,10 @@ audio_thread(void *arg)
 		pthread_mutex_unlock(&p->audioq_lock);
 	}
 
+	/* do we need to bomb out early */
+	if(p->stop)
+		return NULL;
+
 	/* even if this fails, we still need to consume the audioq */
 	(void) MHEGAudioOutput_init(&ao);
 

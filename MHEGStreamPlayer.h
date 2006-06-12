@@ -17,8 +17,7 @@
 #define INIT_VIDEO_BUFFER_WAIT	1.0
 
 /* seconds of audio to buffer before we start playing it (only used if we have no video) */
-//#define INIT_AUDIO_BUFFER_WAIT	1.0
-#define INIT_AUDIO_BUFFER_WAIT	0.5
+#define INIT_AUDIO_BUFFER_WAIT	1.0
 
 /* list of decoded video frames to be displayed */
 typedef struct
