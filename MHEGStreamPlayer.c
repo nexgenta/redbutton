@@ -291,13 +291,9 @@ decode_thread(void *arg)
 		/* get the next complete packet for one of the streams */
 		if(mpegts_demux_frame(tsdemux, &pkt) < 0)
 			continue;
-//if(pkt.dts == AV_NOPTS_VALUE) printf("NO DTS on PID %d!\n", pkt.stream_index);
-//if(pkt.pts == AV_NOPTS_VALUE) printf("NO PTS on PID %d!\n", pkt.stream_index);
-//printf("PTS=%lld DTS=%lld\n", pkt.pts, pkt.dts);
 		/* see what stream we got a packet for */
 		if(pkt.stream_index == p->audio_pid && pkt.pts != AV_NOPTS_VALUE)
 		{
-//printf("decode: got audio packet\n");
 			pts = pkt.pts / audio_time_base;
 			data = pkt.data;
 			size = pkt.size;
@@ -306,7 +302,6 @@ decode_thread(void *arg)
 				audio_frame = new_AudioFrameListItem();
 				af = &audio_frame->item;
 				used = avcodec_decode_audio(audio_codec_ctx, af->data, &af->size, data, size);
-//printf("decode audio: pts=%f used=%d (size=%d) audio_size=%d\n", pts, used, size, af->size);
 				data += used;
 				size -= used;
 				if(af->size > 0)
@@ -328,7 +323,6 @@ decode_thread(void *arg)
 		}
 		else if(pkt.stream_index == p->video_pid && pkt.dts != AV_NOPTS_VALUE)
 		{
-//printf("decode: got video packet\n");
 			(void) avcodec_decode_video(video_codec_ctx, frame, &got_picture, pkt.data, pkt.size);
 			if(got_picture)
 			{
@@ -337,14 +331,13 @@ decode_thread(void *arg)
 				pthread_mutex_lock(&p->videoq_lock);
 				LIST_APPEND(&p->videoq, video_frame);
 				pthread_mutex_unlock(&p->videoq_lock);
-//printf("decode: got video frame: pts=%f (real pts=%f) width=%d height=%d\n", pts, pkt.pts / video_time_base, video_codec_ctx->width, video_codec_ctx->height);
 				/* don't want one thread hogging the CPU time */
 				pthread_yield();
 			}
 		}
 		else
 		{
-//printf("decode: got unknown/untimed packet\n");
+			verbose("MHEGStreamPlayer: decoder got unexpected/untimed packet");
 		}
 		av_free_packet(&pkt);
 	}
@@ -466,10 +459,10 @@ video_thread(void *arg)
 		 */
 		drop_frame = (usecs < 0);
 		if(drop_frame)
+		{
 			verbose("MHEGStreamPlayer: dropped frame %u (usecs=%d)", nframes, usecs);
-//if(drop_frame)
-//printf("dropped frame %d: pts=%f last_pts=%f last_time=%lld this_time=%lld usecs=%d\n", nframes, vf->pts, last_pts, last_time, this_time, usecs);
-		if(!drop_frame)
+		}
+		else
 		{
 			/* scale the next frame if necessary */
 			pthread_mutex_lock(&p->video->inst.scaled_lock);
@@ -499,7 +492,6 @@ video_thread(void *arg)
 			{
 				/* how many usecs do we need to wait */
 				usecs = this_time - now;
-//printf("last_time=%lld this_time=%lld now=%lld sleep=%d\n", last_time, this_time, now, usecs);
 				if(usecs > 0)
 					thread_usleep(usecs);
 				/* remember when we should have displayed this frame */
@@ -512,8 +504,6 @@ video_thread(void *arg)
 			}
 			/* remember the time stamp for this frame */
 			last_pts = vf->pts;
-//now=av_gettime();
-//printf("display frame %d: pts=%f this_time=%lld real_time=%lld (diff=%lld)\n", nframes, vf->pts, last_time, now, now-last_time);
 			/* origin of VideoClass */
 			pthread_mutex_lock(&p->video->inst.bbox_lock);
 			out_x = p->video->inst.Position.x_position;
@@ -567,8 +557,6 @@ audio_thread(void *arg)
 	snd_pcm_format_t format = 0;	/* keep the compiler happy */
 	unsigned int rate;
 	unsigned int channels;
-//	int64_t now;
-//	unsigned int nframes = 0;
 
 	if(!p->have_audio)
 		return NULL;
@@ -661,8 +649,6 @@ rate=(rate*10)/9;
 			pthread_yield();
 			continue;
 		}
-//now=av_gettime();
-//printf("audio: addSamples %d: pts=%f time=%lld\n", ++nframes, af->pts, now);
 /* TODO */
 /* need to make sure pts is what we expect */
 /* if we missed decoding a sample, play silence */
