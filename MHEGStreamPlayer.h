@@ -68,6 +68,10 @@ typedef struct
 	pthread_t decode_tid;		/* thread decoding the MPEG stream into audio/video frames */
 	pthread_t video_tid;		/* thread displaying video frames on the screen */
 	pthread_t audio_tid;		/* thread feeding audio frames into the sound card */
+	pthread_mutex_t base_lock;	/* used to sync audio and video */
+	pthread_cond_t base_cond;	/* the video thread tells the audio thread: */
+	double base_pts;		/* - the PTS of the first video frame */
+	int64_t base_time;		/* - the time the first video frame was displayed */
 	pthread_mutex_t videoq_lock;	/* list of decoded video frames */
 	LIST_OF(VideoFrame) *videoq;	/* head of list is next to be displayed */
 	pthread_mutex_t audioq_lock;	/* list of decoded audio frames */

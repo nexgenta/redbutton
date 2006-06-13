@@ -18,6 +18,8 @@ static void *decode_thread(void *);
 static void *video_thread(void *);
 static void *audio_thread(void *);
 
+static void set_avsync_base(MHEGStreamPlayer *, double, int64_t);
+
 static void thread_usleep(unsigned long);
 static enum CodecID find_av_codec_id(int);
 
@@ -91,6 +93,9 @@ MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 
 	p->audio_codec = NULL;
 
+	pthread_mutex_init(&p->base_lock, NULL);
+	pthread_cond_init(&p->base_cond, NULL);
+
 	pthread_mutex_init(&p->videoq_lock, NULL);
 	p->videoq = NULL;
 
@@ -104,6 +109,9 @@ void
 MHEGStreamPlayer_fini(MHEGStreamPlayer *p)
 {
 	MHEGStreamPlayer_stop(p);
+
+	pthread_mutex_destroy(&p->base_lock);
+	pthread_cond_destroy(&p->base_cond);
 
 	pthread_mutex_destroy(&p->videoq_lock);
 	pthread_mutex_destroy(&p->audioq_lock);
@@ -410,7 +418,12 @@ video_thread(void *arg)
 
 	/* do we need to bomb out early */
 	if(p->stop)
+	{
+		/* wake up the audio thread */
+		if(p->have_audio)
+			set_avsync_base(p, 0.0, 0);
 		return NULL;
+	}
 
 	/* assert */
 	if(p->videoq == NULL)
@@ -485,6 +498,8 @@ video_thread(void *arg)
 				out_height = (out_height * d->yres) / MHEG_YRES;
 			}
 			MHEGVideoOutput_prepareFrame(&vo, vf, out_width, out_height);
+			/* remember the PTS for this frame */
+			last_pts = vf->pts;
 			/* wait until it's time to display the frame */
 			now = av_gettime();
 			/* don't wait if this is the first frame */
@@ -497,13 +512,14 @@ video_thread(void *arg)
 				/* remember when we should have displayed this frame */
 				last_time = this_time;
 			}
-			else
+			else	/* first frame */
 			{
 				/* remember when we displayed this frame */
 				last_time = now;
+				/* tell the audio thread what the PTS and real time are for the first video frame */
+				if(p->have_audio)
+					set_avsync_base(p, last_pts, last_time);
 			}
-			/* remember the time stamp for this frame */
-			last_pts = vf->pts;
 			/* origin of VideoClass */
 			pthread_mutex_lock(&p->video->inst.bbox_lock);
 			out_x = p->video->inst.Position.x_position;
@@ -557,6 +573,10 @@ audio_thread(void *arg)
 	snd_pcm_format_t format = 0;	/* keep the compiler happy */
 	unsigned int rate;
 	unsigned int channels;
+	bool done;
+	int64_t now_time, next_time;
+	double now_pts, next_pts;
+	int usecs;
 
 	if(!p->have_audio)
 		return NULL;
@@ -568,19 +588,43 @@ audio_thread(void *arg)
 		fatal("audio_thread: AudioClass is NULL");
 
 	/* do we need to sync the audio with the video */
-#if 0
 	if(p->have_video)
 	{
 		/* wait until the video thread tells us it has some frames buffered up */
-/* TODO */
-		/* get the video's first PTS and first actual time stamp values */
-/* TODO */
-/* video thread should set base_pts and base_time from the values for the first frame it displays */
+		pthread_mutex_lock(&p->base_lock);
+		pthread_cond_wait(&p->base_cond, &p->base_lock);
+		pthread_mutex_unlock(&p->base_lock);
+		/* video thread sets base_pts and base_time from the values for the first frame it displays */
 		base_time = p->base_time;
 		base_pts = p->base_pts;
+		/* get rid of audio frames that we should have played already */
+		done = false;
+		while(!done)
+		{
+			/* what PTS are we looking for */
+			now_time = av_gettime();
+			now_pts = base_pts + ((now_time - base_time) / 1000000.0);
+			/* remove frames we should have played already */
+			pthread_mutex_lock(&p->audioq_lock);
+			while(p->audioq && p->audioq->item.pts < now_pts)
+				LIST_FREE_HEAD(&p->audioq, AudioFrame, free_AudioFrameListItem);
+			/* have we got the first audio sample to play yet */
+			done = (p->audioq != NULL);
+			pthread_mutex_unlock(&p->audioq_lock);
+			if(!done)
+				pthread_yield();
+		}
+		/* wait until it's time to play the first sample */
+		pthread_mutex_lock(&p->audioq_lock);
+		next_pts = p->audioq->item.pts;
+		pthread_mutex_unlock(&p->audioq_lock);
+		next_time = base_time + ((next_pts - base_pts) * 1000000.0);
+		now_time = av_gettime();
+		usecs = next_time - now_time;
+		if(usecs > 0)
+			thread_usleep(usecs);
 	}
 	else
-#endif
 	{
 		/* wait until we have some audio frames buffered up */
 		do
@@ -662,6 +706,27 @@ audio_thread(void *arg)
 	verbose("MHEGStreamPlayer: audio thread stopped");
 
 	return NULL;
+}
+
+/*
+ * set the base_pts and base_time values for the first video frame
+ * signal the values have been set via the base_cond variable
+ */
+
+static void
+set_avsync_base(MHEGStreamPlayer *p, double pts, int64_t realtime)
+{
+	pthread_mutex_lock(&p->base_lock);
+
+	p->base_pts = pts;
+	p->base_time = realtime;
+
+	/* tell the audio thread we have set the values */
+	pthread_cond_signal(&p->base_cond);
+
+	pthread_mutex_unlock(&p->base_lock);
+
+	return;
 }
 
 /*
