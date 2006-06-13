@@ -315,8 +315,13 @@ decode_thread(void *arg)
 				if(af->size > 0)
 				{
 					af->pts = pts;
-					/* 16-bit samples, but af->size is in bytes */
-					pts += (af->size / 2.0) / (audio_codec_ctx->channels * audio_codec_ctx->sample_rate);
+					/* 16 or 32-bit samples, but af->size is in bytes */
+					if(audio_codec_ctx->sample_fmt == SAMPLE_FMT_S16)
+						pts += (af->size / 2.0) / (audio_codec_ctx->channels * audio_codec_ctx->sample_rate);
+					else if(audio_codec_ctx->sample_fmt == SAMPLE_FMT_S32)
+						pts += (af->size / 4.0) / (audio_codec_ctx->channels * audio_codec_ctx->sample_rate);
+					else
+						fatal("Unsupported audio sample format (%d)", audio_codec_ctx->sample_fmt);
 					pthread_mutex_lock(&p->audioq_lock);
 					LIST_APPEND(&p->audioq, audio_frame);
 					pthread_mutex_unlock(&p->audioq_lock);
@@ -557,7 +562,7 @@ video_thread(void *arg)
 
 /*
  * audio thread
- * takes audio samples of the audioq and feeds them into the sound card as fast as possible
+ * takes audio samples off the audioq and feeds them into the sound card as fast as possible
  * MHEGAudioOuput_addSamples() will block while the sound card buffer is full
  */
 
