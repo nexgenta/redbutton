@@ -363,7 +363,7 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 	SEND_RESPONSE(200, "OK");
 
 	/* tell the client what PIDs and stream types the component tags resolved to */
-	snprintf(hdr, sizeof(hdr), "AudioPID %u AudioType %u VideoPID %uVideoType %u\n", audio_pid, audio_type, video_pid, video_type);
+	snprintf(hdr, sizeof(hdr), "AudioPID %u AudioType %u VideoPID %u VideoType %u\n", audio_pid, audio_type, video_pid, video_type);
 	fputs(hdr, client);
 
 	/* shovel the transport stream down client_sock until the client closes it or we get an error */
