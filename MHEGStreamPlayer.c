@@ -271,7 +271,7 @@ decode_thread(void *arg)
 
 	verbose("MHEGStreamPlayer: decode thread started");
 
-	if(p->video_pid != -1)
+	if(p->have_video && p->video_pid != -1)
 	{
 		if((video_codec_ctx = avcodec_alloc_context()) == NULL)
 			fatal("Out of memory");
@@ -283,7 +283,7 @@ decode_thread(void *arg)
 		verbose("MHEGStreamPlayer: Video: stream type=%d codec=%s", p->video_type, codec->name);
 	}
 
-	if(p->audio_pid != -1)
+	if(p->have_audio && p->audio_pid != -1)
 	{
 		if((audio_codec_ctx = avcodec_alloc_context()) == NULL)
 			fatal("Out of memory");
@@ -309,7 +309,7 @@ decode_thread(void *arg)
 		if(mpegts_demux_frame(tsdemux, &pkt) < 0)
 			continue;
 		/* see what stream we got a packet for */
-		if(pkt.stream_index == p->audio_pid && pkt.pts != AV_NOPTS_VALUE)
+		if(p->have_audio && pkt.stream_index == p->audio_pid && pkt.pts != AV_NOPTS_VALUE)
 		{
 			pts = pkt.pts / audio_time_base;
 			data = pkt.data;
@@ -343,7 +343,7 @@ decode_thread(void *arg)
 			/* don't want one thread hogging the CPU time */
 			pthread_yield();
 		}
-		else if(pkt.stream_index == p->video_pid && pkt.dts != AV_NOPTS_VALUE)
+		else if(p->have_video && pkt.stream_index == p->video_pid && pkt.dts != AV_NOPTS_VALUE)
 		{
 			(void) avcodec_decode_video(video_codec_ctx, frame, &got_picture, pkt.data, pkt.size);
 			if(got_picture)
