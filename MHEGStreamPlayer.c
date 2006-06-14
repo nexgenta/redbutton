@@ -154,6 +154,8 @@ MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *p, AudioClass *audio)
 	p->audio_pid = -1;
 	p->audio_type = -1;
 
+	p->audio_codec = NULL;
+
 	return;
 }
 
@@ -226,8 +228,12 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 		p->ts = NULL;
 	}
 
+	/* forget any existing streams */
 	p->have_video = false;
 	p->have_audio = false;
+	p->video = NULL;
+	p->audio = NULL;
+	p->audio_codec = NULL;
 
 	p->playing = false;
 
