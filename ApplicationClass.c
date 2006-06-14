@@ -336,6 +336,7 @@ ApplicationClass_ReadPersistent(ApplicationClass *t, ReadPersistent *params, Oct
 				}
 			}
 			ref = ref->next;
+			val = val->next;
 		}
 	}
 	else
