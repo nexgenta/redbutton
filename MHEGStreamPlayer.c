@@ -606,6 +606,9 @@ audio_thread(void *arg)
 		done = false;
 		while(!done)
 		{
+			/* do we need to bomb out early */
+			if(p->stop)
+				return NULL;
 			/* what PTS are we looking for */
 			now_time = av_gettime();
 			now_pts = base_pts + ((now_time - base_time) / 1000000.0);
