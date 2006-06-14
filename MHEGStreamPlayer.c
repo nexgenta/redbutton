@@ -667,6 +667,13 @@ audio_thread(void *arg)
 		pthread_mutex_unlock(&p->audioq_lock);
 	}
 
+	/* in case the flag got set since we last checked */
+	if(p->stop)
+	{
+		verbose("MHEGStreamPlayer: audio thread stopped before any output");
+		return NULL;
+	}
+
 	/* even if this fails, we still need to consume the audioq */
 	(void) MHEGAudioOutput_init(&ao);
 
