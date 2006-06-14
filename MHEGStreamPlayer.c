@@ -427,6 +427,7 @@ video_thread(void *arg)
 		/* wake up the audio thread */
 		if(p->have_audio)
 			set_avsync_base(p, 0.0, 0);
+		verbose("MHEGStreamPlayer: video thread stopped before any output");
 		return NULL;
 	}
 
@@ -608,7 +609,10 @@ audio_thread(void *arg)
 		{
 			/* do we need to bomb out early */
 			if(p->stop)
+			{
+				verbose("MHEGStreamPlayer: audio thread stopped before any output");
 				return NULL;
+			}
 			/* what PTS are we looking for */
 			now_time = av_gettime();
 			now_pts = base_pts + ((now_time - base_time) / 1000000.0);
@@ -637,6 +641,13 @@ audio_thread(void *arg)
 		/* wait until we have some audio frames buffered up */
 		do
 		{
+			/* do we need to bomb out early */
+			if(p->stop)
+			{
+				verbose("MHEGStreamPlayer: audio thread stopped before any output");
+				return NULL;
+			}
+			/* see how many frames we have buffered so far */
 			pthread_mutex_lock(&p->audioq_lock);
 			if(p->audioq != NULL)
 				buffered = p->audioq->prev->item.pts - p->audioq->item.pts;
@@ -648,17 +659,13 @@ audio_thread(void *arg)
 			if(buffered < INIT_AUDIO_BUFFER_WAIT)
 				pthread_yield();
 		}
-		while(!p->stop && buffered < INIT_AUDIO_BUFFER_WAIT);
+		while(buffered < INIT_AUDIO_BUFFER_WAIT);
 		/* the time that we played the first frame */
 		base_time = av_gettime();
 		pthread_mutex_lock(&p->audioq_lock);
 		base_pts = p->audioq->item.pts;
 		pthread_mutex_unlock(&p->audioq_lock);
 	}
-
-	/* do we need to bomb out early */
-	if(p->stop)
-		return NULL;
 
 	/* even if this fails, we still need to consume the audioq */
 	(void) MHEGAudioOutput_init(&ao);
