@@ -226,6 +226,9 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 		p->ts = NULL;
 	}
 
+	p->have_video = false;
+	p->have_audio = false;
+
 	p->playing = false;
 
 	return;
