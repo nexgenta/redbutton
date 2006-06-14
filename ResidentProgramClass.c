@@ -234,7 +234,7 @@ printf("TODO: ResidentProgramClass_Fork not yet implemented - running in foregro
 }
 
 /*
- * run the given program (identified by the 3 character name field in the ResidentProgramClass)
+ * run the given program (identified by the name field in the ResidentProgramClass)
  * returns true if the program succeeds
  * sets the parameters to the values described by the UK MHEG Profile
  * caller_gid is used to resolve Generic variables in the parameters
@@ -243,35 +243,36 @@ printf("TODO: ResidentProgramClass_Fork not yet implemented - running in foregro
 
 struct
 {
-	char name[3];
+	char *short_name;
+	char *long_name;
 	bool (*func)(LIST_OF(Parameter) *, OctetString *);
 } resident_progs[] =
 {
-	{ "GCD", prog_GetCurrentDate },
-	{ "FDa", prog_FormatDate },
-	{ "GDW", prog_GetDayOfWeek },
-	{ "Rnd", prog_Random },
-	{ "CTC", prog_CastToContentRef },
-	{ "CTO", prog_CastToObjectRef },
-	{ "GSL", prog_GetStringLength },
-	{ "GSS", prog_GetSubString },
-	{ "SSS", prog_SearchSubString },
-	{ "SES", prog_SearchAndExtractSubString },
-	{ "GSI", prog_SI_GetServiceIndex },
-	{ "TIn", prog_SI_TuneIndex },
-	{ "TII", prog_SI_TuneIndexInfo },
-	{ "BSI", prog_SI_GetBasicSI },
-	{ "GBI", prog_GetBootInfo },
-	{ "CCR", prog_CheckContentRef },
-	{ "CGR", prog_CheckGroupIDRef },
-	{ "VTG", prog_VideoToGraphics },
-	{ "SWA", prog_SetWidescreenAlignment },
-	{ "GDA", prog_GetDisplayAspectRatio },
-	{ "CIS", prog_CI_SendMessage },
-	{ "SSM", prog_SetSubtitleMode },
-	{ "WAI", prog_WhoAmI },
-	{ "DBG", prog_Debug },
-	{ "", NULL }
+	{ "GCD", "GetCurrentDate",		prog_GetCurrentDate },
+	{ "FDa", "FormatDate",			prog_FormatDate },
+	{ "GDW", "GetDayOfWeek",		prog_GetDayOfWeek },
+	{ "Rnd", "Random",			prog_Random },
+	{ "CTC", "CastToContentRef",		prog_CastToContentRef },
+	{ "CTO", "CastToObjectRef",		prog_CastToObjectRef },
+	{ "GSL", "GetStringLength",		prog_GetStringLength },
+	{ "GSS", "GetSubString",		prog_GetSubString },
+	{ "SSS", "SearchSubString",		prog_SearchSubString },
+	{ "SES", "SearchAndExtractSubString",	prog_SearchAndExtractSubString },
+	{ "GSI", "SI_GetServiceIndex",		prog_SI_GetServiceIndex },
+	{ "TIn", "SI_TuneIndex",		prog_SI_TuneIndex },
+	{ "TII", "SI_TuneIndexInfo",		prog_SI_TuneIndexInfo },
+	{ "BSI", "SI_GetBasicSI",		prog_SI_GetBasicSI },
+	{ "GBI", "GetBootInfo",			prog_GetBootInfo },
+	{ "CCR", "CheckContentRef",		prog_CheckContentRef },
+	{ "CGR", "CheckGroupIDRef",		prog_CheckGroupIDRef },
+	{ "VTG", "VideoToGraphics",		prog_VideoToGraphics },
+	{ "SWA", "SetWidescreenAlignment",	prog_SetWidescreenAlignment },
+	{ "GDA", "GetDisplayAspectRatio",	prog_GetDisplayAspectRatio },
+	{ "CIS", "CI_SendMessage",		prog_CI_SendMessage },
+	{ "SSM", "SetSubtitleMode",		prog_SetSubtitleMode },
+	{ "WAI", "WhoAmI",			prog_WhoAmI },
+	{ "DBG", "Debug",			prog_Debug },
+	{ "", "", NULL }
 };
 
 bool
@@ -283,17 +284,13 @@ run_program(ResidentProgramClass *p, LIST_OF(Parameter) *params, OctetString *ca
 	/* remember if we were forked or not */
 	p->inst.forked = forked;
 
-	/* check the name is in the form we expect */
-	if(p->name.size != 3)
-	{
-		error("Unknown ResidentProgram: '%.*s'", p->name.size, p->name.data);
-		return false;
-	}
-
 	/* find it */
-	i = 0;
-	while(resident_progs[i].func && strncmp(resident_progs[i].name, p->name.data, 3) != 0)
-		i ++;
+	for(i=0; resident_progs[i].func!=NULL; i++)
+	{
+		if(OctetString_strcmp(&p->name, resident_progs[i].short_name) == 0
+		|| OctetString_strcmp(&p->name, resident_progs[i].long_name) == 0)
+			break;
+	}
 
 	/* run it */
 	if(resident_progs[i].func)

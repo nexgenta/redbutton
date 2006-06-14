@@ -50,6 +50,8 @@ int der_decode_OctetString(FILE *, OctetString *, int);
 void free_OctetString(OctetString *);
 
 int OctetString_cmp(OctetString *, OctetString *);
+int OctetString_strcmp(OctetString *, char *);
+
 bool OctetString_copy(OctetString *, OctetString *);
 void OctetString_dup(OctetString *, OctetString *);
 
