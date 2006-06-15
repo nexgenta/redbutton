@@ -51,44 +51,50 @@ MHEGAudioOutput_setParams(MHEGAudioOutput *a, snd_pcm_format_t format, unsigned 
 
 	if((err = snd_pcm_hw_params_malloc(&hw_params)) < 0)
 	{
-		error("Unable to set audio parameters: %s", snd_strerror(err));
+		error("No memory for audio parameters: %s", snd_strerror(err));
 		return false;
 	}
 
 	if((err = snd_pcm_hw_params_any(a->ctx, hw_params)) < 0)
 	{
 		error("Unable to set audio parameters: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
 		return false;
 	}
 
 	/* interleaved samples */
 	if((err = snd_pcm_hw_params_set_access(a->ctx, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
 	{
-		error("Unable to set audio parameters: %s", snd_strerror(err));
+		error("Unable to set audio access: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
 		return false;
 	}
 
 	if((err = snd_pcm_hw_params_set_format(a->ctx, hw_params, format)) < 0)
 	{
-		error("Unable to set audio parameters: %s", snd_strerror(err));
+		error("Unable to set audio format: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
 		return false;
 	}
 
 	if((err = snd_pcm_hw_params_set_rate_near(a->ctx, hw_params, &rate, &dir)) < 0)
 	{
-		error("Unable to set audio parameters: %s", snd_strerror(err));
+		error("Unable to set audio sample rate: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
 		return false;
 	}
 
 	if((err = snd_pcm_hw_params_set_channels(a->ctx, hw_params, channels)) < 0)
 	{
-		error("Unable to set audio parameters: %s", snd_strerror(err));
+		error("Unable to set audio channels: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
 		return false;
 	}
 
 	if((err = snd_pcm_hw_params(a->ctx, hw_params)) < 0)
 	{
 		error("Unable to set audio parameters: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
 		return false;
 	}
 
