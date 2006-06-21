@@ -5,6 +5,8 @@ can't see how avstream can cause an out of memory error
 Sky Teletext - can't find PIDs for tags 1 and 2
 BBC News Multiscreen - can't find default a/v PIDs
 
+look into new splice() and tee() syscalls in 2.6.17 kernel for avstream
+
 be able to read from a file
 
 have a verbose flag
