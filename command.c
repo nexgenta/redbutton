@@ -19,6 +19,7 @@
 #define ARGV_MAX	10
 
 /* the commands */
+bool cmd_assoc(struct listen_data *, FILE *, int, char **);
 bool cmd_astream(struct listen_data *, FILE *, int, char **);
 bool cmd_avstream(struct listen_data *, FILE *, int, char **);
 bool cmd_check(struct listen_data *, FILE *, int, char **);
@@ -35,6 +36,7 @@ static struct
 	char *help;
 } command[] =
 {
+	{ "assoc", "",				cmd_assoc,	"List component tag to PID mappings" },
 	{ "astream", "<ComponentTag>",		cmd_astream,	"Stream the given audio component tag" },
 	{ "avstream", "<AudioTag> <VideoTag>",	cmd_avstream,	"Stream the given audio and video component tags" },
 	{ "check", "<ContentReference>",	cmd_check,	"Check if the given file exists on the carousel" },
@@ -124,6 +126,36 @@ if(argc != ARGC)				\
 {						\
 	SEND_RESPONSE(500, "Syntax: " SYNTAX);	\
 	return false;				\
+}
+
+/*
+ * assoc
+ * show the association/component tag to PID mappings
+ * also shows the default audio and video PIDs
+ * (just for debugging)
+ */
+
+bool
+cmd_assoc(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+	unsigned int i;
+
+	SEND_RESPONSE(200, "OK");
+
+	/* if this is ever used by rb-browser, you will need to send a length first */
+	fprintf(client, "Tag\tPID\tType\n");
+	fprintf(client, "===\t===\t====\n");
+
+	/* default audio and video PIDs */
+	fprintf(client, "(audio)\t%u\t%u\n", car->audio_pid, car->audio_type);
+	fprintf(client, "(video)\t%u\t%u\n", car->video_pid, car->video_type);
+
+	/* component tag mappings */
+	for(i=0; i<car->assoc.nassocs; i++)
+		fprintf(client, "%u\t%u\t%u\n", car->assoc.sids[i], car->assoc.pids[i], car->assoc.types[i]);
+
+	return false;
 }
 
 /*
