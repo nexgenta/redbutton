@@ -218,6 +218,11 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 					_car.audio_type = stream_type;
 				}
 			}
+			else
+			{
+				vverbose("pid=0x%x descriptor=0x%x", elementary_pid, desc_tag);
+				vhexdump(&pmt[offset], desc_length);
+			}
 			offset += desc_length;
 			info_length -= desc_length;
 		}
