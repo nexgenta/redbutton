@@ -140,7 +140,7 @@ start_listener(struct listen_data *listen_data)
 	/* parent continues */
 
 	/* listen on the given ip:port */
-	printf("Listening on %s:%u\n", inet_ntoa(listen_data->addr.sin_addr), ntohs(listen_data->addr.sin_port));
+	verbose("Listening on %s:%u", inet_ntoa(listen_data->addr.sin_addr), ntohs(listen_data->addr.sin_port));
 
 	if((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		fatal("socket: %s", strerror(errno));
@@ -218,7 +218,7 @@ handle_connection(struct listen_data *listen_data, int client_sock, struct socka
 	size_t len;
 	bool quit;
 
-	printf("Connection from %s:%d\n", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
+	verbose("Connection from %s:%d", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
 
 	if((client = fdopen(client_sock, "r+")) == NULL)
 		return;
@@ -245,7 +245,7 @@ handle_connection(struct listen_data *listen_data, int client_sock, struct socka
 
 	fclose(client);
 
-	printf("Connection from %s:%d closed\n", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
+	verbose("Connection from %s:%d closed", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
 
 	return;
 }

@@ -50,5 +50,10 @@ void hexdump(unsigned char *, size_t);
 void error(char *, ...);
 void fatal(char *, ...);
 
+/* in rb-download.c */
+void verbose(char *, ...);
+void vverbose(char *, ...);
+void vhexdump(unsigned char *, size_t);
+
 #endif	/* __UTILS_H__ */
 

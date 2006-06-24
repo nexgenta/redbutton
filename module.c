@@ -83,7 +83,7 @@ add_module(struct carousel *car, struct DownloadInfoIndication *dii, struct DIIM
 	mod->size = ntohl(diimod->moduleSize);
 	mod->data = safe_malloc(mod->size);
 
-	printf("add_module: nmodules=%u module=%u size=%u\n", car->nmodules, mod->module_id, mod->size);
+	verbose("add_module: nmodules=%u module=%u size=%u", car->nmodules, mod->module_id, mod->size);
 
 	return mod;
 }
@@ -132,18 +132,18 @@ download_block(struct carousel *car, struct module *mod, uint16_t block, unsigne
 
 	mod->blocks_left --;
 
-	printf("download_block: module=%u block=%u left=%u\n", mod->module_id, block, mod->blocks_left);
+	verbose("download_block: module=%u block=%u left=%u", mod->module_id, block, mod->blocks_left);
 
 	/* have we got it all yet */
 	if(mod->blocks_left == 0)
 	{
-		printf("got module %u (size=%u)\n", mod->module_id, mod->size);
+		verbose("got module %u (size=%u)", mod->module_id, mod->size);
 		/* if it doesn't start with 'BIOP' assume it is compressed */
 		if(strncmp(mod->data, BIOP_MAGIC_STR, BIOP_MAGIC_LEN) != 0)
 		{
-//			hexdump(mod->data, mod->size);
+			vhexdump(mod->data, mod->size);
 			uncompress_module(mod);
-			printf("uncompressed size=%u\n", mod->size);
+			verbose("uncompressed size=%u", mod->size);
 		}
 		process_biop(car, mod, (struct BIOPMessageHeader *) mod->data, mod->size);
 		/* we can free the data now, keep got_block so we don't download it again */

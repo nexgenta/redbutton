@@ -110,12 +110,12 @@ safe_free(void *buf)
 void
 error(char *message, ...)
 {
-        va_list ap;
+	va_list ap;
 
-        va_start(ap, message);
-        vfprintf(stderr, message, ap);
+	va_start(ap, message);
+	vfprintf(stderr, message, ap);
 	fprintf(stderr, "\n");
-        va_end(ap);
+	va_end(ap);
 
 	return;
 }
@@ -123,12 +123,12 @@ error(char *message, ...)
 void
 fatal(char *message, ...)
 {
-        va_list ap;
+	va_list ap;
 
-        va_start(ap, message);
-        vfprintf(stderr, message, ap);
+	va_start(ap, message);
+	vfprintf(stderr, message, ap);
 	fprintf(stderr, "\n");
-        va_end(ap);
+	va_end(ap);
 
 	exit(EXIT_FAILURE);
 }

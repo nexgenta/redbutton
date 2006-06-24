@@ -1,5 +1,5 @@
 /*
- * rb-download [-a <adapter>] [-b <base_dir>] [-t <timeout>] [-l[<listen-addr>]] [-c <carousel_id>] [<service_id>]
+ * rb-download [-v] [-a <adapter>] [-b <base_dir>] [-t <timeout>] [-l[<listen-addr>]] [-c <carousel_id>] [<service_id>]
  *
  * Download the DVB Object Carousel for the given channel onto the local hard disc
  * files will be stored under the current dir if no -b option is given
@@ -22,6 +22,8 @@
  * to only listen on the loop back, do "-l127.0.0.1" or on a different port too, do "-l127.0.0.1:8080"
  * NOTE: because -l may or may not take an argument, you must not put a space between the -l and the value
  * (otherwise, "rb-download -l 1234", is ambiguous - listen on port 1234 or use service_id 1234?)
+ *
+ * -v is verbose/debug mode, use more v's for more verbosity
  *
  * the file structure will be:
  * ./services/<service_id>
@@ -72,6 +74,8 @@
 #define DEFAULT_LISTEN_ADDR	INADDR_ANY
 #define DEFAULT_LISTEN_PORT	10101
 
+static int _verbose = 0;
+
 void usage(char *);
 
 int
@@ -87,7 +91,7 @@ main(int argc, char *argv[])
 	struct carousel *car;
 	int arg;
 
-	while((arg = getopt(argc, argv, "a:b:t:l::c:")) != EOF)
+	while((arg = getopt(argc, argv, "a:b:t:l::c:v")) != EOF)
 	{
 		switch(arg)
 		{
@@ -118,6 +122,10 @@ main(int argc, char *argv[])
 			carousel_id = strtoul(optarg, NULL, 0);
 			break;
 
+		case 'v':
+			_verbose ++;
+			break;
+
 		default:
 			usage(prog_name);
 			break;
@@ -132,9 +140,9 @@ main(int argc, char *argv[])
 	{
 		service_id = strtoul(argv[optind], NULL, 0);
 		car = find_mheg(adapter, timeout, service_id, carousel_id);
-		printf("Carousel ID=%u\n", car->carousel_id);
-		printf("Video PID=%u\n", car->video_pid);
-		printf("Audio PID=%u\n", car->audio_pid);
+		verbose("Carousel ID=%u", car->carousel_id);
+		verbose("Video PID=%u", car->video_pid);
+		verbose("Audio PID=%u", car->audio_pid);
 		if(listen)
 		{
 			listen_data.carousel = car;
@@ -151,9 +159,51 @@ main(int argc, char *argv[])
 }
 
 void
+verbose(char *message, ...)
+{
+	va_list ap;
+
+	if(_verbose)
+	{
+	        va_start(ap, message);
+	        vprintf(message, ap);
+		printf("\n");
+	        va_end(ap);
+	}
+
+	return;
+}
+
+void
+vverbose(char *message, ...)
+{
+	va_list ap;
+
+	if(_verbose > 1)
+	{
+	        va_start(ap, message);
+	        vprintf(message, ap);
+		printf("\n");
+	        va_end(ap);
+	}
+
+	return;
+}
+
+void
+vhexdump(unsigned char *data, size_t nbytes)
+{
+	if(_verbose > 1)
+		hexdump(data, nbytes);
+
+	return;
+}
+
+void
 usage(char *prog_name)
 {
-	fatal("Usage: %s [-a <adapter>] "
+	fatal("Usage: %s [-v] "
+			"[-a <adapter>] "
 			"[-b <base_dir>] "
 			"[-t <timeout>] "
 			"[-l[<listen-addr>]] "

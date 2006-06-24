@@ -88,7 +88,7 @@ save_file(char *kind, uint16_t elementary_pid, uint32_t carousel_id, uint16_t mo
 
 	fclose(f);
 
-	printf("Created file '%s'\n", filename);
+	verbose("Created file '%s'", filename);
 
 	return;
 }
@@ -127,7 +127,7 @@ make_service_root(uint16_t service_id, char *kind, uint16_t elementary_pid, uint
 	if(symlink(realfile, linkfile) < 0 && errno != EEXIST)
 		fatal("Unable to create link '%s' to '%s': %s", linkfile, realfile, strerror(errno));
 
-	printf("Added service root '%s' -> '%s'\n", linkfile, realfile);
+	verbose("Added service root '%s' -> '%s'", linkfile, realfile);
 
 	return;
 }
@@ -157,7 +157,7 @@ make_dir(char *kind, uint16_t elementary_pid, uint32_t carousel_id, uint16_t mod
 	if(mkdir(_dirname, 0755) < 0 && errno != EEXIST)
 		fatal("Unable to create directory '%s': %s", _dirname, strerror(errno));
 
-	printf("Created directory '%s'\n", _dirname);
+	verbose("Created directory '%s'", _dirname);
 
 	return _dirname;
 }
@@ -189,7 +189,7 @@ add_dir_entry(char *dir, char *entry, uint32_t entry_size, char *kind, uint16_t 
 	if(symlink(realfile, linkfile) < 0)
 		fatal("Unable to create link '%s' to '%s': %s", linkfile, realfile, strerror(errno));
 
-	printf("Added directory entry '%s' -> '%s'\n", linkfile, realfile);
+	verbose("Added directory entry '%s' -> '%s'", linkfile, realfile);
 
 	return;
 }

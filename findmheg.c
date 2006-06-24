@@ -151,7 +151,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 	if(!found)
 		fatal("Unable to find programme_map_PID for service_id %u", service_id);
 
-//	printf("programme_map_PID: 0x%x\n", map_pid);
+	vverbose("programme_map_PID: 0x%x", map_pid);
 
 	/* get the PMT */
 	if((pmt = read_table(_car.demux_device, map_pid, TID_PMT, timeout)) == NULL)
@@ -196,7 +196,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 				{
 					_car.carousel_id = ntohl(desc->carousel_id);
 					add_dsmcc_pid(&_car, elementary_pid);
-//					printf("pid=0x%x carousel_id=%u\n", elementary_pid, _car.carousel_id);
+					vverbose("pid=0x%x carousel_id=%u", elementary_pid, _car.carousel_id);
 				}
 			}
 			else if(desc_tag == TAG_STREAM_ID_DESCRIPTOR)
@@ -204,7 +204,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 				struct stream_id_descriptor *desc;
 				desc = (struct stream_id_descriptor *) &pmt[offset];
 				component_tag = desc->component_tag;
-//				printf("pid=0x%x component_tag=0x%x\n", elementary_pid, component_tag);
+				vverbose("pid=0x%x component_tag=0x%x", elementary_pid, component_tag);
 				add_assoc(&_car.assoc, elementary_pid, desc->component_tag, stream_type);
 			}
 			else if(desc_tag == TAG_LANGUAGE_DESCRIPTOR && is_audio_stream(stream_type))

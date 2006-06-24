@@ -47,8 +47,8 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 	struct biop_sequence file;
 	char *dirname;
 
-//	printf("full BIOP, size=%u\n", size);
-//	hexdump((unsigned char *) data, size);
+	vverbose("Whole BIOP, size=%u", size);
+	vhexdump((unsigned char *) data, size);
 
 	/*
 	 * we may get 0, 1 or more BIOP messages in a single block
@@ -65,53 +65,53 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 		|| data->message_type != BIOP_MSG_TYPE)
 			fatal("Invalid BIOP header");
 		size = biop_uint32(data->byte_order, data->message_size);
-//		printf("BIOP message_size=%u\n", size);
+		vverbose("BIOP message_size=%u", size);
 		if(bytes_left < sizeof(struct BIOPMessageHeader) + size)
 			fatal("Not enough BIOP data");
 		/* process MessageSubHeader */
 		subhdr = ((unsigned char *) data) + sizeof(struct BIOPMessageHeader);
-//		hexdump(subhdr, size);
+		vhexdump(subhdr, size);
 		subhdr += biop_sequence255(subhdr, &key);
-//		printf("objectKey:\n");
-//		hexdump(key.data, key.size);
+		vverbose("objectKey:");
+		vhexdump(key.data, key.size);
 		subhdr += biop_sequence(data->byte_order, subhdr, &kind);
-//		printf("objectKind: '%.*s'\n", kind.size, kind.data);
+		vverbose("objectKind: '%.*s'", kind.size, kind.data);
 		subhdr += biop_sequence65535(data->byte_order, subhdr, &info);
-//		printf("objectInfo:\n");
-//		hexdump(info.data, info.size);
+		vverbose("objectInfo:");
+		vhexdump(info.data, info.size);
 		subhdr += biop_sequence255(subhdr, &service_context);
-//		printf("serviceContextList:\n");
-//		hexdump(service_context.data, service_context.size);
+		vverbose("serviceContextList:");
+		vhexdump(service_context.data, service_context.size);
 		subhdr += biop_sequence(data->byte_order, subhdr, &body);
-//		printf("messageBody: %u bytes\n", body.size);
+		vverbose("messageBody: %u bytes", body.size);
 		/* decode the message body, based on the objectKind field */
 		if(strcmp(kind.data, BIOP_DIR) == 0)
 		{
 			/* a directory */
-			printf("DSM::Directory\n");
+			verbose("DSM::Directory");
 			dirname = make_dir(kind.data, car->current_pid, mod->download_id, mod->module_id, key.data, key.size);
 			process_biop_dir(data->byte_order, dirname, car, body.data, body.size);
 		}
 		else if(strcmp(kind.data, BIOP_SERVICEGATEWAY) == 0)
 		{
 			/* the service gateway is the root directory */
-			printf("DSM::ServiceGateway\n");
+			verbose("DSM::ServiceGateway");
 			dirname = make_dir(kind.data, car->current_pid, mod->download_id, mod->module_id, key.data, key.size);
 			process_biop_dir(data->byte_order, dirname, car, body.data, body.size);
 		}
 		else if(strcmp(kind.data, BIOP_FILE) == 0)
 		{
 			/* a file */
-			printf("DSM::File\n");
+			verbose("DSM::File");
 			(void) biop_sequence(data->byte_order, body.data, &file);
-//			hexdump(file.data, file.size);
+			vhexdump(file.data, file.size);
 			save_file(kind.data, car->current_pid, mod->download_id, mod->module_id, key.data, key.size, file.data, file.size);
 		}
 		else if(strcmp(kind.data, BIOP_STREAM) == 0)
 		{
 			/* a stream */
-			printf("DSM::Stream\n");
-//			hexdump(body.data, body.size);
+			verbose("DSM::Stream");
+			vhexdump(body.data, body.size);
 			/*
 			 * just save it for now
 			 * could parse the Taps to make it easier for the browser
@@ -121,8 +121,8 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 		else if(strcmp(kind.data, BIOP_STREAMEVENT) == 0)
 		{
 			/* a stream event */
-			printf("BIOP::StreamEvent\n");
-//			hexdump(body.data, body.size);
+			verbose("BIOP::StreamEvent");
+			vhexdump(body.data, body.size);
 			/*
 			 * just save it for now
 			 * could parse it to make it easier for the browser
@@ -161,28 +161,28 @@ process_biop_dir(uint8_t byte_order, char *dirname, struct carousel *car, unsign
 
 	nbindings = biop_uint16(byte_order, *((uint16_t *) data));
 	data += 2;
-//	printf("binding_count: %u\n", nbindings);
+	vverbose("binding_count: %u", nbindings);
 
 	for(i=0; i<nbindings; i++)
 	{
-//		printf(" binding %u\n", i);
+		vverbose(" binding %u", i);
 		nnames = *data;
 		data += 1;
-//		printf(" nameComponents: %u\n", nnames);
+		vverbose(" nameComponents: %u", nnames);
 		/* only expecting 1 name, so just use the last one */
 		for(j=0; j<nnames; j++)
 		{
 			data += biop_sequence255(data, &name);
-//			printf("  name %u: '%.*s'\n", j, name.size, name.data);
+			vverbose("  name %u: '%.*s'", j, name.size, name.data);
 			data += biop_sequence255(data, &kind);
-//			printf("  kind %u: '%.*s'\n", j, kind.size, kind.data);
+			vverbose("  kind %u: '%.*s'", j, kind.size, kind.data);
 		}
 		/* bindingType */
 		type = *data;
 		data += 1;
-//		printf(" bindingType: %u\n", type);
+		vverbose(" bindingType: %u", type);
 		/* objectRef */
-//		printf(" objectRef:\n");
+		vverbose(" objectRef:");
 		data += process_iop_ior(byte_order, data, &ior);
 		/* make sure we are downloading the PID with this file on */
 		pid = stream2pid(&car->assoc, ior.association_tag);
@@ -196,8 +196,8 @@ process_biop_dir(uint8_t byte_order, char *dirname, struct carousel *car, unsign
 		add_dir_entry(dirname, name.data, name.size, kind.data, pid, ior.carousel_id, ior.module_id, ior.key.data, ior.key.size);
 		/* objectInfo */
 		data += biop_sequence65535(byte_order, data, &info);
-//		printf(" objectInfo:\n");
-//		hexdump(info.data, info.size);
+		vverbose(" objectInfo:");
+		vhexdump(info.data, info.size);
 	}
 
 	return;
@@ -213,8 +213,8 @@ process_biop_service_gateway_info(uint16_t service_id, struct assoc *assoc, unsi
 	struct biop_iop_ior ior;
 	uint16_t elementary_pid;
 
-	printf("BIOP::ServiceGatewayInfo\n");
-//	hexdump(data, size);
+	verbose("BIOP::ServiceGatewayInfo");
+	vhexdump(data, size);
 
 	data += process_iop_ior(BIOP_BIGENDIAN, data, &ior);
 
@@ -244,23 +244,23 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 	uint8_t taps_count;
 	uint32_t transaction_id;
 
-//	printf("IOP::IOR\n");
+	vverbose("IOP::IOR");
 	/* typeId - "dir\0", "fil\0", etc */
 	data += biop_sequence(byte_order, data, &type);
-//	printf("  typeId: '%.*s'\n", type.size, type.data);
+	vverbose("  typeId: '%.*s'", type.size, type.data);
 
 	nprofiles = biop_uint32(byte_order, *((uint32_t *) data));
 	data += 4;
-//	printf("  taggedProfiles_count: %u\n", nprofiles);
+	vverbose("  taggedProfiles_count: %u", nprofiles);
 	for(i=0; i<nprofiles; i++)
 	{
-//		printf("   IOP::taggedProfile %u\n", i);
+		vverbose("   IOP::taggedProfile %u", i);
 		tag = biop_uint32(byte_order, *((uint32_t *) data));
 		data += 4;
 		data += biop_sequence(byte_order, data, &profile);
 		if(tag == TAG_BIOP)
 		{
-//			printf("   BIOPProfileBody:\n");
+			vverbose("   BIOPProfileBody:");
 			/* profile_data_byte_order */
 			profile_bo = *(profile.data);
 			profile.data += 1;
@@ -275,11 +275,11 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 			/* carouselId */
 			ior->carousel_id = biop_uint32(profile_bo, *((uint32_t *) profile.data));
 			profile.data += 4;
-//			printf("    carouselId: %u\n", ior->carousel_id);
+			vverbose("    carouselId: %u", ior->carousel_id);
 			/* moduleId */
 			ior->module_id = biop_uint16(profile_bo, *((uint32_t *) profile.data));
 			profile.data += 2;
-//			printf("    moduleId: %u\n", ior->module_id);
+			vverbose("    moduleId: %u", ior->module_id);
 			/* BIOP version */
 			if(profile.data[0] != BIOP_VSN_MAJOR
 			|| profile.data[1] != BIOP_VSN_MINOR)
@@ -287,30 +287,30 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 			profile.data += 2;
 			/* objectKey */
 			profile.data += biop_sequence255(profile.data, &ior->key);
-//			printf("    objectKey: '%.*s'\n", ior->key.size, ior->key.data);
-//			hexdump(ior->key.data, ior->key.size);
+			vverbose("    objectKey: '%.*s'", ior->key.size, ior->key.data);
+			vhexdump(ior->key.data, ior->key.size);
 			/* DSM::ConnBinder */
 			if(biop_uint32(profile_bo, *((uint32_t *) profile.data)) != TAG_ConnBinder)
 				fatal("Expecting DSM::ConnBinder");
 			profile.data += 4;
-//			printf("    DSM::ConnBinder\n");
+			vverbose("    DSM::ConnBinder");
 			/* component_data_length = *profile.data */
 			profile.data += 1;
 			taps_count = *profile.data;
 			profile.data += 1;
-//			printf("    taps_count: %u\n", taps_count);
+			vverbose("    taps_count: %u", taps_count);
 			if(taps_count > 0)
 			{
-//				printf("    BIOP::Tap\n");
+				vverbose("    BIOP::Tap");
 				/* id = biop_uint16(profile_bo, *((uint16_t *) profile.data)) */
 				profile.data += 2;
 				if(biop_uint16(profile_bo, *((uint16_t *) profile.data)) != BIOP_DELIVERY_PARA_USE)
 					fatal("Expecting BIOP_DELIVERY_PARA_USE");
 				profile.data += 2;
-//				printf("    use: BIOP_DELIVERY_PARA_USE\n");
+				vverbose("    use: BIOP_DELIVERY_PARA_USE");
 				ior->association_tag = biop_uint16(profile_bo, *((uint16_t *) profile.data));
 				profile.data += 2;
-//				printf("    association_tag: %u\n", ior->association_tag);
+				vverbose("    association_tag: %u", ior->association_tag);
 				if(*profile.data != SELECTOR_TYPE_MESSAGE_LEN)
 					fatal("Expecting selector_length %u", SELECTOR_TYPE_MESSAGE_LEN);
 				profile.data += 1;
@@ -319,7 +319,7 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 				profile.data += 2;
 				transaction_id = biop_uint32(profile_bo, *((uint32_t *) profile.data));
 				profile.data += 4;
-//				printf("    transaction_id: %u\n", transaction_id);
+				vverbose("    transaction_id: %u", transaction_id);
 			}
 		}
 		else if(tag == TAG_LITE_OPTIONS)

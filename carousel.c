@@ -59,7 +59,7 @@ load_carousel(struct carousel *car)
 			else if(ntohs(dsmcc->messageId) == DSMCC_MSGID_DDB)
 				process_ddb(car, (struct DownloadDataBlock *) dsmccMessage(dsmcc), ntohl(dsmcc->transactionId), DDB_blockDataLength(dsmcc));
 			else
-				printf("Unknown DSMCC messageId: 0x%x\n", ntohs(dsmcc->messageId));
+				error("Unknown DSMCC messageId: 0x%x", ntohs(dsmcc->messageId));
 		}
 	}
 	while(!done);
@@ -73,26 +73,24 @@ process_dii(struct carousel *car, struct DownloadInfoIndication *dii, uint32_t t
 	unsigned int nmodules;
 	unsigned int i;
 
-	printf("DownloadInfoIndication\n");
-//	printf("transactionId: %u\n", transactionId);
-//	printf("downloadId: %u\n", ntohl(dii->downloadId));
+	verbose("DownloadInfoIndication");
+	vverbose("transactionId: %u", transactionId);
+	vverbose("downloadId: %u", ntohl(dii->downloadId));
 
 	nmodules = DII_numberOfModules(dii);
-//	printf("numberOfModules: %u\n", nmodules);
+	vverbose("numberOfModules: %u", nmodules);
 
 	for(i=0; i<nmodules; i++)
 	{
 		struct DIIModule *mod;
 		mod = DII_module(dii, i);
-//		printf("Module %u\n", i);
-//		printf(" moduleId: %u\n", ntohs(mod->moduleId));
-//		printf(" moduleVersion: %u\n", mod->moduleVersion);
-//		printf(" moduleSize: %u\n", ntohl(mod->moduleSize));
+		vverbose("Module %u", i);
+		vverbose(" moduleId: %u", ntohs(mod->moduleId));
+		vverbose(" moduleVersion: %u", mod->moduleVersion);
+		vverbose(" moduleSize: %u", ntohl(mod->moduleSize));
 		if(find_module(car, ntohs(mod->moduleId), mod->moduleVersion, ntohl(dii->downloadId)) == NULL)
 			add_module(car, dii, mod);
 	}
-
-//	printf("\n");
 
 	return;
 }
@@ -102,7 +100,7 @@ process_dsi(struct carousel *car, struct DownloadServerInitiate *dsi)
 {
 	uint16_t elementary_pid;
 
-	printf("DownloadServerInitiate\n");
+	verbose("DownloadServerInitiate");
 
 	/*
 	 * BBC1 (for example) just broadcasts a DSI
@@ -122,8 +120,6 @@ process_dsi(struct carousel *car, struct DownloadServerInitiate *dsi)
 	/* make sure we are downloading data from the PID the DSI refers to */
 	add_dsmcc_pid(car, elementary_pid);
 
-//	printf("\n");
-
 	return;
 }
 
@@ -133,21 +129,19 @@ process_ddb(struct carousel *car, struct DownloadDataBlock *ddb, uint32_t downlo
 	unsigned char *block;
 	struct module *mod;
 
-	printf("DownloadDataBlock\n");
-//	printf("downloadId: %u\n", downloadId);
+	verbose("DownloadDataBlock");
 
-//	printf("moduleId: %u\n", ntohs(ddb->moduleId));
-//	printf("moduleVersion: %u\n", ddb->moduleVersion);
-//	printf("blockNumber: %u\n", ntohs(ddb->blockNumber));
+	vverbose("downloadId: %u", downloadId);
+	vverbose("moduleId: %u", ntohs(ddb->moduleId));
+	vverbose("moduleVersion: %u", ddb->moduleVersion);
+	vverbose("blockNumber: %u", ntohs(ddb->blockNumber));
 
-//	printf("blockLength: %u\n", blockLength);
+	vverbose("blockLength: %u", blockLength);
 	block = DDB_blockDataByte(ddb);
-//	hexdump(block, blockLength);
+	vhexdump(block, blockLength);
 
 	if((mod = find_module(car, ntohs(ddb->moduleId), ddb->moduleVersion, downloadId)) != NULL)
 		download_block(car, mod, ntohs(ddb->blockNumber), block, blockLength);
-
-//	printf("\n");
 
 	return;
 }

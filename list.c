@@ -92,8 +92,8 @@ list_channels(unsigned int adapter, unsigned int timeout)
 			}
 			else
 			{
-//				printf("desc_tag: %u\n", desc_tag);
-//				hexdump(&sds[offset], desc_length);
+				vverbose("desc_tag: %u", desc_tag);
+				vhexdump(&sds[offset], desc_length);
 				offset += desc_length;
 			}
 			desc_loop_length -= desc_length;
