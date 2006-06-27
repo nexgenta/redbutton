@@ -87,6 +87,4 @@ void MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *, AudioClass *);
 void MHEGStreamPlayer_play(MHEGStreamPlayer *);
 void MHEGStreamPlayer_stop(MHEGStreamPlayer *);
 
-void MHEGStreamPlayer_drawCurrentFrame(MHEGStreamPlayer *);
-
 #endif	/* __MHEGSTREAMPLAYER_H__ */
