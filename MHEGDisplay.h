@@ -60,6 +60,8 @@ bool MHEGDisplay_processEvents(MHEGDisplay *, bool);
 void MHEGDisplay_refresh(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 
 /* drawing routines */
+void MHEGDisplay_setClipRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
+void MHEGDisplay_unsetClipRectangle(MHEGDisplay *);
 void MHEGDisplay_drawHoriLine(MHEGDisplay *, XYPosition *, unsigned int, int, int, MHEGColour *);
 void MHEGDisplay_drawVertLine(MHEGDisplay *, XYPosition *, unsigned int, int, int, MHEGColour *);
 void MHEGDisplay_fillTransparentRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *);

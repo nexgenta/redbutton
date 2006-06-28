@@ -383,6 +383,41 @@ MHEGDisplay_refresh(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 }
 
 /*
+ * set the clip rectangle for all subsequent drawing on the overlay
+ * coords should be in the range 0-MHEG_XRES, 0-MHEG_YRES
+ */
+
+void
+MHEGDisplay_setClipRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
+{
+	XRectangle clip;
+
+	/* scale if fullscreen */
+	clip.x = (pos->x_position * d->xres) / MHEG_XRES;
+	clip.y = (pos->y_position * d->yres) / MHEG_YRES;
+	clip.width = (box->x_length * d->xres) / MHEG_XRES;
+	clip.height = (box->y_length * d->yres) / MHEG_YRES;
+
+/* TODO */
+/* this will effect the XRenderComposite() call in _refresh() */
+	XRenderSetPictureClipRectangles(d->dpy, d->overlay_pic, 0, 0, &clip, 1);
+
+	return;
+}
+
+/*
+ * remove the clip rectangle from the overlay
+ */
+
+void
+MHEGDisplay_unsetClipRectangle(MHEGDisplay *d)
+{
+	XRenderSetPictureClipRectangles(d->dpy, d->overlay_pic, 0, 0, NULL, 0);
+
+	return;
+}
+
+/*
  * coords should be in the range 0-MHEG_XRES, 0-MHEG_YRES
  * width is the line width in pixels
  * style should be LineStyle_solid/dashed/dotted
