@@ -649,13 +649,6 @@ MHEGEngine_redrawArea(XYPosition *pos, OriginalBoxSize *box)
 	if(app->inst.LockCount > 0)
 		return;
 
-/**************************************************************************************/
-/* could do: */
-/* MHEGDisplay_setClipRectangle(pos, box); */
-/* rather than relying on every _render() method to make sure they dont draw outside the area */
-/* we also need to make sure the _render methods dont draw outside their own bounding boxes */
-/**************************************************************************************/
-
 	/* any undrawn on background is black */
 	MHEGColour_black(&black);
 	MHEGDisplay_fillRectangle(&engine.display, pos, box, &black);
@@ -672,6 +665,9 @@ MHEGEngine_redrawArea(XYPosition *pos, OriginalBoxSize *box)
 			VisibleClass_render(obj, &engine.display, pos, box);
 		stack = stack->next;
 	}
+
+	/* use the new objects we have just drawn */
+	MHEGDisplay_useOverlay(&engine.display);
 
 	/* refresh the screen */
 	MHEGDisplay_refresh(&engine.display, pos, box);

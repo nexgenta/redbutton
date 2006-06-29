@@ -47,7 +47,11 @@ typedef struct
 	Colormap cmap;				/* None, unless we needed to create a Colormap for our Visual */
 	Pixmap contents;			/* current contents of the Window */
 	Picture contents_pic;			/* XRender wrapper for the contents, this is what we composite on */
-	Picture overlay_pic;			/* draw MHEG objects on here and overlay it on any video */
+	Pixmap next_overlay;			/* all MHEG objects are drawn on next_overlay */
+	Picture next_overlay_pic;		/* via this XRender wrapper */
+	Pixmap used_overlay;			/* when MHEGDisplay_useOverlay() is called, next_overlay is copied here */
+	Picture used_overlay_pic;		/* used_overlay_pic is composited onto the video */
+	GC overlay_gc;				/* GC to XCopyArea next_overlay to used_overlay */
 	Picture textfg_pic;			/* 1x1 solid foreground colour for text */
 	MHEGKeyMapEntry *keymap;		/* keyboard mapping */
 } MHEGDisplay;
@@ -62,12 +66,15 @@ void MHEGDisplay_refresh(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 /* drawing routines */
 void MHEGDisplay_setClipRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 void MHEGDisplay_unsetClipRectangle(MHEGDisplay *);
+
 void MHEGDisplay_drawHoriLine(MHEGDisplay *, XYPosition *, unsigned int, int, int, MHEGColour *);
 void MHEGDisplay_drawVertLine(MHEGDisplay *, XYPosition *, unsigned int, int, int, MHEGColour *);
 void MHEGDisplay_fillTransparentRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 void MHEGDisplay_fillRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *, MHEGColour *);
 void MHEGDisplay_drawBitmap(MHEGDisplay *, XYPosition *, OriginalBoxSize *, MHEGBitmap *, XYPosition *);
 void MHEGDisplay_drawTextElement(MHEGDisplay *, XYPosition *, MHEGFont *, MHEGTextElement *, bool);
+
+void MHEGDisplay_useOverlay(MHEGDisplay *);
 
 /* convert PNG and MPEG I-frames to internal format */
 MHEGBitmap *MHEGDisplay_newPNGBitmap(MHEGDisplay *, OctetString *);

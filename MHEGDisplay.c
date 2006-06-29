@@ -80,7 +80,6 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 	XGCValues gcvals;
 	XRenderPictFormat *pic_format;
 	XRenderPictureAttributes pa;
-	Pixmap overlay;
 	Pixmap textfg;
 	/* fake argc, argv for XtDisplayInitialize */
 	int argc = 0;
@@ -227,8 +226,10 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 
 	/* create a 32-bit XRender Picture to draw the MHEG objects on */
 	pic_format = XRenderFindStandardFormat(d->dpy, PictStandardARGB32);
-	overlay = XCreatePixmap(d->dpy, d->win, d->xres, d->yres, 32);
-	d->overlay_pic = XRenderCreatePicture(d->dpy, overlay, pic_format, 0, NULL);
+	d->next_overlay = XCreatePixmap(d->dpy, d->win, d->xres, d->yres, 32);
+	d->next_overlay_pic = XRenderCreatePicture(d->dpy, d->next_overlay, pic_format, 0, NULL);
+	d->used_overlay = XCreatePixmap(d->dpy, d->win, d->xres, d->yres, 32);
+	d->used_overlay_pic = XRenderCreatePicture(d->dpy, d->used_overlay, pic_format, 0, NULL);
 
 	/* a 1x1 Picture to hold the text foreground colour */
 	textfg = XCreatePixmap(d->dpy, d->win, 1, 1, 32);
@@ -237,6 +238,9 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 
 	/* a GC to draw on the Window */
 	d->win_gc = XCreateGC(d->dpy, d->win, 0, &gcvals);
+
+	/* a GC to XCopyArea next_overlay to used_overlay (need to avoid any XRender clip mask on next_overlay) */
+	d->overlay_gc = XCreateGC(d->dpy, d->next_overlay, 0, &gcvals);
 
 	/* get the window on the screen */
 	XMapWindow(d->dpy, d->win);
@@ -371,16 +375,25 @@ MHEGDisplay_refresh(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 
 	/*
 	 * if video is being displayed, the current frame will already be in d->contents
-	 * (drawn by the video thread or VideoClass_render)
+	 * (drawn by the video thread)
 	 * overlay the MHEG objects onto the video in d->contents
 	 */
-	XRenderComposite(d->dpy, PictOpOver, d->overlay_pic, None, d->contents_pic, x, y, x, y, x, y, w, h);
+	XRenderComposite(d->dpy, PictOpOver, d->used_overlay_pic, None, d->contents_pic, x, y, x, y, x, y, w, h);
 
 	/* copy the Window contents onto the screen */
 	XCopyArea(d->dpy, d->contents, d->win, d->win_gc, x, y, w, h, x, y);
 
 	return;
 }
+
+/*
+ * all these drawing routines draw onto next_overlay_pic
+ * all coords should be in the range 0-MHEG_XRES, 0-MHEG_YRES
+ * the drawing routines themselves will scale the coords to full screen if needed
+ * you have to call MHEGDisplay_useOverlay() when you have finished drawing
+ * this copies next_overlay onto used_overlay
+ * used_overlay_pic is composited onto any video and put on the screen by MHEGDisplay_refresh()
+ */
 
 /*
  * set the clip rectangle for all subsequent drawing on the overlay
@@ -398,9 +411,7 @@ MHEGDisplay_setClipRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *b
 	clip.width = (box->x_length * d->xres) / MHEG_XRES;
 	clip.height = (box->y_length * d->yres) / MHEG_YRES;
 
-/* TODO */
-/* this will effect the XRenderComposite() call in _refresh() */
-	XRenderSetPictureClipRectangles(d->dpy, d->overlay_pic, 0, 0, &clip, 1);
+	XRenderSetPictureClipRectangles(d->dpy, d->next_overlay_pic, 0, 0, &clip, 1);
 
 	return;
 }
@@ -412,7 +423,7 @@ MHEGDisplay_setClipRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *b
 void
 MHEGDisplay_unsetClipRectangle(MHEGDisplay *d)
 {
-	XRenderSetPictureClipRectangles(d->dpy, d->overlay_pic, 0, 0, NULL, 0);
+	XRenderSetPictureClipRectangles(d->dpy, d->next_overlay_pic, 0, 0, NULL, 0);
 
 	return;
 }
@@ -449,7 +460,7 @@ if(style != LineStyle_solid)
 printf("TODO: LineStyle %d\n", style);
 
 	/* draw a rectangle */
-	XRenderFillRectangle(d->dpy, PictOpOver, d->overlay_pic, &rcol, x, y, w, h);
+	XRenderFillRectangle(d->dpy, PictOpOver, d->next_overlay_pic, &rcol, x, y, w, h);
 
 	return;
 }
@@ -486,7 +497,7 @@ if(style != LineStyle_solid)
 printf("TODO: LineStyle %d\n", style);
 
 	/* draw a rectangle */
-	XRenderFillRectangle(d->dpy, PictOpOver, d->overlay_pic, &rcol, x, y, w, h);
+	XRenderFillRectangle(d->dpy, PictOpOver, d->next_overlay_pic, &rcol, x, y, w, h);
 
 	return;
 }
@@ -515,7 +526,7 @@ MHEGDisplay_fillRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box,
 	w = (box->x_length * d->xres) / MHEG_XRES;
 	h = (box->y_length * d->yres) / MHEG_YRES;
 
-	XRenderFillRectangle(d->dpy, PictOpOver, d->overlay_pic, &rcol, x, y, w, h);
+	XRenderFillRectangle(d->dpy, PictOpOver, d->next_overlay_pic, &rcol, x, y, w, h);
 
 	return;
 }
@@ -539,7 +550,7 @@ MHEGDisplay_fillTransparentRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBo
 	w = (box->x_length * d->xres) / MHEG_XRES;
 	h = (box->y_length * d->yres) / MHEG_YRES;
 
-	XRenderFillRectangle(d->dpy, PictOpSrc, d->overlay_pic, &rcol, x, y, w, h);
+	XRenderFillRectangle(d->dpy, PictOpSrc, d->next_overlay_pic, &rcol, x, y, w, h);
 
 	return;
 }
@@ -570,7 +581,7 @@ MHEGDisplay_drawBitmap(MHEGDisplay *d, XYPosition *src, OriginalBoxSize *box, MH
 	dst_x = (dst->x_position * d->xres) / MHEG_XRES;
 	dst_y = (dst->y_position * d->yres) / MHEG_YRES;
 
-	XRenderComposite(d->dpy, PictOpOver, bitmap->image_pic, None, d->overlay_pic,
+	XRenderComposite(d->dpy, PictOpOver, bitmap->image_pic, None, d->next_overlay_pic,
 			 src_x, src_y, src_x, src_y, dst_x, dst_y, w, h);
 
 
@@ -670,7 +681,7 @@ MHEGDisplay_drawTextElement(MHEGDisplay *d, XYPosition *pos, MHEGFont *font, MHE
 		/* round up/down the X coord */
 		scrn_x = (x * d->xres) / MHEG_XRES;
 		scrn_x = (scrn_x + (face->units_per_EM / 2)) / face->units_per_EM;
-		XftGlyphRender(d->dpy, PictOpOver, d->textfg_pic, font->font, d->overlay_pic,
+		XftGlyphRender(d->dpy, PictOpOver, d->textfg_pic, font->font, d->next_overlay_pic,
 			       0, 0, orig_x + scrn_x, y,
 			       &glyph, 1);
 		face = XftLockFace(font->font);
@@ -685,6 +696,20 @@ MHEGDisplay_drawTextElement(MHEGDisplay *d, XYPosition *pos, MHEGFont *font, MHE
 	}
 
 	XftUnlockFace(font->font);
+
+	return;
+}
+
+/*
+ * copy the contents of next_overlay onto used_overlay
+ * ie all drawing done since the last call to this will appear on the screen at the next refresh()
+ */
+
+void
+MHEGDisplay_useOverlay(MHEGDisplay *d)
+{
+	/* avoid any XRender clip mask */
+	XCopyArea(d->dpy, d->next_overlay, d->used_overlay, d->overlay_gc, 0, 0, d->xres, d->yres, 0, 0);
 
 	return;
 }
