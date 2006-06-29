@@ -428,7 +428,7 @@ MHEGFont_layoutText(MHEGFont *f, MHEGColour *col, OctetString *text, OriginalBox
 
 /* TODO */
 /* truncation: ie remove chars outside box */
-/* if we set a clip rectangle in MHEGEngine_redrawArea it will solve the problem */
+/* setting the clip rectangle in TextClass_render solves the problem */
 /* but UK profile says we shouldn't draw any partial characters */
 
 	return elem_list;

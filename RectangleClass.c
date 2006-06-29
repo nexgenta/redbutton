@@ -390,6 +390,8 @@ RectangleClass_render(RectangleClass *t, MHEGDisplay *d, XYPosition *pos, Origin
 	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
 		return;
 
+	MHEGDisplay_setClipRectangle(d, &ins_pos, &ins_box);
+
 	/* fill it */
 	MHEGDisplay_fillRectangle(d, &ins_pos, &ins_box, &t->inst.RefFillColour);
 
@@ -413,6 +415,8 @@ RectangleClass_render(RectangleClass *t, MHEGDisplay *d, XYPosition *pos, Origin
 	p.y_position = t->inst.Position.y_position + t->inst.BoxSize.y_length - t->inst.LineWidth;
 	len = t->inst.BoxSize.x_length - t->inst.LineWidth;
 	MHEGDisplay_drawHoriLine(d, &p, len, t->inst.LineWidth, t->inst.LineStyle, &t->inst.RefLineColour);
+
+	MHEGDisplay_unsetClipRectangle(d);
 
 	return;
 }

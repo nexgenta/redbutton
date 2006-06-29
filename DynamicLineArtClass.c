@@ -395,8 +395,13 @@ DynamicLineArtClass_render(DynamicLineArtClass *t, MHEGDisplay *d, XYPosition *p
 	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
 		return;
 
+	MHEGDisplay_setClipRectangle(d, &ins_pos, &ins_box);
+
 /* TODO */
 printf("TODO: DynamicLineArtClass_render\n");
+
+	MHEGDisplay_unsetClipRectangle(d);
+
 	return;
 }
 

@@ -553,10 +553,21 @@ HyperTextClass_contentAvailable(HyperTextClass *t, OctetString *file)
 void
 HyperTextClass_render(HyperTextClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 {
+	XYPosition ins_pos;
+	OriginalBoxSize ins_box;
+
 	verbose("HyperTextClass: %s; render", ExternalReference_name(&t->rootClass.inst.ref));
+
+	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
+		return;
+
+	MHEGDisplay_setClipRectangle(d, &ins_pos, &ins_box);
 
 /* TODO */
 printf("TODO: HyperTextClass_render\n");
+
+	MHEGDisplay_unsetClipRectangle(d);
+
 	return;
 }
 

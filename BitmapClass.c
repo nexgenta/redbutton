@@ -471,6 +471,8 @@ BitmapClass_render(BitmapClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxS
 	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
 		return;
 
+	MHEGDisplay_setClipRectangle(d, &ins_pos, &ins_box);
+
 	/* work out where the intersection starts on the bitmap */
 	src.x_position = ins_pos.x_position - t->inst.Position.x_position;
 	src.y_position = ins_pos.y_position - t->inst.Position.y_position;
@@ -484,6 +486,8 @@ BitmapClass_render(BitmapClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxS
 /****************************************************************************************/
 
 	MHEGDisplay_drawBitmap(d, &src, &ins_box, t->inst.Bitmap, &ins_pos);
+
+	MHEGDisplay_unsetClipRectangle(d);
 
 	return;
 }

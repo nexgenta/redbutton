@@ -375,11 +375,21 @@ printf("TODO: SliderClass_GetPortion not yet implemented\n");
 void
 SliderClass_render(SliderClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 {
+	XYPosition ins_pos;
+	OriginalBoxSize ins_box;
+
 	verbose("SliderClass: %s; render", ExternalReference_name(&t->rootClass.inst.ref));
+
+	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
+		return;
+
+	MHEGDisplay_setClipRectangle(d, &ins_pos, &ins_box);
 
 /* TODO */
 printf("TODO: SliderClass_render\n");
+
+	MHEGDisplay_unsetClipRectangle(d);
+
 	return;
 }
-
 

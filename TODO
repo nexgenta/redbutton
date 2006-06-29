@@ -1,7 +1,3 @@
-use setClipRectangle on the intersection area in each _render() method
-(remember to unsetClipRectangle at the end of _render)
-
-
 if openStream fails - need to make sure either:
 contents picture gets filled with black, or
 VideoClass_render does not make a transparent rectangle in the overlay picture

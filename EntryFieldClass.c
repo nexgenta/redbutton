@@ -559,10 +559,21 @@ EntryFieldClass_contentAvailable(EntryFieldClass *t, OctetString *file)
 void
 EntryFieldClass_render(EntryFieldClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 {
+	XYPosition ins_pos;
+	OriginalBoxSize ins_box;
+
 	verbose("EntryFieldClass: %s; render", ExternalReference_name(&t->rootClass.inst.ref));
+
+	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
+		return;
+
+	MHEGDisplay_setClipRectangle(d, &ins_pos, &ins_box);
 
 /* TODO */
 printf("TODO: EntryFieldClass_render\n");
+
+	MHEGDisplay_unsetClipRectangle(d);
+
 	return;
 }
 

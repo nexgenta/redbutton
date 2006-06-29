@@ -423,7 +423,16 @@ MHEGDisplay_setClipRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *b
 void
 MHEGDisplay_unsetClipRectangle(MHEGDisplay *d)
 {
-	XRenderSetPictureClipRectangles(d->dpy, d->next_overlay_pic, 0, 0, NULL, 0);
+	/*
+	 * this doesn't work...
+	 * XRenderSetPictureClipRectangles(d->dpy, d->next_overlay_pic, 0, 0, NULL, 0);
+	 */
+
+	XRenderPictureAttributes attr;
+
+	attr.clip_mask = None;
+
+	XRenderChangePicture(d->dpy, d->next_overlay_pic, CPClipMask, &attr);
 
 	return;
 }

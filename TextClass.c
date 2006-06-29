@@ -590,6 +590,8 @@ TextClass_render(TextClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSize 
 	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
 		return;
 
+	MHEGDisplay_setClipRectangle(d, &ins_pos, &ins_box);
+
 	/* draw the background */
 	MHEGDisplay_fillRectangle(d, &ins_pos, &ins_box, &t->inst.BackgroundColour);
 
@@ -611,6 +613,8 @@ TextClass_render(TextClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSize 
 		MHEGDisplay_drawTextElement(d, &t->inst.Position, &t->inst.Font, &element->item, tabs);
 		element = element->next;
 	}
+
+	MHEGDisplay_unsetClipRectangle(d);
 
 	return;
 }
