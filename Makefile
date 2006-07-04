@@ -1,7 +1,10 @@
 CC=gcc
 CFLAGS=-Wall -O2
+# gprof profiling
+#CFLAGS=-Wall -O2 -pg
 
 DEFS=-D_REENTRANT -D_GNU_SOURCE
+# safe_malloc debugging
 #DEFS=-DDEBUG_ALLOC -D_REENTRANT -D_GNU_SOURCE
 INCS=`freetype-config --cflags`
 LIBS=-lm -lz -L/usr/X11R6/lib -lX11 -lXext -lXt -lXrender -lXft -lpng -lmpeg2 -lmpeg2convert -lavformat -lavcodec -lasound -lpthread
@@ -111,7 +114,7 @@ berdecode:	berdecode.c
 	${CC} ${CFLAGS} ${DEFS} -o berdecode berdecode.c
 
 clean:
-	rm -f rb-browser rb-keymap xsd2c dertest dertest-mheg.[ch] berdecode *.o ISO13522-MHEG-5.[ch] clone.[ch] rtti.h core
+	rm -f rb-browser rb-keymap xsd2c dertest dertest-mheg.[ch] berdecode *.o ISO13522-MHEG-5.[ch] clone.[ch] rtti.h gmon.out core
 
 TARDIR=`basename ${PWD}`
 
