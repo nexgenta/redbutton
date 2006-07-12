@@ -27,13 +27,8 @@ int
 main(int argc, char *argv[])
 {
 	char *prog_name = argv[0];
+	MHEGEngineOptions opts;
 	int arg;
-	bool remote = false;
-	int v = 0;
-	bool f = false;
-	unsigned int timeout = MISSING_CONTENT_TIMEOUT;
-	char *keymap = NULL;
-	char *srg_dir;
 	size_t last;
 	int rc;
 	int i;
@@ -50,28 +45,37 @@ main(int argc, char *argv[])
 	if(NULL != 0)
 		fatal("%s needs to be compiled with a libc that makes NULL == 0", prog_name);
 
+	/* default options */
+	bzero(&opts, sizeof(MHEGEngineOptions));
+	opts.remote = false;
+	opts.srg_loc = NULL;	/* must be given on cmd line */
+	opts.verbose = 0;
+	opts.fullscreen = false;
+	opts.timeout = MISSING_CONTENT_TIMEOUT;
+	opts.keymap = NULL;
+
 	while((arg = getopt(argc, argv, "rvfk:t:")) != EOF)
 	{
 		switch(arg)
 		{
 		case 'r':
-			remote = true;
+			opts.remote = true;
 			break;
 
 		case 'v':
-			v ++;
+			opts.verbose ++;
 			break;
 
 		case 'f':
-			f = true;
+			opts.fullscreen = true;
 			break;
 
 		case 'k':
-			keymap = optarg;
+			opts.keymap = optarg;
 			break;
 
 		case 't':
-			timeout = strtoul(optarg, NULL, 0);
+			opts.timeout = strtoul(optarg, NULL, 0);
 			break;
 
 		default:
@@ -83,14 +87,17 @@ main(int argc, char *argv[])
 	if(optind != argc - 1)
 		usage(prog_name);
 
-	srg_dir = argv[optind];
+	opts.srg_loc = argv[optind];
 
-	/* chop off any trailing / chars */
-	last = strlen(srg_dir) - 1;
-	while(last > 0 && srg_dir[last] == '/')
-		srg_dir[last--] = '\0';
+	/* chop off any trailing / chars for local directory name */
+	if(!opts.remote)
+	{
+		last = strlen(opts.srg_loc) - 1;
+		while(last > 0 && opts.srg_loc[last] == '/')
+			opts.srg_loc[last--] = '\0';
+	}
 
-	MHEGEngine_init(remote, srg_dir, v, timeout, f, keymap);
+	MHEGEngine_init(&opts);
 
 	/* search for the boot object */
 	found = false;
@@ -108,7 +115,7 @@ main(int argc, char *argv[])
 	}
 	else
 	{
-		error("Unable to find boot object in '%s'", srg_dir);
+		error("Unable to find boot object in service gateway '%s'", opts.srg_loc);
 		rc = EXIT_FAILURE;
 	}
 

@@ -76,6 +76,17 @@
 #define ContentHook_Stream_MPEG		10
 #define ContentHook_Stream_File		11
 
+/* cmd line options */
+typedef struct
+{
+	bool remote;		/* or local rb-download backend */
+	char *srg_loc;		/* service gateway location: directory for local; host[:port] for remote */
+	int verbose;		/* -v flag */
+	unsigned int timeout;	/* seconds to poll for missing content before generating a ContentRefError */
+	bool fullscreen;	/* scale to fullscreen? */
+	char *keymap;		/* keymap config file to use (NULL for default) */
+} MHEGEngineOptions;
+
 /* a list of files we are waiting for, and the objects that want them */
 typedef struct
 {
@@ -169,7 +180,7 @@ typedef struct
 } MHEGEngine;
 
 /* prototypes */
-void MHEGEngine_init(bool, char *, int, unsigned int, bool, char *);
+void MHEGEngine_init(MHEGEngineOptions *);
 int MHEGEngine_run(OctetString *);
 void MHEGEngine_fini();
 

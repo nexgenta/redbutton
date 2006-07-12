@@ -164,16 +164,16 @@ free_MHEGActionListItem(LIST_TYPE(MHEGAction) *item)
 static MHEGEngine engine;
 
 void
-MHEGEngine_init(bool remote, char *srg_loc, int verbose, unsigned int timeout, bool fullscreen, char *keymap)
+MHEGEngine_init(MHEGEngineOptions *opts)
 {
 	bzero(&engine, sizeof(MHEGEngine));
 
-	engine.verbose = verbose;
-	engine.timeout = timeout;
+	engine.verbose = opts->verbose;
+	engine.timeout = opts->timeout;
 
-	MHEGDisplay_init(&engine.display, fullscreen, keymap);
+	MHEGDisplay_init(&engine.display, opts->fullscreen, opts->keymap);
 
-	MHEGBackend_init(&engine.backend, remote, srg_loc);
+	MHEGBackend_init(&engine.backend, opts->remote, opts->srg_loc);
 
 	MHEGApp_init(&engine.active_app);
 
