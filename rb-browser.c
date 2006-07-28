@@ -1,8 +1,10 @@
 /*
- * rb-browser [-v] [-f] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>
+ * rb-browser [-v] [-f] [-o <video-output-method>] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>
  *
  * -v is verbose/debug mode
  * -f is full screen, otherwise it uses a window
+ * -o allws you to choose a video output method if the default is not supported/too slow on your graphics card
+ * (do 'rb-browser -o' for a list of available methods)
  * -k changes the default key map to the given file
  * (use rb-keymap to generate a keymap config file)
  * -t is how long to poll for missing files before generating a ContentRefError (default 10 seconds)
@@ -51,10 +53,11 @@ main(int argc, char *argv[])
 	opts.srg_loc = NULL;	/* must be given on cmd line */
 	opts.verbose = 0;
 	opts.fullscreen = false;
+	opts.vo_method = NULL;
 	opts.timeout = MISSING_CONTENT_TIMEOUT;
 	opts.keymap = NULL;
 
-	while((arg = getopt(argc, argv, "rvfk:t:")) != EOF)
+	while((arg = getopt(argc, argv, "rvfo:k:t:")) != EOF)
 	{
 		switch(arg)
 		{
@@ -68,6 +71,10 @@ main(int argc, char *argv[])
 
 		case 'f':
 			opts.fullscreen = true;
+			break;
+
+		case 'o':
+			opts.vo_method = optarg;
 			break;
 
 		case 'k':
@@ -128,6 +135,15 @@ main(int argc, char *argv[])
 void
 usage(char *prog_name)
 {
-	fatal("Usage: %s [-v] [-f] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>", prog_name);
+	fatal("Usage: %s "
+		"[-v] "
+		"[-f] "
+		"[-o <video-output-method>] "
+		"[-k <keymap_file>] "
+		"[-t <timeout>] "
+		"[-r] "
+		"<service_gateway>\n\n"
+		"%s",
+		prog_name, MHEGVideoOutputMethod_getUsage());
 }
 

@@ -11,6 +11,7 @@
 
 #include "ISO13522-MHEG-5.h"
 #include "MHEGDisplay.h"
+#include "MHEGVideoOutput.h"
 #include "MHEGBackend.h"
 #include "MHEGApp.h"
 #include "der_decode.h"
@@ -84,6 +85,7 @@ typedef struct
 	int verbose;		/* -v flag */
 	unsigned int timeout;	/* seconds to poll for missing content before generating a ContentRefError */
 	bool fullscreen;	/* scale to fullscreen? */
+	char *vo_method;	/* MHEGVideoOutputMethod name (NULL for default) */
 	char *keymap;		/* keymap config file to use (NULL for default) */
 } MHEGEngineOptions;
 
@@ -165,6 +167,7 @@ typedef struct
 	int verbose;					/* -v cmd line flag */
 	unsigned int timeout;				/* how long to poll for missing content before generating an error */
 	MHEGDisplay display;				/* make porting easier */
+	MHEGVideoOutputMethod *vo_method;		/* video output method (resolved from name given in MHEGEngineOptions) */
 	MHEGBackend backend;				/* local or remote access to DSMCC carousel and MPEG streams */
 	MHEGApp active_app;				/* application we are currently running */
 	QuitReason quit_reason;				/* do we need to stop the current app */
@@ -185,6 +188,7 @@ int MHEGEngine_run(OctetString *);
 void MHEGEngine_fini();
 
 MHEGDisplay *MHEGEngine_getDisplay(void);
+MHEGVideoOutputMethod *MHEGEngine_getVideoOutputMethod(void);
 
 void MHEGEngine_TransitionTo(TransitionTo *, OctetString *);
 

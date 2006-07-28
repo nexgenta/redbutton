@@ -173,6 +173,8 @@ MHEGEngine_init(MHEGEngineOptions *opts)
 
 	MHEGDisplay_init(&engine.display, opts->fullscreen, opts->keymap);
 
+	engine.vo_method = MHEGVideoOutputMethod_fromString(opts->vo_method);
+
 	MHEGBackend_init(&engine.backend, opts->remote, opts->srg_loc);
 
 	MHEGApp_init(&engine.active_app);
@@ -281,6 +283,12 @@ MHEGDisplay *
 MHEGEngine_getDisplay(void)
 {
 	return &engine.display;
+}
+
+MHEGVideoOutputMethod *
+MHEGEngine_getVideoOutputMethod(void)
+{
+	return engine.vo_method;
 }
 
 /*

@@ -70,6 +70,8 @@ OBJS=	rb-browser.o		\
 	MHEGTimer.o		\
 	MHEGStreamPlayer.o	\
 	MHEGVideoOutput.o	\
+	videoout_null.o		\
+	videoout_xshm.o		\
 	MHEGAudioOutput.o	\
 	${CLASSES}		\
 	ISO13522-MHEG-5.o	\

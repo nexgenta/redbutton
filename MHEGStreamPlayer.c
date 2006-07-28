@@ -445,7 +445,7 @@ video_thread(void *arg)
 		fatal("video_thread: no frames!");
 
 	/* initialise the video output method */
-	MHEGVideoOutput_init(&vo);
+	MHEGVideoOutput_init(&vo, MHEGEngine_getVideoOutputMethod());
 
 	/* the time that we displayed the previous frame */
 	last_time = 0;

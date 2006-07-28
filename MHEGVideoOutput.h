@@ -5,31 +5,28 @@
 #ifndef __MHEGVIDEOOUTPUT_H__
 #define __MHEGVIDEOOUTPUT_H__
 
-#include <stdint.h>
-#include <X11/Xlib.h>
-#include <X11/extensions/XShm.h>
-#include <ffmpeg/avcodec.h>
-
 typedef struct
 {
-	unsigned int width;
-	unsigned int height;
-} FrameSize;
-
-typedef struct
-{
-	XImage *current_frame;			/* frame we are currently displaying */
-	XShmSegmentInfo shm;			/* shared memory used by current_frame */
-	AVPicture rgb_frame;			/* ffmpeg wrapper for current_frame SHM data */
-	enum PixelFormat out_format;		/* rgb_frame ffmpeg pixel format */
-	ImgReSampleContext *resize_ctx;		/* NULL if we do not need to resize the frame */
-	FrameSize resize_in;			/* resize_ctx input dimensions */
-	FrameSize resize_out;			/* resize_ctx output dimensions */
-	AVPicture resized_frame;		/* resized output frame */
-	uint8_t *resized_data;			/* resized_frame data buffer */
+	void *ctx;			/* context passed to MHEGVideoOutputFns */
+	struct MHEGVideoOutputFns
+	{
+		/* return a new ctx */
+		void *(*init)(void);
+		/* free the given ctx */
+		void (*fini)(void *);
+		/* get ready to draw the given YUV frame at the given size */
+		void (*prepareFrame)(void *, VideoFrame *, unsigned int, unsigned int);
+		/* draw the frame setup by prepareFrame at the given location */
+		void (*drawFrame)(void *, int, int);
+	} *fns;
 } MHEGVideoOutput;
 
-void MHEGVideoOutput_init(MHEGVideoOutput *);
+typedef struct MHEGVideoOutputFns MHEGVideoOutputMethod;
+
+MHEGVideoOutputMethod *MHEGVideoOutputMethod_fromString(char *);
+char *MHEGVideoOutputMethod_getUsage(void);
+
+void MHEGVideoOutput_init(MHEGVideoOutput *, MHEGVideoOutputMethod *);
 void MHEGVideoOutput_fini(MHEGVideoOutput *);
 
 void MHEGVideoOutput_prepareFrame(MHEGVideoOutput *, VideoFrame *, unsigned int, unsigned int);
