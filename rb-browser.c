@@ -3,7 +3,7 @@
  *
  * -v is verbose/debug mode
  * -f is full screen, otherwise it uses a window
- * -o allws you to choose a video output method if the default is not supported/too slow on your graphics card
+ * -o allows you to choose a video output method if the default is not supported/too slow on your graphics card
  * (do 'rb-browser -o' for a list of available methods)
  * -k changes the default key map to the given file
  * (use rb-keymap to generate a keymap config file)

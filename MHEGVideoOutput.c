@@ -72,6 +72,10 @@ MHEGVideoOutputMethod_getUsage(void)
 void
 MHEGVideoOutput_init(MHEGVideoOutput *v, MHEGVideoOutputMethod *fns)
 {
+	/* assert */
+	if(fns == NULL)
+		fatal("MHEGVideoOutput_init: video output method not defined");
+
 	v->fns = fns;
 	v->ctx = (*(v->fns->init))();
 

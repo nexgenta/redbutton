@@ -100,7 +100,7 @@ vo_xshm_prepareFrame(void *ctx, VideoFrame *f, unsigned int out_width, unsigned 
 			v->resize_out.height = out_height;
 			/* somewhere to store the resized frame */
 			if((resized_size = avpicture_get_size(f->pix_fmt, out_width, out_height)) < 0)
-				fatal("x11_shm_prepareFrame: invalid frame size");
+				fatal("vo_xshm_prepareFrame: invalid frame size");
 			v->resized_data = safe_realloc(v->resized_data, resized_size);
 			avpicture_fill(&v->resized_frame, v->resized_data, f->pix_fmt, out_width, out_height);
 		}
