@@ -488,7 +488,7 @@ video_thread(void *arg)
 		drop_frame = (usecs < 0);
 		if(drop_frame)
 		{
-			verbose("MHEGStreamPlayer: dropped frame %u (usecs=%d)", nframes, usecs);
+			verbose("MHEGStreamPlayer: dropped video frame %u (usecs=%d)", nframes, usecs);
 		}
 		else
 		{
@@ -592,6 +592,7 @@ audio_thread(void *arg)
 	int64_t now_time, next_time;
 	double now_pts, next_pts;
 	int usecs;
+	double vpts = 0.0;
 
 	if(!p->have_audio)
 		return NULL;
@@ -724,8 +725,20 @@ audio_thread(void *arg)
 /* TODO */
 /* need to make sure pts is what we expect */
 /* if we missed decoding a sample, play silence */
-		/* this will block until the sound card can take the data */
-		MHEGAudioOutput_addSamples(&ao, af->data, af->size);
+		/* if the audio is getting ahead, don't play this sample */
+		pthread_mutex_lock(&p->videoq_lock);
+		vpts = p->videoq ? p->videoq->item.pts : vpts;
+		pthread_mutex_unlock(&p->videoq_lock);
+		if(vpts <= af->pts)
+		{
+			/* this will block until the sound card can take the data */
+			MHEGAudioOutput_addSamples(&ao, af->data, af->size);
+		}
+		else
+		{
+			verbose("MHEGStreamPlayer: dropped audio frame (%f ahead)", vpts - af->pts);
+		}
+/* TODO handle case when video is ahead */
 		/* we can delete the frame from the queue now */
 		pthread_mutex_lock(&p->audioq_lock);
 		LIST_FREE_HEAD(&p->audioq, AudioFrame, free_AudioFrameListItem);
