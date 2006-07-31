@@ -1,4 +1,7 @@
-maintain A/V sync in MHEGStreamPlayer
+vsync video drawing with monitor refresh
+
+
+better audio sync in MHEGStreamPlayer
 
 
 if openStream fails - need to make sure either:
