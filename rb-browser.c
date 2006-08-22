@@ -1,5 +1,5 @@
 /*
- * rb-browser [-v] [-f] [-o <video-output-method>] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>
+ * rb-browser [-v] [-f] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>
  *
  * -v is verbose/debug mode
  * -f is full screen, otherwise it uses a window
@@ -138,7 +138,7 @@ usage(char *prog_name)
 	fatal("Usage: %s "
 		"[-v] "
 		"[-f] "
-		"[-o <video-output-method>] "
+		"[-o <video_output_method>] "
 		"[-k <keymap_file>] "
 		"[-t <timeout>] "
 		"[-r] "
