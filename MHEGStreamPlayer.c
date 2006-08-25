@@ -164,6 +164,10 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 {
 	verbose("MHEGStreamPlayer_play: audio_tag=%d video_tag=%d", p->audio_tag, p->video_tag);
 
+	/* make sure the VideoClass doesn't try to draw anything yet */
+	if(p->video != NULL)
+		p->video->inst.no_video = true;
+
 	p->audio_pid = p->audio_tag;
 	p->video_pid = p->video_tag;
 	if((p->ts = MHEGEngine_openStream(p->have_audio, &p->audio_pid, &p->audio_type,
@@ -172,6 +176,10 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 		error("Unable to open MPEG stream");
 		return;
 	}
+
+	/* let the VideoClass know we now have a video stream */
+	if(p->video != NULL)
+		p->video->inst.no_video = false;
 
 	p->playing = true;
 	p->stop = false;

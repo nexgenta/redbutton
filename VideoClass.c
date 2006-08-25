@@ -34,6 +34,8 @@ default_VideoClassInstanceVars(VideoClass *t, VideoClassInstanceVars *v)
 	pthread_mutex_init(&v->scaled_lock, NULL);
 	v->scaled = false;
 
+	v->no_video = false;
+
 	return;
 }
 
@@ -375,6 +377,10 @@ VideoClass_render(VideoClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSiz
 	OriginalBoxSize ins_box;
 
 	verbose("VideoClass: %s; render", ExternalReference_name(&t->rootClass.inst.ref));
+
+	/* if the MHEGStreamPlayer failed to open the video stream, don't display anything */
+	if(t->inst.no_video)
+		return;
 
 	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
 		return;
