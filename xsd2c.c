@@ -8,7 +8,7 @@
  * -c gives the output C source file (default is <ASN1-types>.c)
  * -h gives the output header file (default is <ASN1-types>.h)
  *
- * Simon Kilvington, 9/1/2006
+ * Simon Kilvington, 25/8/2006
  */
 
 #include <unistd.h>
@@ -1188,6 +1188,10 @@ output_decodefunc(FILE *src, struct typeinfo *t, struct typeinfo *types)
 		}
 	}
 
+	/* do we need the ENUMERATED value variable */
+	if(strcmp(t->type, "xsd:token") == 0)
+		fprintf(src, "\tint value;\n");
+
 	/* output the type name */
 	fprintf(src, "\n#ifdef DER_VERBOSE\n");
 	fprintf(src, "\tprintf(\"<%s>\\n\");\n", t->name);
@@ -1242,8 +1246,9 @@ output_decodefunc(FILE *src, struct typeinfo *t, struct typeinfo *types)
 	{
 		/* ENUMERATED is stored as an INTEGER */
 		fprintf(src, "\t/* ENUMERATED */\n");
-		output_decode_subtype(src, t->name, "Integer", "(int *) type", "length", 1);
+		output_decode_subtype(src, t->name, "Integer", "&value", "length", 1);
 		fprintf(src, "\tleft -= sublen;\n\n");
+		fprintf(src, "\t*type = (%s) value;\n\n", t->name);
 	}
 	/* is it a SEQUENCE OF primitive-type, or a SEQUENCE OF complex-type */
 	else if((strcmp(t->type, "xsd:list") == 0 && t->subtypes && t->subtypes->next == NULL)
