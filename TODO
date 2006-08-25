@@ -1,3 +1,11 @@
+use ffmpeg to convert MPEG I-frames to MHEGBitmaps in MHEGDisplay_newMPEGBitmap
+(rather than libmpeg2)
+
+
+use ffmpeg to permenantly scale-up bitmaps in MHEGBitmap_fromRGBA
+(rather than having to apply an XRender xform matrix and filter each time)
+
+
 vsync video drawing with monitor refresh
 
 
