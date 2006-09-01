@@ -7,7 +7,7 @@ DEFS=-D_REENTRANT -D_GNU_SOURCE
 # safe_malloc debugging
 #DEFS=-DDEBUG_ALLOC -D_REENTRANT -D_GNU_SOURCE
 INCS=`freetype-config --cflags`
-LIBS=-lm -lz -L/usr/X11R6/lib -lX11 -lXext -lXt -lXrender -lXft -lpng -lmpeg2 -lmpeg2convert -lavformat -lavcodec -lasound -lpthread
+LIBS=-lm -lz -L/usr/X11R6/lib -lX11 -lXext -lXt -lXrender -lXft -lpng -lavformat -lavcodec -lasound -lpthread
 
 CLASSES=ActionClass.o	\
 	ApplicationClass.o	\

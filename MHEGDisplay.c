@@ -13,8 +13,6 @@
 #include <X11/Intrinsic.h>
 #include <X11/Shell.h>
 #include <X11/keysym.h>
-#include <mpeg2dec/mpeg2.h>
-#include <mpeg2dec/mpeg2convert.h>
 #include <ffmpeg/avformat.h>
 
 #include "MHEGEngine.h"
@@ -767,78 +765,95 @@ MHEGBitmap *
 MHEGDisplay_newMPEGBitmap(MHEGDisplay *d, OctetString *mpeg)
 {
 	MHEGBitmap *b;
-	mpeg2dec_t *decoder;
-	const mpeg2_info_t *info;
-	bool done;
-	unsigned int width = 0;		/* keep the compiler happy */
-	unsigned int height = 0;	/* keep the compiler happy */
-	unsigned char *rgba = NULL;	/* keep the compiler happy */
+	AVCodecContext *codec_ctx;
+	AVCodec *codec;
+	AVFrame *yuv_frame;
+	AVFrame *rgb_frame;
+	unsigned char *data;
+	unsigned int size;
+	int used;
+	int got_picture;
+	unsigned int width;
+	unsigned int height;
+	int nbytes;
+	unsigned char *rgba = NULL;
 	unsigned int i;
 
 	/* nothing to do */
 	if(mpeg == NULL || mpeg->size == 0)
 		return NULL;
 
-	/* use libmpeg2 to convert the data into a standard format we can use as an XImage */
-	if((decoder = mpeg2_init()) == NULL)
-	{
-		error("Unable to initialise MPEG decoder");
-		return NULL;
-	}
-	info = mpeg2_info(decoder);
+	/* use ffmpeg to convert the data into a standard format we can use as an XImage */
+	if((codec_ctx = avcodec_alloc_context()) == NULL)
+		fatal("Out of memory");
 
-	/* feed all the data into the buffer */
-	mpeg2_buffer(decoder, mpeg->data, mpeg->data + mpeg->size);
+	if((codec = avcodec_find_decoder(CODEC_ID_MPEG2VIDEO)) == NULL)
+		fatal("Unable to initialise MPEG decoder");
 
-	done = false;
+	if(avcodec_open(codec_ctx, codec) < 0)
+		fatal("Unable to open video codec");
+
+	if((yuv_frame = avcodec_alloc_frame()) == NULL)
+		fatal("Out of memory");
+	if((rgb_frame = avcodec_alloc_frame()) == NULL)
+		fatal("Out of memory");
+
+	/* decode the YUV frame */
+	data = mpeg->data;
+	size = mpeg->size;
 	do
 	{
-		mpeg2_state_t state = mpeg2_parse(decoder);
-		switch(state)
-		{
-		case STATE_BUFFER:
-			/*
-			 * we've already filled the buffer with all the data
-			 * if the decoder needs more, the data is probably invalid
-			 */
-			error("Unable to decode MPEG image");
-			mpeg2_close(decoder);
-			return NULL;
-
-		case STATE_SEQUENCE:
-			mpeg2_convert(decoder, mpeg2convert_rgb32, NULL);
-			break;
-
-		case STATE_SLICE:
-		case STATE_END:
-		case STATE_INVALID_END:
-			/* do we have a picture */
-			if(info->display_fbuf)
-			{
-				width = info->sequence->width;
-				height = info->sequence->height;
-				rgba = info->display_fbuf->buf[0];
-				/* set the alpha channel values to opaque */
-				for(i=0; i<width*height; i++)
-					rgba[(i * 4) + 3] = 0xff;
-				done = true;
-			}
-			break;
-
-		default:
-			break;
-		}
+		used = avcodec_decode_video(codec_ctx, yuv_frame, &got_picture, data, size);
+		data += used;
+		size -= used;
 	}
-	while(!done);
+	while(!got_picture && size > 0);
+	/* need to call it one final time with size=0, to actually get the frame */
+	if(!got_picture)
+		(void) avcodec_decode_video(codec_ctx, yuv_frame, &got_picture, data, size);
 
-	/*
-	 * we now have an array of 32-bit RGBA pixels in network byte order
-	 * ie if pix is a char *: pix[0] = R, pix[1] = G, pix[2] = B, pix[3] = A
-	 */
-	b = MHEGBitmap_fromRGBA(d, rgba, width, height);
+	if(!got_picture)
+	{
+		error("Unable to decode MPEG image");
+		b = NULL;
+	}
+	else
+	{
+		/* convert to RGBA */
+		width = codec_ctx->width;
+		height = codec_ctx->height;
+		if((nbytes = avpicture_get_size(PIX_FMT_RGBA32, width, height)) < 0)
+			fatal("Invalid MPEG image");
+		rgba = safe_malloc(nbytes);
+		avpicture_fill((AVPicture *) rgb_frame, rgba, PIX_FMT_RGBA32, width, height);
+		img_convert((AVPicture *) rgb_frame, PIX_FMT_RGBA32, (AVPicture*) yuv_frame, codec_ctx->pix_fmt, width, height);
+		/*
+		 * ffmpeg always stores PIX_FMT_RGBA32 as
+		 *  (A << 24) | (R << 16) | (G << 8) | B
+		 * no matter what byte order our CPU uses. ie,
+		 * it is stored as BGRA on little endian CPU architectures and ARGB on big endian CPUs
+		 * we need RGBA, so swap the components as needed
+		 */
+		for(i=0; i<width*height; i++)
+		{
+			uint32_t pix = *((uint32_t *) &rgba[(i * 4)]);
+			rgba[(i * 4) + 0] = (pix >> 16) & 0xff;	/* R */
+			rgba[(i * 4) + 1] = (pix >> 8) & 0xff;	/* G */
+			rgba[(i * 4) + 2] = pix & 0xff;		/* B */
+			rgba[(i * 4) + 3] = 0xff;		/* opaque */
+		}
+		/*
+		 * we now have an array of 32-bit RGBA pixels in network byte order
+		 * ie if pix is a char *: pix[0] = R, pix[1] = G, pix[2] = B, pix[3] = A
+		 */
+		b = MHEGBitmap_fromRGBA(d, rgba, width, height);
+	}
 
 	/* clean up */
-	mpeg2_close(decoder);
+	safe_free(rgba);
+	av_free(yuv_frame);
+	av_free(rgb_frame);
+	avcodec_close(codec_ctx);
 
 	return b;
 }
