@@ -732,6 +732,7 @@ MHEGDisplay_newPNGBitmap(MHEGDisplay *d, OctetString *png)
 	MHEGBitmap *b;
 	png_uint_32 width, height;
 	unsigned char *rgba;
+	unsigned int i;
 
 	/* nothing to do */
 	if(png == NULL || png->size == 0)
@@ -747,7 +748,25 @@ MHEGDisplay_newPNGBitmap(MHEGDisplay *d, OctetString *png)
 	/*
 	 * we now have an array of 32-bit RGBA pixels in network byte order
 	 * ie if pix is a char *: pix[0] = R, pix[1] = G, pix[2] = B, pix[3] = A
+	 * we need to convert it to ffmpeg's PIX_FMT_RGBA32 format
+	 * ffmpeg always stores PIX_FMT_RGBA32 as
+	 *  (A << 24) | (R << 16) | (G << 8) | B
+	 * no matter what byte order our CPU uses. ie,
+	 * it is stored as BGRA on little endian CPU architectures and ARGB on big endian CPUs
 	 */
+	for(i=0; i<width*height; i++)
+	{
+		uint8_t r = rgba[(i * 4) + 0];
+		uint8_t g = rgba[(i * 4) + 1];
+		uint8_t b = rgba[(i * 4) + 2];
+		uint8_t a = rgba[(i * 4) + 3];
+/* TODO */
+/* if we still need to do r=g=b=0 when a=0, do it here */
+		uint32_t pix = (a << 24) | (r << 16) | (g << 8) | b;
+		*((uint32_t *) &rgba[i * 4]) = pix;
+	}
+
+	/* convert the PIX_FMT_RGBA32 data to a MHEGBitmap */
 	b = MHEGBitmap_fromRGBA(d, rgba, width, height);
 
 	/* clean up */
@@ -777,7 +796,6 @@ MHEGDisplay_newMPEGBitmap(MHEGDisplay *d, OctetString *mpeg)
 	unsigned int height;
 	int nbytes;
 	unsigned char *rgba = NULL;
-	unsigned int i;
 
 	/* nothing to do */
 	if(mpeg == NULL || mpeg->size == 0)
@@ -827,25 +845,7 @@ MHEGDisplay_newMPEGBitmap(MHEGDisplay *d, OctetString *mpeg)
 		rgba = safe_malloc(nbytes);
 		avpicture_fill((AVPicture *) rgb_frame, rgba, PIX_FMT_RGBA32, width, height);
 		img_convert((AVPicture *) rgb_frame, PIX_FMT_RGBA32, (AVPicture*) yuv_frame, codec_ctx->pix_fmt, width, height);
-		/*
-		 * ffmpeg always stores PIX_FMT_RGBA32 as
-		 *  (A << 24) | (R << 16) | (G << 8) | B
-		 * no matter what byte order our CPU uses. ie,
-		 * it is stored as BGRA on little endian CPU architectures and ARGB on big endian CPUs
-		 * we need RGBA, so swap the components as needed
-		 */
-		for(i=0; i<width*height; i++)
-		{
-			uint32_t pix = *((uint32_t *) &rgba[(i * 4)]);
-			rgba[(i * 4) + 0] = (pix >> 16) & 0xff;	/* R */
-			rgba[(i * 4) + 1] = (pix >> 8) & 0xff;	/* G */
-			rgba[(i * 4) + 2] = pix & 0xff;		/* B */
-			rgba[(i * 4) + 3] = 0xff;		/* opaque */
-		}
-		/*
-		 * we now have an array of 32-bit RGBA pixels in network byte order
-		 * ie if pix is a char *: pix[0] = R, pix[1] = G, pix[2] = B, pix[3] = A
-		 */
+		/* convert the PIX_FMT_RGBA32 data to a MHEGBitmap */
 		b = MHEGBitmap_fromRGBA(d, rgba, width, height);
 	}
 
@@ -872,8 +872,11 @@ MHEGDisplay_freeBitmap(MHEGDisplay *d, MHEGBitmap *b)
 }
 
 /*
- * construct a MHEGBitmap from an array of 32-bit RGBA pixels in network byte order
- * ie if pix is a char *: pix[0] = R, pix[1] = G, pix[2] = B, pix[3] = A
+ * construct a MHEGBitmap from an array of ffmpeg's PIX_FMT_RGBA32 pixels
+ * ffmpeg always stores PIX_FMT_RGBA32 as
+ *  (A << 24) | (R << 16) | (G << 8) | B
+ * no matter what byte order our CPU uses. ie,
+ * it is stored as BGRA on little endian CPU architectures and ARGB on big endian CPUs
  */
 
 MHEGBitmap *
@@ -881,8 +884,9 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 {
 	MHEGBitmap *bitmap;
 	unsigned char *xdata;
+	uint32_t rgba_pix;
 	uint32_t xpix;
-	unsigned char r, g, b, a;
+	uint8_t r, g, b, a;
 	unsigned int i, npixs;
 	XImage *ximg;
 	XRenderPictFormat *pic_format;
@@ -900,7 +904,7 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 	xdata = safe_malloc(npixs * 4);
 	/*
 	 * copy the pixels, converting them to our XRender RGBA order as we go
-	 * even if the XRender pixel layout is the same as the PNG one we still process each pixel
+	 * even if the XRender pixel layout is the same as the ffmpeg one we still process each pixel
 	 * because we want to make sure transparent pixels have 0 for their RGB components
 	 * otherwise, if we scale up the bitmap in fullscreen mode and apply our bilinear filter,
 	 * we may end up with a border around the image
@@ -910,10 +914,11 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 	 */
 	for(i=0; i<npixs; i++)
 	{
-		r = rgba[(i * 4) + 0];
-		g = rgba[(i * 4) + 1];
-		b = rgba[(i * 4) + 2];
-		a = rgba[(i * 4) + 3];
+		rgba_pix = *((uint32_t *) &rgba[i * 4]);
+		a = (rgba_pix >> 24) & 0xff;
+		r = (rgba_pix >> 16) & 0xff;
+		g = (rgba_pix >> 8) & 0xff;
+		b = rgba_pix & 0xff;
 		/* is it transparent */
 		if(a == 0)
 		{
