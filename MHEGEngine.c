@@ -329,6 +329,10 @@ MHEGEngine_TransitionTo(TransitionTo *to, OctetString *caller_gid)
 	|| OctetString_cmp(&current_scene->rootClass.inst.ref.group_identifier, &scene_id) != 0)
 	{
 		verbose("TransitionTo: %s", ExternalReference_name(&ref->u.external_reference));
+		/* UK MHEG Profile says we don't need to support transition effects */
+		/* (remember that 'to' will get destroyed when we free the action queues, so use it now if you need it) */
+		if(to->have_transition_effect)
+			error("Transition effects not supported");
 		/* get the active app */
 		current_app = MHEGEngine_getActiveApplication();
 		/* check the new scene is available */
@@ -386,9 +390,6 @@ MHEGEngine_TransitionTo(TransitionTo *to, OctetString *caller_gid)
 			SceneClass_Preparation(current_scene);
 			SceneClass_Activation(current_scene);
 		}
-		/* UK MHEG Profile says we don't need to support transition effects */
-		if(to->have_transition_effect)
-			error("Transition effects not supported");
 	}
 
 	/* clean up */
