@@ -314,7 +314,8 @@ TokenGroupClass_CallActionSlot(TokenGroupClass *t, CallActionSlot *params, Octet
 	 * if the action is not Null, add the ElementaryActions to temp_actionq
 	 * note, just doing:
 	 * ActionClass_execute(&action->item.u.action_class, &t->rootClass.inst.ref.group_identifier);
-	 * does not work - it makes some BBC apps get into an infinite loop
+	 * is not the same as adding the actions to the queue
+	 * (also ActionClass_execute will ignore context changing actions - TransitionTo, Launch, Spawn and Quit)
 	 */
 	if(action->item.choice == ActionSlot_action_class)
 		MHEGEngine_addToTempActionQ(&action->item.u.action_class, &t->rootClass.inst.ref.group_identifier);

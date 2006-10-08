@@ -348,14 +348,6 @@ MHEGEngine_TransitionTo(TransitionTo *to, OctetString *caller_gid)
 			safe_free(scene_id.data);
 			return;
 		}
-#if 0
-/* TODO */
-/* should we do this before or after we destroy the current scene? */
-		/* empty the Async event queue and any pending actions */
-		LIST_FREE(&engine.async_eventq, MHEGAsyncEvent, free_MHEGAsyncEventListItem);
-		LIST_FREE(&engine.main_actionq, MHEGAction, free_MHEGActionListItem);
-		LIST_FREE(&engine.temp_actionq, MHEGAction, free_MHEGActionListItem);
-#endif
 		/*
 		 * do Deactivation of all Ingredients in the current app that are not shared
 		 * in the reverse order they appear in the items list
@@ -377,9 +369,7 @@ MHEGEngine_TransitionTo(TransitionTo *to, OctetString *caller_gid)
 			SceneClass_Deactivation(current_scene);
 			SceneClass_Destruction(current_scene);
 		}
-/* TODO */
-/* should we do this before or after we destroy the current scene? */
-		/* empty the Async event queue and any pending actions */
+		/* now the old scene is destroyed, empty the Async event queue and any pending actions */
 		LIST_FREE(&engine.async_eventq, MHEGAsyncEvent, free_MHEGAsyncEventListItem);
 		LIST_FREE(&engine.main_actionq, MHEGAction, free_MHEGActionListItem);
 		LIST_FREE(&engine.temp_actionq, MHEGAction, free_MHEGActionListItem);
