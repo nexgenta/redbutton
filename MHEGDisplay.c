@@ -756,13 +756,28 @@ MHEGDisplay_newPNGBitmap(MHEGDisplay *d, OctetString *png)
 	 */
 	for(i=0; i<width*height; i++)
 	{
-		uint8_t r = rgba[(i * 4) + 0];
-		uint8_t g = rgba[(i * 4) + 1];
-		uint8_t b = rgba[(i * 4) + 2];
-		uint8_t a = rgba[(i * 4) + 3];
-/* TODO */
-/* if we still need to do r=g=b=0 when a=0, do it here */
-		uint32_t pix = (a << 24) | (r << 16) | (g << 8) | b;
+		uint8_t a, r, g, b;
+		uint32_t pix;
+		/*
+		 * if the pixel is transparent, set the RGB components to 0
+		 * otherwise, if we scale up the bitmap in fullscreen mode,
+		 * we may end up with a border around the image
+		 * this happens, for example, with the BBC's "Press Red" image
+		 * it has a transparent box around it, but the RGB values are not 0 in the transparent area
+		 * when we scale it up we get a pink border around it
+		 */
+		a = rgba[(i * 4) + 3];
+		if(a == 0)
+		{
+			pix = 0;
+		}
+		else
+		{
+			r = rgba[(i * 4) + 0];
+			g = rgba[(i * 4) + 1];
+			b = rgba[(i * 4) + 2];
+			pix = (a << 24) | (r << 16) | (g << 8) | b;
+		}
 		*((uint32_t *) &rgba[i * 4]) = pix;
 	}
 
@@ -890,6 +905,7 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 	unsigned int i, npixs;
 	XImage *ximg;
 	XRenderPictFormat *pic_format;
+	enum PixelFormat av_format;
 	GC gc;
 
 	bitmap = safe_malloc(sizeof(MHEGBitmap));
@@ -897,41 +913,44 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 
 	/* find a matching XRender pixel format */
 	pic_format = XRenderFindStandardFormat(d->dpy, PictStandardARGB32);
+	av_format = find_av_pix_fmt(32,
+				    pic_format->direct.redMask << pic_format->direct.red,
+				    pic_format->direct.greenMask << pic_format->direct.green,
+				    pic_format->direct.blueMask << pic_format->direct.blue);
 
 	/* copy the RGBA values into a block we can use as XImage data */
 	npixs = width * height;
 	/* 4 bytes per pixel */
 	xdata = safe_malloc(npixs * 4);
-	/*
-	 * copy the pixels, converting them to our XRender RGBA order as we go
-	 * even if the XRender pixel layout is the same as the ffmpeg one we still process each pixel
-	 * because we want to make sure transparent pixels have 0 for their RGB components
-	 * otherwise, if we scale up the bitmap in fullscreen mode and apply our bilinear filter,
-	 * we may end up with a border around the image
-	 * this happens, for example, with the BBC's "Press Red" image
-	 * it has a transparent box around it, but the RGB values are not 0 in the transparent area
-	 * when we scale it up we get a pink border around it
-	 */
-	for(i=0; i<npixs; i++)
+	/* are the pixel layouts exactly the same */
+	if(av_format == PIX_FMT_RGBA32)
 	{
-		rgba_pix = *((uint32_t *) &rgba[i * 4]);
-		a = (rgba_pix >> 24) & 0xff;
-		r = (rgba_pix >> 16) & 0xff;
-		g = (rgba_pix >> 8) & 0xff;
-		b = rgba_pix & 0xff;
-		/* is it transparent */
-		if(a == 0)
+		memcpy(xdata, rgba, npixs * 4);
+	}
+	else
+	{
+		/* swap the RGBA components as needed */
+		for(i=0; i<npixs; i++)
 		{
-			xpix = 0;
+			rgba_pix = *((uint32_t *) &rgba[i * 4]);
+			a = (rgba_pix >> 24) & 0xff;
+			r = (rgba_pix >> 16) & 0xff;
+			g = (rgba_pix >> 8) & 0xff;
+			b = rgba_pix & 0xff;
+			/* is it transparent */
+			if(a == 0)
+			{
+				xpix = 0;
+			}
+			else
+			{
+				xpix = a << pic_format->direct.alpha;
+				xpix |= r << pic_format->direct.red;
+				xpix |= g << pic_format->direct.green;
+				xpix |= b << pic_format->direct.blue;
+			}
+			*((uint32_t *) &xdata[i * 4]) = xpix;
 		}
-		else
-		{
-			xpix = a << pic_format->direct.alpha;
-			xpix |= r << pic_format->direct.red;
-			xpix |= g << pic_format->direct.green;
-			xpix |= b << pic_format->direct.blue;
-		}
-		*((uint32_t *) &xdata[i * 4]) = xpix;
 	}
 
 	/* get X to draw the XImage onto a Pixmap */
