@@ -66,9 +66,6 @@ find_av_pix_fmt(int bpp, unsigned long rmask, unsigned long gmask, unsigned long
 		break;
 	}
 
-	if(fmt == PIX_FMT_NONE)
-		error("Unsupported pixel format (bpp=%d r=%lx g=%lx b=%lx)", bpp, rmask, gmask, bmask);
-
 	return fmt;
 }
 
