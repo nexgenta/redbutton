@@ -1,6 +1,8 @@
 CC=gcc
 CFLAGS=-Wall -O
 
+DESTDIR=/usr/local
+
 OBJS=	rb-download.o	\
 	list.o		\
 	findmheg.o	\
@@ -25,6 +27,9 @@ rb-download:	${OBJS}
 
 .c.o:
 	${CC} ${CFLAGS} -c $<
+
+install:	rb-download
+	install -m 755 rb-download ${DESTDIR}/bin
 
 clean:
 	rm -f rb-download *.o core
