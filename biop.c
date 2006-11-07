@@ -277,7 +277,7 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 			profile.data += 4;
 			vverbose("    carouselId: %u", ior->carousel_id);
 			/* moduleId */
-			ior->module_id = biop_uint16(profile_bo, *((uint32_t *) profile.data));
+			ior->module_id = biop_uint16(profile_bo, *((uint16_t *) profile.data));
 			profile.data += 2;
 			vverbose("    moduleId: %u", ior->module_id);
 			/* BIOP version */
