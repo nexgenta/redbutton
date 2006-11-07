@@ -3,6 +3,8 @@ CFLAGS=-Wall -O2
 # gprof profiling
 #CFLAGS=-Wall -O2 -pg
 
+DESTDIR=/usr/local
+
 DEFS=-D_REENTRANT -D_GNU_SOURCE
 # safe_malloc debugging
 #DEFS=-DDEBUG_ALLOC -D_REENTRANT -D_GNU_SOURCE
@@ -114,6 +116,10 @@ dertest-mheg.c:	xsd2c ISO13522-MHEG-5.xsd
 
 berdecode:	berdecode.c
 	${CC} ${CFLAGS} ${DEFS} -o berdecode berdecode.c
+
+install:	rb-browser rb-keymap
+	install -m 755 rb-browser ${DESTDIR}/bin
+	install -m 755 rb-keymap ${DESTDIR}/bin
 
 clean:
 	rm -f rb-browser rb-keymap xsd2c dertest dertest-mheg.[ch] berdecode *.o ISO13522-MHEG-5.[ch] clone.[ch] rtti.h gmon.out core
