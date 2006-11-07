@@ -30,7 +30,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#if defined(HAVE_DREAMBOX_HARDWARE)
+#include <ost/dmx.h>
+#define dmx_sct_filter_params dmxSctFilterParams
+#else
 #include <linux/dvb/dmx.h>
+#endif
 
 #include "dsmcc.h"
 #include "carousel.h"

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <arpa/inet.h>
 
 #include "biop.h"
 #include "fs.h"
