@@ -132,7 +132,7 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 		}
 		else
 		{
-			fatal("Unknown BIOP object: '%.*s'\n", kind.size, kind.data);
+			fatal("Unknown BIOP object: '%.*s'", kind.size, kind.data);
 		}
 		/* move onto the next */
 		data = (struct BIOPMessageHeader *) (((unsigned char *) data) + sizeof(struct BIOPMessageHeader) + size);
