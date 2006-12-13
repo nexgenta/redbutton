@@ -8,11 +8,6 @@ vsync video drawing with monitor refresh
 better audio sync in MHEGStreamPlayer
 
 
-if openStream fails - need to make sure either:
-contents picture gets filled with black, or
-VideoClass_render does not make a transparent rectangle in the overlay picture
-
-
 in all VisibleClass objects
 only redraw them in SetPosition/SetBoxSize/etc if they actually move/change size/etc
 
