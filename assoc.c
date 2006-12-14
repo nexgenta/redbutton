@@ -67,7 +67,7 @@ stream2pid(struct assoc *a, uint16_t stream_id)
 			return a->pids[i];
 	}
 
-	error("Unknown PID for association tag 0x%x", stream_id);
+	error("Unknown PID for association tag %u", stream_id);
 
 	return 0;
 }
@@ -83,7 +83,7 @@ stream2type(struct assoc *a, uint16_t stream_id)
 			return a->types[i];
 	}
 
-	error("Unknown stream type for association tag 0x%x", stream_id);
+	error("Unknown stream type for association tag %u", stream_id);
 
 	return 0;
 }
