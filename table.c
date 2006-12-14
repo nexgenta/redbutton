@@ -203,6 +203,8 @@ add_dsmcc_pid(struct carousel *car, uint16_t pid)
 		if(car->pids[i].pid == pid)
 			return;
 
+	verbose("Adding PID %u to filter", pid);
+
 	/* add a new PID data structure */
 	car->npids ++;
 	car->pids = safe_realloc(car->pids, car->npids * sizeof(struct pid_fds));
