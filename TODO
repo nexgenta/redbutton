@@ -1,3 +1,11 @@
+use PMT data_broadcast_id_descriptor (tag=0x66) to find boot carousel
+0x66 - tag
+uint8 N - length
+0x0106 - TDN data_broadcast_id
+0x0101 - UK Launch Profile application_type_code
+uint8 P - boot_priority_hint (0=highest)
+(see UK MHEG Profile p161)
+
 got an "Out of memory" error when doing avstream and video changed size
 (start of C4 news)
 can't see how avstream can cause an out of memory error
