@@ -6,6 +6,7 @@
 #include "ISO13522-MHEG-5.h"
 #include "StreamComponent.h"
 #include "ExternalReference.h"
+#include "ContentBody.h"
 #include "utils.h"
 
 void
@@ -76,6 +77,7 @@ StreamClass_Activation(StreamClass *t)
 {
 	LIST_TYPE(StreamComponent) *comp;
 	RootClass *r;
+	OctetString *service;
 
 	verbose("StreamClass: %s; Activation", ExternalReference_name(&t->rootClass.inst.ref));
 
@@ -89,6 +91,14 @@ StreamClass_Activation(StreamClass *t)
 	{
 		/* generates an IsAvailable event */
 		StreamClass_Preparation(t);
+	}
+
+	/* assume default is "rec://svc/cur", ie current channel */
+	if(t->have_original_content
+	&& (service = ContentBody_getReference(&t->original_content)) != NULL
+	&& OctetString_strcmp(service, "rec://svc/cur") != 0)
+	{
+printf("TODO: StreamClass: service='%.*s'\n", service->size, service->data);
 	}
 
 	/* start playing all active StreamComponents */

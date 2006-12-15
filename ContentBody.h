@@ -11,4 +11,6 @@
 
 bool ContentBody_getContent(ContentBody *, RootClass *, OctetString *);
 
+OctetString *ContentBody_getReference(ContentBody *);
+
 #endif	/* __CONTENTBODY_H__ */

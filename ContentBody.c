@@ -48,3 +48,30 @@ ContentBody_getContent(ContentBody *c, RootClass *obj, OctetString *out)
 	return rc;
 }
 
+/*
+ * returns a ptr to the Referenced Content OctetString
+ * retuns NULL if the content is included
+ */
+
+OctetString *
+ContentBody_getReference(ContentBody *c)
+{
+	OctetString *rc = NULL;
+
+	switch(c->choice)
+	{
+	case ContentBody_included_content:
+		break;
+
+	case ContentBody_referenced_content:
+		rc = &c->u.referenced_content.content_reference;
+		break;
+
+	default:
+		error("Unknown ContentBody type: %d", c->choice);
+		break;
+	}
+
+	return rc;
+}
+
