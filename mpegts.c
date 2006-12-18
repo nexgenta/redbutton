@@ -236,19 +236,21 @@ read_packet(FILE *ts, uint8_t *buf)
 	/* find the next sync byte */
 	resync = 0;
 	nread = 0;
+	*buf = 0;
 	do
 	{
 		/* read the whole of the next packet */
 		while(nread != TS_PACKET_SIZE && !feof(ts))
 			nread += fread(buf + nread, 1, TS_PACKET_SIZE - nread, ts);
-		if(*buf != TS_SYNC_BYTE && !feof(ts))
+		if(nread > 0 && *buf != TS_SYNC_BYTE && !feof(ts))
 		{
 			resync ++;
-			memmove(buf, buf + 1, TS_PACKET_SIZE - 1);
-			nread = TS_PACKET_SIZE - 1;
+			memmove(buf, buf + 1, nread - 1);
+			buf[nread - 1] = 0;
+			nread --;
 		}
 	}
-	while(*buf != TS_SYNC_BYTE && !feof(ts));
+	while(nread < TS_PACKET_SIZE && *buf != TS_SYNC_BYTE && !feof(ts));
 
 	if(feof(ts))
 		return -1;
