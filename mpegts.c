@@ -50,6 +50,7 @@ struct MpegTSContext
 	int stop_parse;			/* stop parsing loop */
 	PESContext *pids[NB_PID_MAX];	/* PIDs we are demuxing */
 	int is_start;			/* is the current packet the first of a frame */
+	int last_cc;			/* last Continuity Check value we saw (<0 => none seen yet) */
 };
 
 /* TS stream handling */
@@ -103,6 +104,9 @@ mpegts_open(FILE *ts)
 	ctx->ts_stream = ts;
 
 	ctx->is_start = 0;
+
+	/* last continuity check value (-1 => CC always passes) */
+	ctx->last_cc = -1;
 
 	return ctx;
 }
@@ -266,6 +270,7 @@ static void
 handle_packet(MpegTSContext *ctx, const uint8_t *packet)
 {
 	PESContext *pes;
+	int cc, cc_ok;
 	int pid, afc;
 	const uint8_t *p, *p_end;
 
@@ -276,11 +281,14 @@ handle_packet(MpegTSContext *ctx, const uint8_t *packet)
 
 	ctx->is_start = packet[1] & 0x40;
 
-#if 0
-	/* continuity check (currently not used) */
+	/* continuity check */
 	cc = (packet[3] & 0xf);
-	cc_ok = (tss->last_cc < 0) || ((((tss->last_cc + 1) & 0x0f) == cc));
-	tss->last_cc = cc;
+	cc_ok = (ctx->last_cc < 0) || (((ctx->last_cc + 1) & 0x0f) == cc);
+	ctx->last_cc = cc;
+#if 0
+	/* skip until we find the next start packet */
+	if(!cc_ok && !ctx->is_start)
+		pes->state = MPEGTS_SKIP;
 #endif
 
 	/* skip adaptation field */
