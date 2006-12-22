@@ -304,6 +304,9 @@ MHEGEngine_TransitionTo(TransitionTo *to, OctetString *caller_gid)
 	OctetString scene_id;
 	SceneClass *current_scene;
 	ApplicationClass *current_app;
+	OctetString *app_gid;
+	LIST_TYPE(MHEGAsyncEvent) *ev, *next_ev;
+	LIST_TYPE(MHEGAction) *act, *next_act;
 	LIST_TYPE(GroupItem) *gi;
 	LIST_TYPE(GroupItem) *gi_tail;
 
@@ -369,10 +372,48 @@ MHEGEngine_TransitionTo(TransitionTo *to, OctetString *caller_gid)
 			SceneClass_Deactivation(current_scene);
 			SceneClass_Destruction(current_scene);
 		}
-		/* now the old scene is destroyed, empty the Async event queue and any pending actions */
-		LIST_FREE(&engine.async_eventq, MHEGAsyncEvent, free_MHEGAsyncEventListItem);
-		LIST_FREE(&engine.main_actionq, MHEGAction, free_MHEGActionListItem);
-		LIST_FREE(&engine.temp_actionq, MHEGAction, free_MHEGActionListItem);
+		/*
+		 * now the old scene is destroyed,
+		 * remove its events from the Async event queue and its pending actions
+		 * keep events and actions associated with the app
+		 */
+		app_gid = &current_app->rootClass.inst.ref.group_identifier;
+		/* async event queue */
+		ev = engine.async_eventq;
+		while(ev)
+		{
+			next_ev = ev->next;
+			if(OctetString_cmp(&ev->item.src.group_identifier, app_gid) != 0)
+			{
+				LIST_REMOVE(&engine.async_eventq, ev);
+				free_MHEGAsyncEventListItem(ev);
+			}
+			ev = next_ev;
+		}
+		/* main action queue */
+		act = engine.main_actionq;
+		while(act)
+		{
+			next_act = act->next;
+			if(OctetString_cmp(act->item.group_id, app_gid) != 0)
+			{
+				LIST_REMOVE(&engine.main_actionq, act);
+				free_MHEGActionListItem(act);
+			}
+			act = next_act;
+		}
+		/* temp action queue */
+		act = engine.temp_actionq;
+		while(act)
+		{
+			next_act = act->next;
+			if(OctetString_cmp(act->item.group_id, app_gid) != 0)
+			{
+				LIST_REMOVE(&engine.temp_actionq, act);
+				free_MHEGActionListItem(act);
+			}
+			act = next_act;
+		}
 		/* load the new scene (also free's the old one if we have one) */
 		if((current_scene = MHEGApp_loadScene(&engine.active_app, &scene_id)) != NULL)
 		{
