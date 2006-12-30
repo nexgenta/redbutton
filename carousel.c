@@ -102,17 +102,12 @@ process_dsi(struct carousel *car, struct DownloadServerInitiate *dsi)
 
 	verbose("DownloadServerInitiate");
 
-	/*
-	 * BBC1 (for example) just broadcasts a DSI
-	 * the DSI points to a carousel on the BBCi elementary_pid
-	 * so, to access the carousel for BBC1 we have to read from the BBCi PID
-	 * but, when we read the BBCi PID we will download the BBCi DSI
-	 * we don't want the BBCi DSI to overwrite our original BBC1 DSI
-	 * so only download the first DSI we find (ie before we read from to BBCi)
-	 */
-	if(car->got_dsi)
+	/* only download the DSI from the boot PID */
+	if(car->current_pid != car->boot_pid
+	|| car->got_dsi)
 		return;
 
+	/* TODO: check for updated version */
 	car->got_dsi = true;
 
 	elementary_pid = process_biop_service_gateway_info(car->service_id, &car->assoc, DSI_privateDataByte(dsi), ntohs(dsi->privateDataLength));

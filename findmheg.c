@@ -195,6 +195,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 				if(carousel_id == -1 || carousel_id == (ntohl(desc->carousel_id)))
 				{
 					_car.carousel_id = ntohl(desc->carousel_id);
+					_car.boot_pid = elementary_pid;
 					add_dsmcc_pid(&_car, elementary_pid);
 					vverbose("PID=%u carousel_id=%u", elementary_pid, _car.carousel_id);
 				}
