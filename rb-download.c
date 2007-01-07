@@ -141,6 +141,7 @@ main(int argc, char *argv[])
 		service_id = strtoul(argv[optind], NULL, 0);
 		car = find_mheg(adapter, timeout, service_id, carousel_id);
 		verbose("Carousel ID=%u", car->carousel_id);
+		verbose("Boot PID=%u", car->boot_pid);
 		verbose("Video PID=%u", car->video_pid);
 		verbose("Audio PID=%u", car->audio_pid);
 		if(listen)

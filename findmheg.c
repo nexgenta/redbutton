@@ -44,9 +44,10 @@
 #define STREAM_TYPE_ISO13818_6_B	0x0b
 
 /* descriptors we want */
-#define TAG_LANGUAGE_DESCRIPTOR		0x0a
-#define TAG_CAROUSEL_ID_DESCRIPTOR	0x13
-#define TAG_STREAM_ID_DESCRIPTOR	0x52
+#define TAG_LANGUAGE_DESCRIPTOR			0x0a
+#define TAG_CAROUSEL_ID_DESCRIPTOR		0x13
+#define TAG_STREAM_ID_DESCRIPTOR		0x52
+#define TAG_DATA_BROADCAST_ID_DESCRIPTOR	0x66
 
 /* bits of the descriptors we care about */
 struct carousel_id_descriptor
@@ -64,6 +65,17 @@ struct language_descriptor
 	char language_code[3];
 	uint8_t audio_type;
 } __attribute__((__packed__));
+
+struct data_broadcast_id_descriptor
+{
+	uint16_t data_broadcast_id;
+	uint16_t application_type_code;
+	uint8_t boot_priority_hint;
+} __attribute__((__packed__));
+
+/* data_broadcast_id_descriptor values we want */
+#define DATA_BROADCAST_ID	0x0106
+#define APPLICATION_TYPE_CODE	0x0101
 
 bool
 is_audio_stream(uint8_t stream_type)
@@ -101,6 +113,8 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 	uint8_t desc_tag;
 	uint8_t desc_length;
 	uint16_t component_tag;
+	int desc_boot_pid;
+	int desc_carousel_id;
 
 	/* carousel data we know so far */
 	snprintf(_car.demux_device, sizeof(_car.demux_device), DEMUX_DEVICE, adapter);
@@ -110,6 +124,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 
 	/* unknown */
 	_car.carousel_id = 0;
+	_car.boot_pid = 0;
 	_car.audio_pid = 0;
 	_car.audio_type = 0;
 	_car.video_pid = 0;
@@ -179,6 +194,9 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 			_car.video_pid = elementary_pid;
 			_car.video_type = stream_type;
 		}
+		/* it's not the boot PID yet */
+		desc_boot_pid = -1;
+		desc_carousel_id = -1;
 		/* read the descriptors */
 		info_length = ((pmt[offset] & 0x0f) << 8) + pmt[offset+1];
 		offset += 2;
@@ -188,17 +206,35 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 			desc_length = pmt[offset+1];
 			offset += 2;
 			info_length -= 2;
-			if(desc_tag == TAG_CAROUSEL_ID_DESCRIPTOR)
+			/* ignore boot PID if we explicitly chose a carousel ID */
+			if(desc_tag == TAG_DATA_BROADCAST_ID_DESCRIPTOR && carousel_id == -1)
+			{
+				struct data_broadcast_id_descriptor *desc;
+				desc = (struct data_broadcast_id_descriptor *) &pmt[offset];
+				if(ntohs(desc->data_broadcast_id) == DATA_BROADCAST_ID
+				&& ntohs(desc->application_type_code) == APPLICATION_TYPE_CODE)
+				{
+					desc_boot_pid = elementary_pid;
+					vverbose("PID=%u boot_priority_hint=%u", elementary_pid, desc->boot_priority_hint);
+				}
+				else
+				{
+					vverbose("PID=%u data_broadcast_id=0x%x", elementary_pid, ntohs(desc->data_broadcast_id));
+					vhexdump(&pmt[offset], desc_length);
+				}
+			}
+			else if(desc_tag == TAG_CAROUSEL_ID_DESCRIPTOR)
 			{
 				struct carousel_id_descriptor *desc;
 				desc = (struct carousel_id_descriptor *) &pmt[offset];
 				if(carousel_id == -1 || carousel_id == (ntohl(desc->carousel_id)))
 				{
-					_car.carousel_id = ntohl(desc->carousel_id);
-					_car.boot_pid = elementary_pid;
-					add_dsmcc_pid(&_car, elementary_pid);
-					vverbose("PID=%u carousel_id=%u", elementary_pid, _car.carousel_id);
+					/* if we chose this carousel, set the boot PID */
+					if(carousel_id != -1)
+						desc_boot_pid = elementary_pid;
+					desc_carousel_id = ntohl(desc->carousel_id);
 				}
+				vverbose("PID=%u carousel_id=%u", elementary_pid, ntohl(desc->carousel_id));
 			}
 			else if(desc_tag == TAG_STREAM_ID_DESCRIPTOR)
 			{
@@ -226,6 +262,14 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 			}
 			offset += desc_length;
 			info_length -= desc_length;
+		}
+		/* is it the boot PID */
+		if(desc_boot_pid != -1)
+		{
+			vverbose("Set boot_pid=%u carousel_id=%u", desc_boot_pid, desc_carousel_id);
+			_car.carousel_id = desc_carousel_id;
+			_car.boot_pid = desc_boot_pid;
+			add_dsmcc_pid(&_car, desc_boot_pid);
 		}
 	}
 
