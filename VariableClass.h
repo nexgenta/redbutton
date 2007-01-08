@@ -19,5 +19,7 @@ void VariableClass_TestVariable(VariableClass *, int, ComparisonValue *, OctetSt
 
 unsigned int VariableClass_type(VariableClass *);
 
+char *VariableClass_stringValue(VariableClass *);
+
 #endif	/* __VARIABLECLASS_H__ */
 

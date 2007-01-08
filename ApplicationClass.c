@@ -258,7 +258,7 @@ ApplicationClass_StorePersistent(ApplicationClass *t, StorePersistent *params, O
 	/* free any existing contents */
 	LIST_FREE_ITEMS(&p->data, OriginalValue, free_OriginalValue, safe_free);
 
-	verbose("StorePersistent: '%.*s'", filename->size, filename->data);
+	verbose("StorePersistent: filename '%.*s'", filename->size, filename->data);
 
 	/* add the new values */
 	ref = params->in_variables;
@@ -268,6 +268,7 @@ ApplicationClass_StorePersistent(ApplicationClass *t, StorePersistent *params, O
 		{
 			if(var->rootClass.inst.rtti == RTTI_VariableClass)
 			{
+				verbose("StorePersistent: variable '%s'", VariableClass_stringValue(var));
 				val = safe_malloc(sizeof(LIST_TYPE(OriginalValue)));
 				OriginalValue_dup(&val->item, &var->inst.Value);
 				LIST_APPEND(&p->data, val);
@@ -315,7 +316,7 @@ ApplicationClass_ReadPersistent(ApplicationClass *t, ReadPersistent *params, Oct
 	/* find the file */
 	if((p = MHEGEngine_findPersistentData(filename, false)) != NULL)
 	{
-		verbose("ReadPersistent: '%.*s'", filename->size, filename->data);
+		verbose("ReadPersistent: filename '%.*s'", filename->size, filename->data);
 		/* read the values into the variables */
 		ref = params->out_variables;
 		val = p->data;
@@ -328,6 +329,7 @@ ApplicationClass_ReadPersistent(ApplicationClass *t, ReadPersistent *params, Oct
 				{
 					/* free any existing data */
 					OriginalValue_copy(&var->inst.Value, &val->item);
+					verbose("ReadPersistent: variable '%s'", VariableClass_stringValue(var));
 				}
 				else
 				{

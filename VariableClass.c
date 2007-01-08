@@ -234,3 +234,50 @@ VariableClass_type(VariableClass *v)
 	return v->inst.Value.choice;
 }
 
+/*
+ * returns a static string that will be overwritten by the next call to this routine
+ */
+
+static char *_value = NULL;
+
+char *
+VariableClass_stringValue(VariableClass *v)
+{
+	OctetString *oct;
+
+	switch(v->inst.Value.choice)
+	{
+	case OriginalValue_boolean:
+		_value = safe_realloc(_value, 16);
+		snprintf(_value, 16, "Boolean %s", v->inst.Value.u.boolean ? "true" : "false");
+		return _value;
+
+	case OriginalValue_integer:
+		_value = safe_realloc(_value, 64);
+		snprintf(_value, 64, "Integer %d", v->inst.Value.u.integer);
+		return _value;
+
+	case OriginalValue_octetstring:
+		oct = &v->inst.Value.u.octetstring;
+		_value = safe_realloc(_value, oct->size + 128);
+		snprintf(_value, oct->size + 128, "OctetString %u %.*s", oct->size, oct->size, oct->data);
+		return _value;
+
+	case OriginalValue_object_reference:
+		_value = safe_realloc(_value, PATH_MAX + 32);
+		snprintf(_value, PATH_MAX + 32, "ObjectReference %s", ObjectReference_name(&v->inst.Value.u.object_reference));
+		return _value;
+
+	case OriginalValue_content_reference:
+		oct = &v->inst.Value.u.content_reference;
+		_value = safe_realloc(_value, oct->size + 128);
+		snprintf(_value, oct->size + 128, "ContentReference %u %.*s", oct->size, oct->size, oct->data);
+		return _value;
+
+	default:
+		error("Unknown VariableClass %s; type: %d", ExternalReference_name(&v->rootClass.inst.ref), v->inst.Value.choice);
+		_value = safe_realloc(_value, 32);
+		snprintf(_value, 32, "Invalid VariableClass");
+		return _value;
+	}
+}
