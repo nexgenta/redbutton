@@ -1,17 +1,8 @@
-use PMT data_broadcast_id_descriptor (tag=0x66) to find boot carousel
-0x66 - tag
-uint8 N - length
-0x0106 - TDN data_broadcast_id
-0x0101 - UK Launch Profile application_type_code
-uint8 P - boot_priority_hint (0=highest)
-(see UK MHEG Profile p161)
-
 got an "Out of memory" error when doing avstream and video changed size
 (start of C4 news)
 can't see how avstream can cause an out of memory error
 
 Sky Teletext - can't find PIDs for tags 1 and 2
-BBC News Multiscreen - can't find default a/v PIDs
 
 look into new splice() and tee() syscalls in 2.6.17 kernel for avstream
 
