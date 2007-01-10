@@ -33,11 +33,6 @@ main(int argc, char *argv[])
 	int arg;
 	size_t last;
 	int rc;
-	int i;
-	bool found;
-	OctetString boot_obj;
-	/* search order for the app to boot in the Service Gateway dir */
-	char *boot_order[] = { "~//a", "~//startup", NULL };
 
 	/* we assume &struct == &struct.first_item, not sure if C guarantees it */
 	ApplicationClass app;
@@ -106,27 +101,8 @@ main(int argc, char *argv[])
 
 	MHEGEngine_init(&opts);
 
-	/* search for the boot object */
-	found = false;
-	for(i=0; !found && boot_order[i] != NULL; i++)
-	{
-		boot_obj.size = strlen(boot_order[i]);
-		boot_obj.data = boot_order[i];
-		found = MHEGEngine_checkContentRef(&boot_obj);
-	}
+	rc = MHEGEngine_run();
 
-	if(found)
-	{
-		verbose("Booting '%.*s'", boot_obj.size, boot_obj.data);
-		rc = MHEGEngine_run(&boot_obj);
-	}
-	else
-	{
-		error("Unable to find boot object in service gateway '%s'", opts.srg_loc);
-		rc = EXIT_FAILURE;
-	}
-
-	/* clean up */
 	MHEGEngine_fini();
 
 	return rc;

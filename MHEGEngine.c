@@ -183,84 +183,107 @@ MHEGEngine_init(MHEGEngineOptions *opts)
 }
 
 int
-MHEGEngine_run(OctetString *derfile)
+MHEGEngine_run(void)
 {
+	OctetString boot_obj;
 	ApplicationClass *app;
 	SceneClass *scene;
 	bool block;
+	unsigned int i;
+	bool found;
+	/* search order for the app to boot in the Service Gateway dir */
+	char *boot_order[] = { "~//a", "~//startup", NULL };
 
 	do
 	{
-		verbose("Running '%.*s'", derfile->size, derfile->data);
-		engine.quit_reason = QuitReason_DontQuit;
-		/* load the app */
-		if((app = MHEGApp_loadApplication(&engine.active_app, derfile)) == NULL)
+		/* search for the boot object */
+		found = false;
+		for(i=0; !found && boot_order[i] != NULL; i++)
+		{
+			boot_obj.size = strlen(boot_order[i]);
+			boot_obj.data = boot_order[i];
+			found = MHEGEngine_checkContentRef(&boot_obj);
+		}
+		if(!found)
+		{
+			error("Unable to find boot object in service gateway");
 			return EXIT_FAILURE;
-		/* start it up */
-		ApplicationClass_Preparation(app);
-		ApplicationClass_Activation(app);
-		/* main loop */
-		while(engine.quit_reason == QuitReason_DontQuit)
-		{
-			/* poll for files we are waiting for */
-			MHEGEngine_pollMissingContent();
-			/* process any async events */
-			MHEGEngine_processMHEGEvents();
-			/*
-			 * if we are polling for missing content,
-			 * or if we need to quit the current app
-			 * don't block waiting for the next GUI event
-			 */
-			block = (engine.missing_content == NULL && engine.quit_reason == QuitReason_DontQuit);
-			/* process any GUI events */
-			if(MHEGDisplay_processEvents(&engine.display, block))
-				engine.quit_reason = QuitReason_GUIQuit;
 		}
-		/* do Destruction of Application and Scene */
-		if((scene = MHEGEngine_getActiveScene()) != NULL)
+		do
 		{
-			SceneClass_Deactivation(scene);
-			SceneClass_Destruction(scene);
-		}
-		ApplicationClass_Deactivation(app);
-		ApplicationClass_Destruction(app);
-		/* clean up */
-		MHEGApp_fini(&engine.active_app);
-		LIST_FREE(&engine.objects, RootClassPtr, safe_free);
-		LIST_FREE(&engine.missing_content, MissingContent, free_MissingContentListItem);
-		LIST_FREE(&engine.active_links, LinkClassPtr, safe_free);
-		LIST_FREE(&engine.async_eventq, MHEGAsyncEvent, free_MHEGAsyncEventListItem);
-		LIST_FREE(&engine.main_actionq, MHEGAction, free_MHEGActionListItem);
-		LIST_FREE(&engine.temp_actionq, MHEGAction, free_MHEGActionListItem);
-		/* do we need to run a new app */
-		switch(engine.quit_reason)
-		{
-		case QuitReason_Launch:
-			verbose("Launch '%.*s'", engine.quit_data.size, engine.quit_data.data);
-			derfile = &engine.quit_data;
-			break;
-
-		case QuitReason_Spawn:
+			/* boot it */
+			verbose("Booting '%.*s'", boot_obj.size, boot_obj.data);
+			engine.quit_reason = QuitReason_DontQuit;
+			/* load the app */
+			if((app = MHEGApp_loadApplication(&engine.active_app, &boot_obj)) == NULL)
+				return EXIT_FAILURE;
+			/* start it up */
+			ApplicationClass_Preparation(app);
+			ApplicationClass_Activation(app);
+			/* main loop */
+			while(engine.quit_reason == QuitReason_DontQuit)
+			{
+				/* poll for files we are waiting for */
+				MHEGEngine_pollMissingContent();
+				/* process any async events */
+				MHEGEngine_processMHEGEvents();
+				/*
+				 * if we are polling for missing content,
+				 * or if we need to quit the current app
+				 * don't block waiting for the next GUI event
+				 */
+				block = (engine.missing_content == NULL && engine.quit_reason == QuitReason_DontQuit);
+				/* process any GUI events */
+				if(MHEGDisplay_processEvents(&engine.display, block))
+					engine.quit_reason = QuitReason_GUIQuit;
+			}
+			/* do Destruction of Application and Scene */
+			if((scene = MHEGEngine_getActiveScene()) != NULL)
+			{
+				SceneClass_Deactivation(scene);
+				SceneClass_Destruction(scene);
+			}
+			ApplicationClass_Deactivation(app);
+			ApplicationClass_Destruction(app);
+			/* clean up */
+			MHEGApp_fini(&engine.active_app);
+			LIST_FREE(&engine.objects, RootClassPtr, safe_free);
+			LIST_FREE(&engine.missing_content, MissingContent, free_MissingContentListItem);
+			LIST_FREE(&engine.active_links, LinkClassPtr, safe_free);
+			LIST_FREE(&engine.async_eventq, MHEGAsyncEvent, free_MHEGAsyncEventListItem);
+			LIST_FREE(&engine.main_actionq, MHEGAction, free_MHEGActionListItem);
+			LIST_FREE(&engine.temp_actionq, MHEGAction, free_MHEGActionListItem);
+			/* do we need to run a new app */
+			switch(engine.quit_reason)
+			{
+			case QuitReason_Launch:
+				verbose("Launch '%.*s'", engine.quit_data.size, engine.quit_data.data);
+				boot_obj.size = engine.quit_data.size;
+				boot_obj.data = engine.quit_data.data;
+				break;
+	
+			case QuitReason_Spawn:
+				verbose("Spawn '%.*s'", engine.quit_data.size, engine.quit_data.data);
 /* TODO */
 /* need to run on_restart and on_spawn_close_down Actions at some point */
 printf("TODO: Spawn '%.*s'; doing Launch instead\n", engine.quit_data.size, engine.quit_data.data);
-			derfile = &engine.quit_data;
-			break;
-
-		case QuitReason_Retune:
-/* TODO */
-fatal("TODO: Retune to '%.*s' (service_id %u)", engine.quit_data.size, engine.quit_data.data, si_get_service_id(&engine.quit_data));
-			break;
-
-		default:
-			/* nothing to do */
-			break;
+				boot_obj.size = engine.quit_data.size;
+				boot_obj.data = engine.quit_data.data;
+				break;
+	
+			case QuitReason_Retune:
+				verbose("Retune to '%.*s'", engine.quit_data.size, engine.quit_data.data);
+				MHEGEngine_retune(&engine.quit_data);
+				break;
+	
+			default:
+				/* nothing to do */
+				break;
+			}
 		}
+		while(engine.quit_reason == QuitReason_Launch || engine.quit_reason == QuitReason_Spawn);
 	}
-	while(engine.quit_reason == QuitReason_Launch || engine.quit_reason == QuitReason_Spawn);
-
-	/* clean up */
-	free_OctetString(&engine.quit_data);
+	while(engine.quit_reason == QuitReason_Retune);
 
 	return EXIT_SUCCESS;
 }
@@ -275,6 +298,8 @@ MHEGEngine_fini(void)
 	si_free();
 
 	MHEGBackend_fini(&engine.backend);
+
+	free_OctetString(&engine.quit_data);
 
 	return;
 }
@@ -1381,6 +1406,17 @@ MHEGEngine_openStream(bool have_audio, int *audio_tag, int *audio_type, bool hav
 	return (*(engine.backend.fns->openStream))(&engine.backend,
 						   have_audio, audio_tag, audio_type,
 						   have_video, video_tag, video_type);
+}
+
+/*
+ * retune the backend to the given service
+ * service should be in the form "dvb://<network_id>..<service_id>", eg "dvb://233a..4C80"
+ */
+
+void
+MHEGEngine_retune(OctetString *service)
+{
+	return (*(engine.backend.fns->retune))(&engine.backend, service);
 }
 
 /*

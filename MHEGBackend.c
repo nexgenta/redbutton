@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 
 #include "MHEGEngine.h"
+#include "si.h"
 #include "utils.h"
 
 /* local backend funcs */
@@ -18,6 +19,7 @@ bool local_checkContentRef(MHEGBackend *, ContentReference *);
 bool local_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *local_openFile(MHEGBackend *, OctetString *);
 FILE *local_openStream(MHEGBackend *, bool, int *, int *, bool, int *, int *);
+void local_retune(MHEGBackend *, OctetString *);
 
 static struct MHEGBackendFns local_backend_fns =
 {
@@ -25,6 +27,7 @@ static struct MHEGBackendFns local_backend_fns =
 	local_loadFile,		/* loadFile */
 	local_openFile,		/* openFile */
 	local_openStream,	/* openStream */
+	local_retune,		/* retune */
 };
 
 /* remote backend funcs */
@@ -32,6 +35,7 @@ bool remote_checkContentRef(MHEGBackend *, ContentReference *);
 bool remote_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *remote_openFile(MHEGBackend *, OctetString *);
 FILE *remote_openStream(MHEGBackend *, bool, int *, int *, bool, int *, int *);
+void remote_retune(MHEGBackend *, OctetString *);
 
 static struct MHEGBackendFns remote_backend_fns =
 {
@@ -39,6 +43,7 @@ static struct MHEGBackendFns remote_backend_fns =
 	remote_loadFile,	/* loadFile */
 	remote_openFile,	/* openFile */
 	remote_openStream,	/* openStream */
+	remote_retune,		/* retune */
 };
 
 /* internal functions */
@@ -346,6 +351,20 @@ local_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_typ
 }
 
 /*
+ * retune the backend to the given service
+ * service should be in the form "dvb://<network_id>..<service_id>", eg "dvb://233a..4C80"
+ */
+
+void
+local_retune(MHEGBackend *t, OctetString *service)
+{
+/* TODO */
+fatal("TODO: Retune local backend to '%.*s' (service_id %u)", service->size, service->data, si_get_service_id(service));
+
+	return;
+}
+
+/*
  * remote routines
  */
 
@@ -538,5 +557,19 @@ remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_ty
 	}
 
 	return sock;
+}
+
+/*
+ * retune the backend to the given service
+ * service should be in the form "dvb://<network_id>..<service_id>", eg "dvb://233a..4C80"
+ */
+
+void
+remote_retune(MHEGBackend *t, OctetString *service)
+{
+/* TODO */
+fatal("TODO: Retune remote backend to '%.*s' (service_id %u)", service->size, service->data, si_get_service_id(service));
+
+	return;
 }
 
