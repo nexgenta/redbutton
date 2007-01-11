@@ -11,12 +11,12 @@
 
 struct listen_data
 {
-	struct sockaddr_in addr;	/* ip:port to listen on */
 	struct carousel *carousel;	/* carousel we are downloading */
 };
 
 int parse_addr(char *, struct in_addr *, in_port_t *);
 
-void start_listener(struct listen_data *);
+void start_listener(struct sockaddr_in *, unsigned int, unsigned int, uint16_t, int);
+struct carousel *start_downloader(unsigned int, unsigned int, uint16_t, int);
 
 #endif

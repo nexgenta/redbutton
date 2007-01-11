@@ -17,6 +17,8 @@
 #include <sys/wait.h>
 
 #include "command.h"
+#include "findmheg.h"
+#include "carousel.h"
 #include "utils.h"
 
 /* listen() backlog, 5 is max for BSD apparently */
@@ -107,22 +109,17 @@ get_host_addr(char *host, struct in_addr *output)
  */
 
 void
-start_listener(struct listen_data *listen_data)
+start_listener(struct sockaddr_in *listen_addr, unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
 {
+	struct listen_data listen_data;
 	struct sigaction action;
-	pid_t child;
 	int sockopt;
 	int listen_sock;
 	int accept_sock;
 	fd_set read_fds;
 	socklen_t addr_len;
 	struct sockaddr_in client_addr;
-
-	/*
-	 * fork:
-	 * the parent listens for commands,
-	 * the child returns and downloads the carousel
-	 */
+	pid_t child;
 
 	/* don't let our children become zombies */
 	action.sa_handler = dead_child;
@@ -131,16 +128,11 @@ start_listener(struct listen_data *listen_data)
 	if(sigaction(SIGCHLD, &action, NULL) < 0)
 		fatal("signal: SIGCHLD: %s", strerror(errno));
 
-	/* if we can't fork it's probably best to kill ourselves*/
-	if((child = fork()) < 0)
-		fatal("fork: %s", strerror(errno));
-	/* child returns */
-	else if(child == 0)
-		return;
-	/* parent continues */
+	/* fork off a child to download the carousel */
+	listen_data.carousel = start_downloader(adapter, timeout, service_id, carousel_id);
 
 	/* listen on the given ip:port */
-	verbose("Listening on %s:%u", inet_ntoa(listen_data->addr.sin_addr), ntohs(listen_data->addr.sin_port));
+	verbose("Listening on %s:%u", inet_ntoa(listen_addr->sin_addr), ntohs(listen_addr->sin_port));
 
 	if((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		fatal("socket: %s", strerror(errno));
@@ -150,7 +142,7 @@ start_listener(struct listen_data *listen_data)
 	if(setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(sockopt)) < 0)
 		fatal("setsockopt: SO_REUSEADDR: %s", strerror(errno));
 
-	if(bind(listen_sock, (struct sockaddr *) &listen_data->addr, sizeof(struct sockaddr_in)) < 0)
+	if(bind(listen_sock, (struct sockaddr *) listen_addr, sizeof(struct sockaddr_in)) < 0)
 		fatal("bind: %s", strerror(errno));
 
 	if(listen(listen_sock, BACKLOG) < 0)
@@ -188,7 +180,7 @@ start_listener(struct listen_data *listen_data)
 		{
 			/* child */
 			close(listen_sock);
-			handle_connection(listen_data, accept_sock, &client_addr);
+			handle_connection(&listen_data, accept_sock, &client_addr);
 			close(accept_sock);
 			/* use _exit in child so stdio etc don't clean up twice */
 			_exit(EXIT_SUCCESS);
@@ -248,6 +240,37 @@ handle_connection(struct listen_data *listen_data, int client_sock, struct socka
 	verbose("Connection from %s:%d closed", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
 
 	return;
+}
+
+struct carousel *
+start_downloader(unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
+{
+	struct carousel *car;
+	pid_t child;
+	
+	/* find the MHEG PIDs */
+	car = find_mheg(adapter, timeout, service_id, carousel_id);
+
+	verbose("Carousel ID=%u", car->carousel_id);
+	verbose("Boot PID=%u", car->boot_pid);
+	verbose("Video PID=%u", car->video_pid);
+	verbose("Audio PID=%u", car->audio_pid);
+
+	/*
+	 * fork:
+	 * the parent listens for commands,
+	 * the child downloads the carousel
+	 */
+
+	/* if we can't fork it's probably best to kill ourselves*/
+	if((child = fork()) < 0)
+		fatal("fork: %s", strerror(errno));
+	/* child downloads the carousel until killed by parent */
+	else if(child == 0)
+		load_carousel(car);                                            
+	/* parent continues */
+
+	return car;
 }
 
 static void

@@ -1,5 +1,5 @@
 /*
- * rb-download [-v] [-a <adapter>] [-b <base_dir>] [-t <timeout>] [-l[<listen-addr>]] [-c <carousel_id>] [<service_id>]
+ * rb-download [-v] [-a <adapter>] [-b <base_dir>] [-t <timeout>] [-l <listen_addr>] [-c <carousel_id>] [<service_id>]
  *
  * Download the DVB Object Carousel for the given channel onto the local hard disc
  * files will be stored under the current dir if no -b option is given
@@ -15,13 +15,12 @@
  * /dev/dvb/adapter0/dvr0
  * use the -a option to change the adapter number (eg "-a 1" will use /dev/dvb/adapter1/demux0 etc)
  *
- * if -l is given, rb-download listens on the network for commands from a remote rb-browser
+ * rb-download listens on the network for commands from a remote rb-browser
  * the default IP to listen on is 0.0.0.0 (ie all interfaces), the default TCP port is 10101
- * listen-addr should be given in the form "host:port", where host defaults to 0.0.0.0 and port defaults to 10101
- * eg, to listen on a different port, do "-l8080"
- * to only listen on the loop back, do "-l127.0.0.1" or on a different port too, do "-l127.0.0.1:8080"
- * NOTE: because -l may or may not take an argument, you must not put a space between the -l and the value
- * (otherwise, "rb-download -l 1234", is ambiguous - listen on port 1234 or use service_id 1234?)
+ * the -l option changes the default IP and port
+ * listen_addr should be given in the form "host:port", where host defaults to 0.0.0.0 and port defaults to 10101
+ * eg, to listen on a different port, do "-l 8080"
+ * to only listen on the loop back, do "-l 127.0.0.1" or on a different port too, do "-l 127.0.0.1:8080"
  *
  * -v is verbose/debug mode, use more v's for more verbosity
  *
@@ -35,7 +34,7 @@
  */
 
 /*
- * Copyright (C) 2005, 2006, Simon Kilvington
+ * Copyright (C) 2005, 2006, 2007, Simon Kilvington
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,16 +81,21 @@ int
 main(int argc, char *argv[])
 {
 	char *prog_name = argv[0];
-	unsigned int adapter = 0;
-	unsigned int timeout = DEFAULT_TIMEOUT;
-	bool listen = false;
-	struct listen_data listen_data;
-	int carousel_id = -1;
+	unsigned int adapter;
+	unsigned int timeout;
+	struct sockaddr_in listen_addr;
+	int carousel_id;
 	uint16_t service_id;
-	struct carousel *car;
 	int arg;
 
-	while((arg = getopt(argc, argv, "a:b:t:l::c:v")) != EOF)
+	/* default values */
+	adapter = 0;
+	timeout = DEFAULT_TIMEOUT;
+	listen_addr.sin_addr.s_addr = htonl(DEFAULT_LISTEN_ADDR);
+	listen_addr.sin_port = htons(DEFAULT_LISTEN_PORT);
+	carousel_id = -1;	/* read it from the PMT */
+
+	while((arg = getopt(argc, argv, "a:b:t:l:c:v")) != EOF)
 	{
 		switch(arg)
 		{
@@ -109,12 +113,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'l':
-			listen = true;
-			/* default values */
-			listen_data.addr.sin_addr.s_addr = htonl(DEFAULT_LISTEN_ADDR);
-			listen_data.addr.sin_port = htons(DEFAULT_LISTEN_PORT);
-			/* optarg is NULL if no value is given, parse_addr can't fail with NULL */
-			if(parse_addr(optarg, &listen_data.addr.sin_addr, &listen_data.addr.sin_port) < 0)
+			if(parse_addr(optarg, &listen_addr.sin_addr, &listen_addr.sin_port) < 0)
 				fatal("Unable to resolve host %s", optarg);
 			break;
 
@@ -139,17 +138,7 @@ main(int argc, char *argv[])
 	else if(argc - optind == 1)
 	{
 		service_id = strtoul(argv[optind], NULL, 0);
-		car = find_mheg(adapter, timeout, service_id, carousel_id);
-		verbose("Carousel ID=%u", car->carousel_id);
-		verbose("Boot PID=%u", car->boot_pid);
-		verbose("Video PID=%u", car->video_pid);
-		verbose("Audio PID=%u", car->audio_pid);
-		if(listen)
-		{
-			listen_data.carousel = car;
-			start_listener(&listen_data);
-		}
-		load_carousel(car);
+		start_listener(&listen_addr, adapter, timeout, service_id, carousel_id);
 	}
 	else
 	{
@@ -207,7 +196,7 @@ usage(char *prog_name)
 			"[-a <adapter>] "
 			"[-b <base_dir>] "
 			"[-t <timeout>] "
-			"[-l[<listen-addr>]] "
+			"[-l <listen_addr>] "
 			"[-c carousel_id] "
 			"[<service_id>]", prog_name);
 }
