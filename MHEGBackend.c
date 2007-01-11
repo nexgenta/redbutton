@@ -73,6 +73,7 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 	{
 		/* backend is on a different host, srg_loc is the remote host[:port] */
 		b->fns = &remote_backend_fns;
+		b->base_dir = NULL;
 		if(parse_addr(srg_loc, &b->addr.sin_addr, &b->addr.sin_port) < 0)
 			fatal("Unable to resolve host %s", srg_loc);
 		verbose("Remote backend at %s:%u", inet_ntoa(b->addr.sin_addr), ntohs(b->addr.sin_port));
@@ -81,7 +82,7 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 	{
 		/* backend and frontend on same host, srg_loc is the base directory */
 		b->fns = &local_backend_fns;
-		b->base_dir = srg_loc;
+		b->base_dir = safe_strdup(srg_loc);
 		verbose("Local backend; carousel file root '%s'", srg_loc);
 	}
 
@@ -95,6 +96,8 @@ MHEGBackend_fini(MHEGBackend *b)
 	if(b->be_sock != NULL
 	&& remote_command(b, true, "quit\n") != NULL)
 		fclose(b->be_sock);
+
+	safe_free(b->base_dir);
 
 	return;
 }
@@ -358,8 +361,34 @@ local_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_typ
 void
 local_retune(MHEGBackend *t, OctetString *service)
 {
-/* TODO */
-fatal("TODO: Retune local backend to '%.*s' (service_id %u)", service->size, service->data, si_get_service_id(service));
+	unsigned int service_id;
+	char service_str[64];
+	char *slash;
+	int prefix_len;
+
+	/* extract the service_id */
+	service_id = si_get_service_id(service);
+	snprintf(service_str, sizeof(service_str), "%u", service_id);
+
+	/*
+	 * base_dir is: [path/to/services/]<service_id>
+	 * so we just need to replace the last filename component with the new service_id
+	 */
+	slash = strrchr(t->base_dir, '/');
+	if(slash == NULL)
+	{
+		/* no preceeding path */
+		t->base_dir = safe_realloc(t->base_dir, strlen(service_str) + 1);
+		strcpy(t->base_dir, service_str);
+	}
+	else
+	{
+		prefix_len = (slash - t->base_dir) + 1;
+		t->base_dir = safe_realloc(t->base_dir, prefix_len + strlen(service_str) + 1);
+		strcpy(t->base_dir + prefix_len, service_str);
+	}
+
+	verbose("Retune: new service gateway is '%s'", t->base_dir);
 
 	return;
 }

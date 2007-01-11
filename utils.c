@@ -206,6 +206,24 @@ safe_free(void *buf)
 	return;
 }
 
+/*
+ * safe_strdup(NULL) == NULL
+ */
+
+char *
+safe_strdup(const char *src)
+{
+	char *dst;
+
+	if(src == NULL)
+		return NULL;
+
+	dst = (char *) safe_malloc(strlen(src) + 1);
+	strcpy(dst, src);
+
+	return dst;
+}
+
 void
 error(char *message, ...)
 {

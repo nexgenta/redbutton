@@ -45,6 +45,8 @@ void *safe_mallocz(size_t);
 void *safe_realloc(void *, size_t);
 void safe_free(void *);
 
+char *safe_strdup(const char *);
+
 void error(char *, ...);
 void fatal(char *, ...);
 
