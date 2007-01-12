@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "command.h"
 #include "assoc.h"
@@ -26,6 +27,7 @@ bool cmd_check(struct listen_data *, FILE *, int, char **);
 bool cmd_file(struct listen_data *, FILE *, int, char **);
 bool cmd_help(struct listen_data *, FILE *, int, char **);
 bool cmd_quit(struct listen_data *, FILE *, int, char **);
+bool cmd_retune(struct listen_data *, FILE *, int, char **);
 bool cmd_vstream(struct listen_data *, FILE *, int, char **);
 
 static struct
@@ -44,6 +46,7 @@ static struct
 	{ "file", "<ContentReference>",		cmd_file,	"Retrieve the given file from the carousel" },
 	{ "help", "",				cmd_help,	"List available commands" },
 	{ "quit", "",				cmd_quit,	"Close the connection" },
+	{ "retune", "<ServiceID>",		cmd_retune,	"Start downloading the carousel from ServiceID" },
 	{ "vstream", "<ComponentTag>",		cmd_vstream,	"Stream the given video component tag" },
 	{ NULL, NULL, NULL, NULL }
 };
@@ -501,6 +504,38 @@ cmd_file(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 	fclose(file);
 
 	return false;
+}
+
+/*
+ * retune <ServiceID>
+ * stop downloading the current carousel
+ * start downloading the carousel on the given ServiceID
+ */
+
+bool
+cmd_retune(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+	unsigned int service_id;
+	union sigval value;
+
+
+	CHECK_USAGE(2, "retune <ServiceID>");
+
+	service_id = strtoul(argv[1], NULL, 0);
+
+	/* do we need to retune */
+	if(service_id != car->service_id)
+	{
+		/* send a SIGHUP to the main listener process */
+		value.sival_int = service_id;
+		sigqueue(getppid(), SIGHUP, value);
+	}
+
+	SEND_RESPONSE(200, "OK");
+
+	/* need to close the connection as this process now has stale listen_data->carousel */
+	return true;
 }
 
 /*

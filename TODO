@@ -1,3 +1,6 @@
+need to kill all existing command connections on retune
+(listen_data->carousel is stale for them)
+
 got an "Out of memory" error when doing avstream and video changed size
 (start of C4 news)
 can't see how avstream can cause an out of memory error

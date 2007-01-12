@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <sys/types.h>
 
 #include "dsmcc.h"
 #include "assoc.h"
@@ -58,6 +59,7 @@ struct carousel
 	char demux_device[PATH_MAX];	/* demux device path */
 	char dvr_device[PATH_MAX];	/* dvr device path */
 	unsigned int timeout;		/* timeout for the DVB devices */
+	pid_t downloader;		/* ID of the process downloading the carousel */
 	uint16_t service_id;
 	uint32_t carousel_id;
 	uint16_t boot_pid;		/* PID containing DSI */

@@ -84,12 +84,14 @@ read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs)
 	timeout.tv_usec = 0;
 	do
 	{
-		_buf[0] = 0;
+		_buf[0] = 0xff;	/* we never want table ID 0xff */
 		FD_ZERO(&readfds);
 		FD_SET(fd_data, &readfds);
 		if(select(fd_data + 1, &readfds, NULL, NULL, &timeout) < 0)
 		{
-			error("select: %s", strerror(errno));
+			if(errno == EINTR)
+				continue;
+			error("read_table: select: %s", strerror(errno));
 			close(fd_data);
 			return NULL;
 		}
@@ -147,7 +149,7 @@ read_dsmcc_tables(struct carousel *car)
 		/* wait for some data to be ready */
 		if(select(max + 1, &readfds, NULL, NULL, &timeout) < 0)
 		{
-			error("select: %s", strerror(errno));
+			error("read_dsmcc_tables: select: %s", strerror(errno));
 			return NULL;
 		}
 		/* see which fd is ready */

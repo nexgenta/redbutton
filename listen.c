@@ -28,7 +28,19 @@
 static int get_host_addr(char *, struct in_addr *);
 
 static void handle_connection(struct listen_data *, int, struct sockaddr_in *);
+
 static void dead_child(int);
+static void hup_handler(int, siginfo_t *, void *);
+
+/*
+ * we have a main process that listens for commands on the network
+ * each time a new command is received a new process is forked to handle it
+ * the main process also has a child downloading the carousel
+ * to retune, the command processing process sends a SIGHUP to the main process
+ * the siginfo contains the new service_id
+ * this variable is set by the SIGHUP handler from the siginfo, -1 => no retune needed
+ */
+static volatile int retune_id = -1;
 
 /*
  * extract the IP addr and port number from a string in one of these forms:
@@ -131,6 +143,13 @@ start_listener(struct sockaddr_in *listen_addr, unsigned int adapter, unsigned i
 	/* fork off a child to download the carousel */
 	listen_data.carousel = start_downloader(adapter, timeout, service_id, carousel_id);
 
+	/* catch SIGHUP - tells us to retune */
+	action.sa_sigaction = hup_handler;
+	sigemptyset(&action.sa_mask);
+	action.sa_flags = SA_SIGINFO;
+	if(sigaction(SIGHUP, &action, NULL) < 0)
+		fatal("signal: SIGHUP: %s", strerror(errno));
+
 	/* listen on the given ip:port */
 	verbose("Listening on %s:%u", inet_ntoa(listen_addr->sin_addr), ntohs(listen_addr->sin_port));
 
@@ -151,11 +170,21 @@ start_listener(struct sockaddr_in *listen_addr, unsigned int adapter, unsigned i
 	/* listen for connections */
 	while(true)
 	{
+		/* do we need to retune */
+		if(retune_id != -1)
+		{
+			verbose("Retune to service_id %d", retune_id);
+			/* kill the current downloader process and start a new one */
+			kill(listen_data.carousel->downloader, SIGKILL);
+			listen_data.carousel = start_downloader(adapter, timeout, retune_id, -1);
+			retune_id = -1;
+		}
+		/* listen for a connection */
 		FD_ZERO(&read_fds);
 		FD_SET(listen_sock, &read_fds);
 		if(select(listen_sock + 1, &read_fds, NULL, NULL, NULL) < 0)
 		{
-			/* could have been interupted by SIGCHLD */
+			/* could have been interupted by SIGCHLD or SIGHUP */
 			if(errno != EINTR)
 				error("select: %s", strerror(errno));
 			continue;
@@ -270,6 +299,9 @@ start_downloader(unsigned int adapter, unsigned int timeout, uint16_t service_id
 		load_carousel(car);                                            
 	/* parent continues */
 
+	/* remember the PID of the downloader process so we can kill it on retune */
+	car->downloader = child;
+
 	return car;
 }
 
@@ -281,3 +313,13 @@ dead_child(int signo)
 
 	return;
 }
+
+static void
+hup_handler(int signo, siginfo_t *info, void *ctx)
+{
+	if(signo == SIGHUP)
+		retune_id = info->si_value.sival_int;
+
+	return;
+}
+
