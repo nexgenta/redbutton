@@ -519,7 +519,6 @@ cmd_retune(struct listen_data *listen_data, FILE *client, int argc, char *argv[]
 	unsigned int service_id;
 	union sigval value;
 
-
 	CHECK_USAGE(2, "retune <ServiceID>");
 
 	service_id = strtoul(argv[1], NULL, 0);
