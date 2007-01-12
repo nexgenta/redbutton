@@ -596,8 +596,26 @@ remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_ty
 void
 remote_retune(MHEGBackend *t, OctetString *service)
 {
+	char cmd[128];
+	FILE *sock;
+
+	snprintf(cmd, sizeof(cmd), "retune %u", si_get_service_id(service));
+
 /* TODO */
 fatal("TODO: Retune remote backend to '%.*s' (service_id %u)", service->size, service->data, si_get_service_id(service));
+
+	if((sock = remote_command(t, true, cmd)) == NULL
+	|| remote_response(sock) != BACKEND_RESPONSE_OK)
+	{
+		error("Unable to retune to '%.*s' (service_id %u)", service->size, service->data, si_get_service_id(service));
+	}
+
+	/* a "retune" command closes the connection to the backend, so close our end */
+	if(t->be_sock != NULL)
+	{
+		fclose(t->be_sock);
+		t->be_sock = NULL;
+	}
 
 	return;
 }
