@@ -6,6 +6,7 @@ got an "Out of memory" error when doing avstream and video changed size
 can't see how avstream can cause an out of memory error
 
 Sky Teletext - can't find PIDs for tags 1 and 2
+(need to read the component_tag descriptors for *all* service_id's on the MUX)
 
 look into new splice() and tee() syscalls in 2.6.17 kernel for avstream
 
