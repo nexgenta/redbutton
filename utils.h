@@ -45,6 +45,13 @@
 #define DVR_DEVICE  "/dev/dvb/adapter%u/dvr0"
 #endif
 
+/* DVB frontend device - %u is card number */
+#if defined(HAVE_DREAMBOX_HARDWARE)
+#define FE_DEVICE "/dev/dvb/card%u/frontend0"
+#else
+#define FE_DEVICE  "/dev/dvb/adapter%u/frontend0"
+#endif
+
 char *skip_ws(char *);
 
 char hex_digit(uint8_t);

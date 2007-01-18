@@ -19,6 +19,7 @@
 #include "command.h"
 #include "findmheg.h"
 #include "carousel.h"
+#include "channels.h"
 #include "utils.h"
 
 /* listen() backlog, 5 is max for BSD apparently */
@@ -276,6 +277,9 @@ start_downloader(unsigned int adapter, unsigned int timeout, uint16_t service_id
 {
 	struct carousel *car;
 	pid_t child;
+
+	/* retune if needed */
+	tune_service_id(adapter, timeout, service_id);
 	
 	/* find the MHEG PIDs */
 	car = find_mheg(adapter, timeout, service_id, carousel_id);
