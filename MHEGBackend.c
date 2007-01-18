@@ -601,9 +601,6 @@ remote_retune(MHEGBackend *t, OctetString *service)
 
 	snprintf(cmd, sizeof(cmd), "retune %u\n", si_get_service_id(service));
 
-/* TODO */
-printf("TODO: Retune remote backend to '%.*s' (service_id %u). This will fail if the new service is on a different frequency.", service->size, service->data, si_get_service_id(service));
-
 	if((sock = remote_command(t, true, cmd)) == NULL
 	|| remote_response(sock) != BACKEND_RESPONSE_OK)
 	{
