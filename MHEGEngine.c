@@ -192,19 +192,27 @@ MHEGEngine_run(void)
 	bool block;
 	unsigned int i;
 	bool found;
+	struct timeval start;
+	struct timeval now;
 	/* search order for the app to boot in the Service Gateway dir */
 	char *boot_order[] = { "~//a", "~//startup", NULL };
 
 	do
 	{
-		/* search for the boot object */
+		/* search for the boot object for timeout seconds */
 		found = false;
-		for(i=0; !found && boot_order[i] != NULL; i++)
+		gettimeofday(&start, NULL);
+		do
 		{
-			boot_obj.size = strlen(boot_order[i]);
-			boot_obj.data = boot_order[i];
-			found = MHEGEngine_checkContentRef(&boot_obj);
+			for(i=0; !found && boot_order[i] != NULL; i++)
+			{
+				boot_obj.size = strlen(boot_order[i]);
+				boot_obj.data = boot_order[i];
+				found = MHEGEngine_checkContentRef(&boot_obj);
+			}
+			gettimeofday(&now, NULL);
 		}
+		while(!found && now.tv_sec <= (start.tv_sec + engine.timeout));
 		if(!found)
 		{
 			error("Unable to find boot object in service gateway");
