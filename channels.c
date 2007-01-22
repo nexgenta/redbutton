@@ -41,7 +41,7 @@ static FILE *_channels = NULL;
 
 /*
  * if filename is NULL, it searches for:
- * ~/channels.conf
+ * ~/.tzap/channels.conf
  * /etc/channels.conf
  */
 
@@ -58,7 +58,7 @@ init_channels_conf(char *filename)
 	{
 		if((home = getenv("HOME")) != NULL)
 		{
-			snprintf(pathname, sizeof(pathname), "%s/channels.conf", home);
+			snprintf(pathname, sizeof(pathname), "%s/.tzap/channels.conf", home);
 			verbose("Trying to open %s", pathname);
 			_channels = fopen(pathname, "r");
 		}
