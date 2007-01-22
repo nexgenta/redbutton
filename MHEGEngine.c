@@ -174,6 +174,7 @@ MHEGEngine_init(MHEGEngineOptions *opts)
 	MHEGDisplay_init(&engine.display, opts->fullscreen, opts->keymap);
 
 	engine.vo_method = MHEGVideoOutputMethod_fromString(opts->vo_method);
+	engine.av_disabled = opts->av_disabled;
 
 	MHEGBackend_init(&engine.backend, opts->remote, opts->srg_loc);
 
@@ -261,7 +262,7 @@ MHEGEngine_run(void)
 				boot_obj.size = engine.quit_data.size;
 				boot_obj.data = engine.quit_data.data;
 				break;
-	
+
 			case QuitReason_Spawn:
 				verbose("Spawn '%.*s'", engine.quit_data.size, engine.quit_data.data);
 /* TODO */
@@ -270,12 +271,12 @@ printf("TODO: Spawn '%.*s'; doing Launch instead\n", engine.quit_data.size, engi
 				boot_obj.size = engine.quit_data.size;
 				boot_obj.data = engine.quit_data.data;
 				break;
-	
+
 			case QuitReason_Retune:
 				verbose("Retune to '%.*s'", engine.quit_data.size, engine.quit_data.data);
 				MHEGEngine_retune(&engine.quit_data);
 				break;
-	
+
 			default:
 				/* nothing to do */
 				break;
@@ -314,6 +315,12 @@ MHEGVideoOutputMethod *
 MHEGEngine_getVideoOutputMethod(void)
 {
 	return engine.vo_method;
+}
+
+bool
+MHEGEngine_avDisabled(void)
+{
+	return engine.av_disabled;
 }
 
 /*

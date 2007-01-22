@@ -86,6 +86,7 @@ typedef struct
 	unsigned int timeout;	/* seconds to poll for missing content before generating a ContentRefError */
 	bool fullscreen;	/* scale to fullscreen? */
 	char *vo_method;	/* MHEGVideoOutputMethod name (NULL for default) */
+	bool av_disabled;	/* true => audio and video output totally disabled */
 	char *keymap;		/* keymap config file to use (NULL for default) */
 } MHEGEngineOptions;
 
@@ -168,6 +169,7 @@ typedef struct
 	unsigned int timeout;				/* how long to poll for missing content before generating an error */
 	MHEGDisplay display;				/* make porting easier */
 	MHEGVideoOutputMethod *vo_method;		/* video output method (resolved from name given in MHEGEngineOptions) */
+	bool av_disabled;				/* true => video and audio output totally disabled */
 	MHEGBackend backend;				/* local or remote access to DSMCC carousel and MPEG streams */
 	MHEGApp active_app;				/* application we are currently running */
 	QuitReason quit_reason;				/* do we need to stop the current app */
@@ -189,6 +191,7 @@ void MHEGEngine_fini(void);
 
 MHEGDisplay *MHEGEngine_getDisplay(void);
 MHEGVideoOutputMethod *MHEGEngine_getVideoOutputMethod(void);
+bool MHEGEngine_avDisabled(void);
 
 void MHEGEngine_TransitionTo(TransitionTo *, OctetString *);
 

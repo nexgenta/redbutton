@@ -168,6 +168,10 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 	if(p->video != NULL)
 		p->video->inst.no_video = true;
 
+	/* is audio/video output totally disabled */
+	if(MHEGEngine_avDisabled())
+		return;
+
 	p->audio_pid = p->audio_tag;
 	p->video_pid = p->video_tag;
 	if((p->ts = MHEGEngine_openStream(p->have_audio, &p->audio_pid, &p->audio_type,

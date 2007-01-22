@@ -1,8 +1,9 @@
 /*
- * rb-browser [-v] [-f] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>
+ * rb-browser [-v] [-f] [-d] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>
  *
  * -v is verbose/debug mode
  * -f is full screen, otherwise it uses a window
+ * -d disables all video and audio output
  * -o allows you to choose a video output method if the default is not supported/too slow on your graphics card
  * (do 'rb-browser -o' for a list of available methods)
  * -k changes the default key map to the given file
@@ -49,10 +50,11 @@ main(int argc, char *argv[])
 	opts.verbose = 0;
 	opts.fullscreen = false;
 	opts.vo_method = NULL;
+	opts.av_disabled = false;
 	opts.timeout = MISSING_CONTENT_TIMEOUT;
 	opts.keymap = NULL;
 
-	while((arg = getopt(argc, argv, "rvfo:k:t:")) != EOF)
+	while((arg = getopt(argc, argv, "rvfdo:k:t:")) != EOF)
 	{
 		switch(arg)
 		{
@@ -66,6 +68,10 @@ main(int argc, char *argv[])
 
 		case 'f':
 			opts.fullscreen = true;
+			break;
+
+		case 'd':
+			opts.av_disabled = true;
 			break;
 
 		case 'o':
@@ -114,6 +120,7 @@ usage(char *prog_name)
 	fatal("Usage: %s "
 		"[-v] "
 		"[-f] "
+		"[-d] "
 		"[-o <video_output_method>] "
 		"[-k <keymap_file>] "
 		"[-t <timeout>] "
