@@ -15,9 +15,8 @@ only redraw them in SetPosition/SetBoxSize/etc if they actually move/change size
 print avstream error message in rb-browser if openStream fails
 
 
-use -t timeout when searching for initial object to boot
-(only use it when searching for boot obj? all other times raise ContentRefError
-immediately?)
+only use -t timeout when searching for boot obj?
+all other times raise ContentRefError immediately?
 
 
 handle SIGPIPE - default handler terminates the process
