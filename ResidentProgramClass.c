@@ -796,9 +796,9 @@ prog_GetSubString(LIST_OF(Parameter) *params, OctetString *caller_gid)
 int
 search_substring(OctetString *string, int start, OctetString *search)
 {
-	/* range check */
+	/* assert */
 	if(start < 1 || start > string->size)
-		return -1;
+		fatal("search_substring: start=%d string->size=%d", start, string->size);
 
 	/* simple cases */
 	if(string->size == 0)
@@ -847,6 +847,10 @@ prog_SearchSubString(LIST_OF(Parameter) *params, OctetString *caller_gid)
 	startIndex = GenericInteger_getInteger(startIndex_par, caller_gid);
 	searchString = GenericOctetString_getOctetString(searchString_par, caller_gid);
 
+	/* range checks */
+	startIndex = MAX(startIndex, 1);
+	startIndex = MIN(startIndex, string->size);
+
 	stringPosition = search_substring(string, startIndex, searchString);
 	GenericInteger_setInteger(stringPosition_par, caller_gid, stringPosition);
 
@@ -891,6 +895,10 @@ prog_SearchAndExtractSubString(LIST_OF(Parameter) *params, OctetString *caller_g
 	string = GenericOctetString_getOctetString(string_par, caller_gid);
 	startIndex = GenericInteger_getInteger(startIndex_par, caller_gid);
 	searchString = GenericOctetString_getOctetString(searchString_par, caller_gid);
+
+	/* range checks */
+	startIndex = MAX(startIndex, 1);
+	startIndex = MIN(startIndex, string->size);
 
 	if((search_pos = search_substring(string, startIndex, searchString)) != -1)
 	{
