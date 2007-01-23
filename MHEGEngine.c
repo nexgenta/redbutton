@@ -1449,26 +1449,43 @@ static char _absolute[PATH_MAX];
 char *
 MHEGEngine_absoluteFilename(OctetString *name)
 {
-/**********************************************************************************/
+	unsigned int size;
+	unsigned char *data;
+
 /* TODO */
-/* also need to cope with DSM: and CI: at the start */
-/**********************************************************************************/
+/* need to cope with CI: at the start */
+	if(name->size > 2 && strncmp(name->data, "CI:", 3) == 0)
+	{
+printf("TODO: absoluteFilename '%.*s'", name->size, name->data);
+	}
+
+	/* DSM: at the start is equivalent to ~ */
+	if(name->size > 3 && strncmp(name->data, "DSM:", 4) == 0)
+	{
+		size = name->size - 4;
+		data = &name->data[4];
+	}
+	else
+	{
+		size = name->size;
+		data = name->data;
+	}
 
 	/* does it already start with a ~// */
-	if(name->size > 2 && strncmp(name->data, "~//", 3) == 0)
-		snprintf(_absolute, sizeof(_absolute), "%.*s", name->size, name->data);
+	if(size > 2 && strncmp(data, "~//", 3) == 0)
+		snprintf(_absolute, sizeof(_absolute), "%.*s", size, data);
 	/* starting with // is the same as starting with ~// */
-	else if(name->size > 1 && strncmp(name->data, "//", 2) == 0)
-		snprintf(_absolute, sizeof(_absolute), "~%.*s", name->size, name->data);
+	else if(size > 1 && strncmp(data, "//", 2) == 0)
+		snprintf(_absolute, sizeof(_absolute), "~%.*s", size, data);
 	/* starting with ~/ means prepend the path to the current active app */
-	else if(name->size > 1 && strncmp(name->data, "~/", 2) == 0)
-		snprintf(_absolute, sizeof(_absolute), "%s%.*s", active_app_path(), name->size - 1, &name->data[1]);
+	else if(size > 1 && strncmp(data, "~/", 2) == 0)
+		snprintf(_absolute, sizeof(_absolute), "%s%.*s", active_app_path(), size - 1, &data[1]);
 	/* starting with / is the same as starting with ~/ */
-	else if(name->size > 0 && name->data[0] == '/')
-		snprintf(_absolute, sizeof(_absolute), "%s%.*s", active_app_path(), name->size, name->data);
+	else if(size > 0 && data[0] == '/')
+		snprintf(_absolute, sizeof(_absolute), "%s%.*s", active_app_path(), size, data);
 	/* no / at the start, UK Profile doesn't say what to do, so prepend the path to the current active app */
-	else if(name->size > 0)
-		snprintf(_absolute, sizeof(_absolute), "%s/%.*s", active_app_path(), name->size, name->data);
+	else if(size > 0)
+		snprintf(_absolute, sizeof(_absolute), "%s/%.*s", active_app_path(), size, data);
 	/* no name at all */
 	else
 		snprintf(_absolute, sizeof(_absolute), "%s/", active_app_path());
