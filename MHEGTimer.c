@@ -22,6 +22,8 @@ timer_cb(XtPointer usr_data, XtIntervalId *id)
 {
 	TimerCBData *data = (TimerCBData *) usr_data;
 	EventData event_data;
+	XEvent ev;
+	MHEGDisplay *d = MHEGEngine_getDisplay();
 
 	/* generate a TimerFired event */
 	event_data.choice = EventData_integer;
@@ -33,8 +35,22 @@ timer_cb(XtPointer usr_data, XtIntervalId *id)
 
 	safe_free(data);
 
-	/* process the async event we generated */
-	MHEGEngine_processMHEGEvents();
+	/*
+	 * a timer going off does not get us out of a block in XtAppNextEvent
+	 * but we need to process the async event we just generated
+	 * we could just call MHEGEngine_processMHEGEvents() here
+	 * but if processing that means we want to Launch, Retune etc we will not be able to do it until XtAppNextEvent exits
+	 * so generate a fake event here, just to end XtAppNextEvent and get back to the engine main loop
+	 */
+	ev.xexpose.type = Expose;
+	ev.xexpose.display = d->dpy;
+	ev.xexpose.window = d->win;
+	ev.xexpose.x = 0;
+	ev.xexpose.y = 0;
+	ev.xexpose.width = 0;
+	ev.xexpose.height = 0;
+	ev.xexpose.count = 0;
+	XSendEvent(d->dpy, d->win, False, 0, &ev);
 
 	return;
 }
