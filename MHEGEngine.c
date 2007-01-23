@@ -1456,7 +1456,7 @@ MHEGEngine_absoluteFilename(OctetString *name)
 /* need to cope with CI: at the start */
 	if(name->size > 2 && strncmp(name->data, "CI:", 3) == 0)
 	{
-printf("TODO: absoluteFilename '%.*s'", name->size, name->data);
+printf("TODO: absoluteFilename '%.*s'\n", name->size, name->data);
 	}
 
 	/* DSM: at the start is equivalent to ~ */
