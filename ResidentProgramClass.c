@@ -797,7 +797,8 @@ int
 search_substring(OctetString *string, int start, OctetString *search)
 {
 	/* assert */
-	if(start < 1 || start > string->size)
+	if(string->size != 0
+	&& (start < 1 || start > string->size))
 		fatal("search_substring: start=%d string->size=%d", start, string->size);
 
 	/* simple cases */
