@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "command.h"
 #include "assoc.h"
@@ -456,6 +458,7 @@ bool
 cmd_file(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 {
 	char *filename;
+	struct stat info;
 	FILE *file;
 	long size;
 	char hdr[64];
@@ -468,6 +471,14 @@ cmd_file(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 	if((filename = external_filename(listen_data, argv[1])) == NULL)
 	{
 		SEND_RESPONSE(500, "Invalid ContentReference");
+		return false;
+	}
+
+	/* check it is a regular file */
+	if(stat(filename, &info) < 0
+	|| !S_ISREG(info.st_mode))
+	{
+		SEND_RESPONSE(500, "Invalid file");
 		return false;
 	}
 
