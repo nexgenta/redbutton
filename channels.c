@@ -264,6 +264,13 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	if((needed_params = get_tune_params(service_id)) == NULL)
 		fatal("service_id %u not found in channels.conf file", service_id);
 
+/* TODO */
+	/* if no-one was using the frontend when we open it
+	 * FE_GET_FRONTEND may say we are tuned to the frequency we want
+	 * but when we try to read any data, it fails
+	 * => always tune the first time we open the frontend
+	 */
+
 	/* are we already tuned to the right frequency */
 	vverbose("Current frequency %u; needed %u", current_params.frequency, needed_params->frequency);
 	if(current_params.frequency != needed_params->frequency)
