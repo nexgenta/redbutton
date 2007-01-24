@@ -375,18 +375,26 @@ VideoClass_render(VideoClass *t, MHEGDisplay *d, XYPosition *pos, OriginalBoxSiz
 {
 	XYPosition ins_pos;
 	OriginalBoxSize ins_box;
+	MHEGColour black;
 
 	verbose("VideoClass: %s; render", ExternalReference_name(&t->rootClass.inst.ref));
-
-	/* if the MHEGStreamPlayer failed to open the video stream, don't display anything */
-	if(t->inst.no_video)
-		return;
 
 	if(!intersects(pos, box, &t->inst.Position, &t->inst.BoxSize, &ins_pos, &ins_box))
 		return;
 
-	/* make a transparent hole in the MHEG overlay so we can see the video below it */
-	MHEGDisplay_fillTransparentRectangle(d, &ins_pos, &ins_box);
+	/*
+	 * if we have no video stream, just draw a black rectangle
+	 * if we do have a video stream, make a transparent hole in the MHEG overlay so we can see the video below it
+	 */
+	if(t->inst.no_video)
+	{
+		MHEGColour_black(&black);
+		MHEGDisplay_fillRectangle(d, &ins_pos, &ins_box, &black);
+	}
+	else
+	{
+		MHEGDisplay_fillTransparentRectangle(d, &ins_pos, &ins_box);
+	}
 
 	return;
 }
