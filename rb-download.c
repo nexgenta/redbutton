@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 
 	/* initialise channels.conf */
 	if(!init_channels_conf(channels_file))
-		fatal("Unable to parse channels.conf file");
+		error("Unable to open channels.conf file");
 
 	/* do we need to change the base directory */
 	if(base_dir != NULL

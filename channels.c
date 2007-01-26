@@ -189,6 +189,12 @@ get_tune_params(uint16_t service_id)
 	unsigned int id;
 	int len;
 
+	if(_channels == NULL)
+	{
+		verbose("No channels.conf file available");
+		return NULL;
+	}
+
 	bzero(&_params, sizeof(_params));
 
 	verbose("Searching channels.conf for service_id %u", service_id);
@@ -262,7 +268,10 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 
 	/* find the tuning params for the service */
 	if((needed_params = get_tune_params(service_id)) == NULL)
-		fatal("service_id %u not found in channels.conf file", service_id);
+	{
+		error("service_id %u not found in channels.conf file", service_id);
+		return false;
+	}
 
 /* TODO */
 	/* if no-one was using the frontend when we open it

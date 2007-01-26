@@ -279,7 +279,8 @@ start_downloader(unsigned int adapter, unsigned int timeout, uint16_t service_id
 	pid_t child;
 
 	/* retune if needed */
-	tune_service_id(adapter, timeout, service_id);
+	if(!tune_service_id(adapter, timeout, service_id))
+		error("Unable to retune; let's hope you're already tuned to the right frequency...");
 	
 	/* find the MHEG PIDs */
 	car = find_mheg(adapter, timeout, service_id, carousel_id);
