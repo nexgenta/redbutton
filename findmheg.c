@@ -193,6 +193,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 		{
 			_car.video_pid = elementary_pid;
 			_car.video_type = stream_type;
+			vverbose("PID=%u video stream_type=0x%x", elementary_pid, stream_type);
 		}
 		/* it's not the boot PID yet */
 		desc_boot_pid = -1;
@@ -253,6 +254,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 				{
 					_car.audio_pid = elementary_pid;
 					_car.audio_type = stream_type;
+					vverbose("PID=%u audio stream_type=0x%x", elementary_pid, stream_type);
 				}
 			}
 			else
