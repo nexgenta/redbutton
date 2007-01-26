@@ -240,22 +240,26 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	struct dvb_frontend_event event;
 	bool lock;
 	/* need to keep the frontend device open to stop it untuning itself */
-	/* TODO: fix this hack */
 	static int fe_fd = -1;
 
-	vverbose("Getting frontend info");
-
-	/* see what we are currently tuned to */
 	snprintf(fe_dev, sizeof(fe_dev), FE_DEVICE, adapter);
-	/*
-	 * need O_RDWR if you want to tune, O_RDONLY is okay for getting info
-	 * if someone else is using the frontend, we can only open O_RDONLY
-	 * => we can still download data, but just not retune
-	 */
-	if(fe_fd != -1)
-		close(fe_fd);
-	if((fe_fd = open(fe_dev, O_RDONLY | O_NONBLOCK)) < 0)
-		fatal("open '%s': %s", fe_dev, strerror(errno));
+
+	if(fe_fd < 0)
+	{
+		/*
+		 * need O_RDWR if you want to tune, O_RDONLY is okay for getting info
+		 * if someone else is using the frontend, we can only open O_RDONLY
+		 * => we can still download data, but just not retune
+		 */
+		if((fe_fd = open(fe_dev, O_RDWR | O_NONBLOCK)) < 0)
+		{
+			error("Unable to open '%s' read/write; you will not be able to retune", fe_dev);
+			if((fe_fd = open(fe_dev, O_RDONLY | O_NONBLOCK)) < 0)
+				fatal("open '%s': %s", fe_dev, strerror(errno));
+		}
+	}
+
+	vverbose("Getting frontend info");
 
 	if(ioctl(fe_fd, FE_GET_INFO, &fe_info) < 0)
 		fatal("ioctl FE_GET_INFO: %s", strerror(errno));
@@ -263,6 +267,7 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	if(fe_info.type != FE_OFDM)
 		fatal("TODO: Only able to tune DVB-T devices at present");
 
+	/* see what we are currently tuned to */
 	if(ioctl(fe_fd, FE_GET_FRONTEND, &current_params) < 0)
 		fatal("ioctl FE_GET_FRONTEND: %s", strerror(errno));
 
@@ -285,15 +290,12 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	if(current_params.frequency != needed_params->frequency)
 	{
 		verbose("Retuning to frequency %u", needed_params->frequency);
-		close(fe_fd);
-		if((fe_fd = open(fe_dev, O_RDWR | O_NONBLOCK)) < 0)
-			fatal("open '%s': %s", fe_dev, strerror(errno));
 		/* empty event queue */
 		while(ioctl(fe_fd, FE_GET_EVENT, &event) >= 0)
 			; /* do nothing */
 		/* tune in */
 		if(ioctl(fe_fd, FE_SET_FRONTEND, needed_params) < 0)
-			fatal("ioctl FE_GET_FRONTEND: %s", strerror(errno));
+			fatal("Unable to retune: ioctl FE_SET_FRONTEND: %s", strerror(errno));
 		/* wait for lock */
 		vverbose("Waiting for tuner to lock on");
 		/* TODO: use timeout value here */
