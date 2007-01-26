@@ -242,10 +242,9 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	/* need to keep the frontend device open to stop it untuning itself */
 	static int fe_fd = -1;
 
-	snprintf(fe_dev, sizeof(fe_dev), FE_DEVICE, adapter);
-
 	if(fe_fd < 0)
 	{
+		snprintf(fe_dev, sizeof(fe_dev), FE_DEVICE, adapter);
 		/*
 		 * need O_RDWR if you want to tune, O_RDONLY is okay for getting info
 		 * if someone else is using the frontend, we can only open O_RDONLY
