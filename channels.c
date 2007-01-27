@@ -264,7 +264,11 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 		fatal("ioctl FE_GET_INFO: %s", strerror(errno));
 
 	if(fe_info.type != FE_OFDM)
-		fatal("TODO: Only able to tune DVB-T devices at present");
+	{
+/* TODO */
+printf("TODO: Only able to tune DVB-T devices at present\n");
+return false;
+	}
 
 	/* see what we are currently tuned to */
 	if(ioctl(fe_fd, FE_GET_FRONTEND, &current_params) < 0)
