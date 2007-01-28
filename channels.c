@@ -238,6 +238,7 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	struct dvb_frontend_parameters current_params;
 	struct dvb_frontend_parameters *needed_params;
 	struct dvb_frontend_event event;
+	fe_status_t status;
 	bool lock;
 	/* need to keep the frontend device open to stop it untuning itself */
 	static int fe_fd = -1;
@@ -281,16 +282,20 @@ return false;
 		return false;
 	}
 
-/* TODO */
 	/* if no-one was using the frontend when we open it
 	 * FE_GET_FRONTEND may say we are tuned to the frequency we want
 	 * but when we try to read any data, it fails
-	 * => always tune the first time we open the frontend
+	 * so check if we have a lock
 	 */
+	if(ioctl(fe_fd, FE_READ_STATUS, &status) < 0)
+		lock = false;
+	else
+		lock = status & FE_HAS_LOCK;
 
 	/* are we already tuned to the right frequency */
-	vverbose("Current frequency %u; needed %u", current_params.frequency, needed_params->frequency);
-	if(current_params.frequency != needed_params->frequency)
+	vverbose("Current frequency %u; needed %u; lock=%d", current_params.frequency, needed_params->frequency, lock);
+	if(!lock
+	|| current_params.frequency != needed_params->frequency)
 	{
 		verbose("Retuning to frequency %u", needed_params->frequency);
 		/* empty event queue */
