@@ -12,6 +12,8 @@
 /* default TCP port to contact backend on */
 #define DEFAULT_REMOTE_PORT	10101
 
+#define DEFAULT_BACKEND		"127.0.0.1"
+
 typedef struct MHEGBackend
 {
 	char *base_dir;			/* local Service Gateway root directory */

@@ -1,5 +1,5 @@
 /*
- * rb-browser [-v] [-f] [-d] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-r] <service_gateway>
+ * rb-browser [-v] [-f] [-d] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-r] [<service_gateway>]
  *
  * -v is verbose/debug mode
  * -f is full screen, otherwise it uses a window
@@ -12,6 +12,8 @@
  * -r means use a remote backend (rb-download running on another host), <service_gateway> should be host[:port]
  * if -r is not specified, rb-download is running on the same machine
  * and <service_gateway> should be an entry in the services directory, eg. services/4165
+ * (this is really only for debugging or running MHEG apps you've written yourself)
+ * the default backend is "-r 127.0.0.1"
  */
 
 #include <unistd.h>
@@ -45,8 +47,8 @@ main(int argc, char *argv[])
 
 	/* default options */
 	bzero(&opts, sizeof(MHEGEngineOptions));
-	opts.remote = false;
-	opts.srg_loc = NULL;	/* must be given on cmd line */
+	opts.remote = false;		/* not the default, but needed so you do eg "-r services/4165" */
+	opts.srg_loc = DEFAULT_BACKEND;
 	opts.verbose = 0;
 	opts.fullscreen = false;
 	opts.vo_method = NULL;
@@ -92,10 +94,12 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if(optind != argc - 1)
+	if(optind == argc)
+		opts.remote = true;	/* default backend "-r 127.0.0.1" */
+	else if(optind == argc - 1)
+		opts.srg_loc = argv[optind];
+	else
 		usage(prog_name);
-
-	opts.srg_loc = argv[optind];
 
 	/* chop off any trailing / chars for local directory name */
 	if(!opts.remote)
@@ -125,7 +129,7 @@ usage(char *prog_name)
 		"[-k <keymap_file>] "
 		"[-t <timeout>] "
 		"[-r] "
-		"<service_gateway>\n\n"
+		"[<service_gateway>]\n\n"
 		"%s",
 		prog_name, MHEGVideoOutputMethod_getUsage());
 }
