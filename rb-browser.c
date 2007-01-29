@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 
 	/* default options */
 	bzero(&opts, sizeof(MHEGEngineOptions));
-	opts.remote = false;		/* not the default, but needed so you do eg "-r services/4165" */
+	opts.remote = false;		/* not the default, but needed so you can do eg "-r services/4165" */
 	opts.srg_loc = DEFAULT_BACKEND;
 	opts.verbose = 0;
 	opts.fullscreen = false;
