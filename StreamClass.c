@@ -94,7 +94,7 @@ StreamClass_Activation(StreamClass *t)
 		StreamClass_Preparation(t);
 	}
 
-	/* assume default is "rec://svc/def", ie current channel */
+	/* assume default is "rec://svc/cur", ie current channel */
 	if(t->have_original_content
 	&& (service = ContentBody_getReference(&t->original_content)) != NULL)
 	{
