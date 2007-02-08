@@ -18,7 +18,7 @@
 bool local_checkContentRef(MHEGBackend *, ContentReference *);
 bool local_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *local_openFile(MHEGBackend *, OctetString *);
-FILE *local_openStream(MHEGBackend *, bool, int *, int *, bool, int *, int *);
+FILE *local_openStream(MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
 void local_retune(MHEGBackend *, OctetString *);
 
 static struct MHEGBackendFns local_backend_fns =
@@ -34,7 +34,7 @@ static struct MHEGBackendFns local_backend_fns =
 bool remote_checkContentRef(MHEGBackend *, ContentReference *);
 bool remote_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *remote_openFile(MHEGBackend *, OctetString *);
-FILE *remote_openStream(MHEGBackend *, bool, int *, int *, bool, int *, int *);
+FILE *remote_openStream(MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
 void remote_retune(MHEGBackend *, OctetString *);
 
 static struct MHEGBackendFns remote_backend_fns =
@@ -333,14 +333,15 @@ local_openFile(MHEGBackend *t, OctetString *name)
  * return a read-only FILE handle for an MPEG Transport Stream
  * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
  * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
- * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the given Service ID is used
+ * if service_id is -1, it uses the Service ID we are downloading the carousel from
  * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
  * updates *audio_type and/or *video_type to the stream type IDs
  * returns NULL on error
  */
 
 FILE *
-local_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
+local_openStream(MHEGBackend *t, int service_id, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
 {
 	/*
 	 * we need to convert the audio/video_tag into PIDs
@@ -350,7 +351,7 @@ local_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_typ
 	 * 3. just stream the TS from the backend
 	 * we choose 3, to avoid duplicating code and having to pass "-d <device>" options etc
 	 */
-	return remote_openStream(t, have_audio, audio_tag, audio_type, have_video, video_tag, video_type);
+	return remote_openStream(t, service_id, have_audio, audio_tag, audio_type, have_video, video_tag, video_type);
 }
 
 /*
@@ -522,14 +523,15 @@ remote_openFile(MHEGBackend *t, OctetString *name)
  * return a read-only FILE handle for an MPEG Transport Stream
  * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
  * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
- * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the current Service ID is used
+ * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the given Service ID is used
+ * if service_id is -1, it uses the Service ID we are downloading the carousel from
  * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
  * updates *audio_type and/or *video_type to the stream type IDs
  * returns NULL on error
  */
 
 FILE *
-remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
+remote_openStream(MHEGBackend *t, int service_id, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
 {
 	char cmd[PATH_MAX];
 	FILE *sock;
@@ -537,6 +539,9 @@ remote_openStream(MHEGBackend *t, bool have_audio, int *audio_tag, int *audio_ty
 	unsigned int audio_pid = 0;
 	unsigned int video_pid = 0;
 	bool err;
+
+/* TODO */
+if(service_id != -1) printf("TODO: openStream: service_id=%d\n", service_id);
 
 	/* no PIDs required */
 	if(!have_audio && !have_video)

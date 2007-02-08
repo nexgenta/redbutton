@@ -12,6 +12,7 @@ void StreamClass_Activation(StreamClass *);
 void StreamClass_Deactivation(StreamClass *);
 void StreamClass_Destruction(StreamClass *);
 
+void StreamClass_SetData(StreamClass *, SetData *, OctetString *);
 void StreamClass_SetCounterTrigger(StreamClass *, SetCounterTrigger *, OctetString *);
 void StreamClass_SetSpeed(StreamClass *, SetSpeed *, OctetString *);
 void StreamClass_SetCounterPosition(StreamClass *, SetCounterPosition *, OctetString *);

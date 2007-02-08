@@ -7,6 +7,7 @@
 #include "StreamComponent.h"
 #include "ExternalReference.h"
 #include "ContentBody.h"
+#include "si.h"
 #include "utils.h"
 
 void
@@ -93,12 +94,29 @@ StreamClass_Activation(StreamClass *t)
 		StreamClass_Preparation(t);
 	}
 
-	/* assume default is "rec://svc/cur", ie current channel */
+	/* assume default is "rec://svc/def", ie current channel */
 	if(t->have_original_content
-	&& (service = ContentBody_getReference(&t->original_content)) != NULL
-	&& OctetString_strcmp(service, "rec://svc/cur") != 0)
+	&& (service = ContentBody_getReference(&t->original_content)) != NULL)
 	{
+		/*
+		 * service can be:
+		 * "dvb://<original_network_id>.[<transport_stream_id>].<service_id>"
+		 * "rec://svc/def" - use the service we are downloading the carousel from
+		 * "rec://svc/cur" - use the current service
+		 * this will be the same as "def" unless SetData has been called on the StreamClass
+		 * "rec://svc/lcn/X" - use logical channel number X (eg 1 for BBC1, 3 for ITV1, etc)
+		 */
+		if(OctetString_strncmp(service, "dvb:", 4) == 0)
+		{
+			MHEGStreamPlayer_setServiceID(&t->inst.player, si_get_service_id(service));
+		}
+		/* leave player's service ID as it is for "cur" and "def" */
+		else if(OctetString_strcmp(service, "rec://svc/cur") != 0
+		     && OctetString_strcmp(service, "rec://svc/def") != 0)
+		{
+/* TODO */
 printf("TODO: StreamClass: service='%.*s'\n", service->size, service->data);
+		}
 	}
 
 	/* start playing all active StreamComponents */
@@ -198,6 +216,21 @@ StreamClass_Destruction(StreamClass *t)
 	t->rootClass.inst.AvailabilityStatus = false;
 	MHEGEngine_generateEvent(&t->rootClass.inst.ref, EventType_is_deleted, NULL);
 
+	return;
+}
+
+/*
+ * corrigendum says StreamClass can be the target of SetData
+ * this changes the multiplex (ie service ID)
+ */
+
+void
+StreamClass_SetData(StreamClass *t, SetData *set, OctetString *caller_gid)
+{
+	verbose("StreamClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
+
+/* TODO */
+printf("TODO: StreamClass_SetData not yet implemented\n");
 	return;
 }
 

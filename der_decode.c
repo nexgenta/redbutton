@@ -234,6 +234,19 @@ OctetString_strcmp(OctetString *oct, char *str)
 }
 
 /*
+ * compare the first n characters of the OctetString with the given C string
+ */
+
+int
+OctetString_strncmp(OctetString *oct, char *str, size_t n)
+{
+	if(oct->size < n)
+		return oct->size - n;
+	else
+		return memcmp(oct->data, str, n);
+}
+
+/*
  * assumes its okay to call der_realloc(dst->data, x)
  * if dst is not initialised, you should use OctetString_dup instead
  * src can be NULL, but dst must be valid

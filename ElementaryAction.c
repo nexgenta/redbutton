@@ -1205,6 +1205,8 @@ printf("TODO: Select: target: %s\n", ExternalReference_name(&obj->inst.ref));
 				TokenGroupClass_SetData((TokenGroupClass *) obj, &e->u.set_data, caller_gid);
 			else if(obj->inst.rtti == RTTI_ListGroupClass)
 				ListGroupClass_SetData((ListGroupClass *) obj, &e->u.set_data, caller_gid);
+			else if(obj->inst.rtti == RTTI_StreamClass)
+				StreamClass_SetData((StreamClass *) obj, &e->u.set_data, caller_gid);
 			else
 				error("SetData: unexpected target: %s", ExternalReference_name(&obj->inst.ref));
 		}

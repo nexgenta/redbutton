@@ -91,6 +91,9 @@ MHEGStreamPlayer_init(MHEGStreamPlayer *p)
 	p->video = NULL;
 	p->audio = NULL;
 
+	/* stream a/v components from the service we are currently tuned to */
+	p->service_id = -1;
+
 	p->audio_codec = NULL;
 
 	pthread_mutex_init(&p->base_lock, NULL);
@@ -115,6 +118,20 @@ MHEGStreamPlayer_fini(MHEGStreamPlayer *p)
 
 	pthread_mutex_destroy(&p->videoq_lock);
 	pthread_mutex_destroy(&p->audioq_lock);
+
+	return;
+}
+
+/*
+ * service ID is used to resolve the stream component tags
+ * -1 => use the service we are currently tuned to,
+ * ie the service we are downloading the carousel from
+ */
+
+void
+MHEGStreamPlayer_setServiceID(MHEGStreamPlayer *p, int id)
+{
+	p->service_id = id;
 
 	return;
 }
@@ -174,7 +191,8 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 
 	p->audio_pid = p->audio_tag;
 	p->video_pid = p->video_tag;
-	if((p->ts = MHEGEngine_openStream(p->have_audio, &p->audio_pid, &p->audio_type,
+	if((p->ts = MHEGEngine_openStream(p->service_id,
+					  p->have_audio, &p->audio_pid, &p->audio_type,
 					  p->have_video, &p->video_pid, &p->video_type)) == NULL)
 	{
 		error("Unable to open MPEG stream");

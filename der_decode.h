@@ -51,6 +51,7 @@ void free_OctetString(OctetString *);
 
 int OctetString_cmp(OctetString *, OctetString *);
 int OctetString_strcmp(OctetString *, char *);
+int OctetString_strncmp(OctetString *, char *, size_t);
 
 bool OctetString_copy(OctetString *, OctetString *);
 void OctetString_dup(OctetString *, OctetString *);

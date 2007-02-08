@@ -29,7 +29,7 @@ typedef struct MHEGBackend
 		/* open a carousel file */
 		FILE *(*openFile)(struct MHEGBackend *, OctetString *);
 		/* open an MPEG Transport Stream */
-		FILE *(*openStream)(struct MHEGBackend *, bool, int *, int *, bool, int *, int *);
+		FILE *(*openStream)(struct MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
 		/* tune to the given service */
 		void (*retune)(struct MHEGBackend *, OctetString *);
 	} *fns;
