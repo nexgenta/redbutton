@@ -110,12 +110,20 @@ StreamClass_Activation(StreamClass *t)
 		{
 			MHEGStreamPlayer_setServiceID(&t->inst.player, si_get_service_id(service));
 		}
-		/* leave player's service ID as it is for "cur" and "def" */
-		else if(OctetString_strcmp(service, "rec://svc/cur") != 0
-		     && OctetString_strcmp(service, "rec://svc/def") != 0)
+		else if(OctetString_strncmp(service, "rec://svc/lcn/", 14) == 0)
 		{
 /* TODO */
 printf("TODO: StreamClass: service='%.*s'\n", service->size, service->data);
+		}
+		else if(OctetString_strcmp(service, "rec://svc/def") == 0)
+		{
+			/* use the service ID we are currently tuned to */
+			MHEGStreamPlayer_setServiceID(&t->inst.player, -1);
+		}
+		/* leave player's service ID as it is for "rec://svc/cur" */
+		else if(OctetString_strcmp(service, "rec://svc/cur") != 0)
+		{
+			error("StreamClass: unexpected service '%.*s'", service->size, service->data);
 		}
 	}
 
