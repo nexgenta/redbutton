@@ -540,21 +540,18 @@ remote_openStream(MHEGBackend *t, int service_id, bool have_audio, int *audio_ta
 	unsigned int video_pid = 0;
 	bool err;
 
-/* TODO */
-if(service_id != -1) printf("TODO: openStream: service_id=%d\n", service_id);
-
 	/* no PIDs required */
 	if(!have_audio && !have_video)
 		return NULL;
 	/* video and audio */
 	else if(have_audio && have_video)
-		snprintf(cmd, sizeof(cmd), "avstream %d %d\n", *audio_tag, *video_tag);
+		snprintf(cmd, sizeof(cmd), "avstream %d %d %d\n", service_id, *audio_tag, *video_tag);
 	/* audio only */
 	else if(have_audio)
-		snprintf(cmd, sizeof(cmd), "astream %d\n", *audio_tag);
+		snprintf(cmd, sizeof(cmd), "astream %d %d\n", service_id, *audio_tag);
 	/* video only */
 	else
-		snprintf(cmd, sizeof(cmd), "vstream %d\n", *video_tag);
+		snprintf(cmd, sizeof(cmd), "vstream %d %d\n", service_id, *video_tag);
 
 	/* false => create a new connection to the backend */
 	if((sock = remote_command(t, false, cmd)) == NULL)
