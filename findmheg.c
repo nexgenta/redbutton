@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 
 #include "carousel.h"
+#include "findmheg.h"
 #include "table.h"
 #include "assoc.h"
 #include "utils.h"
@@ -280,5 +281,40 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 		fatal("Unable to find Carousel Descriptor in PMT");
 
 	return &_car;
+}
+
+static struct avstreams _streams;
+
+struct avstreams *
+find_avstreams(struct carousel *car, int service_id, int audio_tag, int video_tag)
+{
+if(service_id != -1) printf("TODO: find_avstreams %d\n", service_id);
+
+	/* map the tags to PIDs and stream types, or use the defaults */
+	if(audio_tag == -1)
+	{
+		/* maybe 0 if we have no default stream */
+		_streams.audio_pid = car->audio_pid;
+		_streams.audio_type = car->audio_type;
+	}
+	else
+	{
+		_streams.audio_pid = stream2pid(&car->assoc, audio_tag);
+		_streams.audio_type = stream2type(&car->assoc, audio_tag);
+	}
+
+	if(video_tag == -1)
+	{
+		/* maybe 0 if we have no default stream */
+		_streams.video_pid = car->video_pid;
+		_streams.video_type = car->video_type;
+	}
+	else
+	{
+		_streams.video_pid = stream2pid(&car->assoc, video_tag);
+		_streams.video_type = stream2type(&car->assoc, video_tag);
+	}
+
+	return &_streams;
 }
 

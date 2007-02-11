@@ -25,7 +25,17 @@
 
 #include <stdint.h>
 
+struct avstreams
+{
+	uint16_t audio_pid;
+	uint8_t audio_type;
+	uint16_t video_pid;
+	uint8_t video_type;
+};
+
 struct carousel *find_mheg(unsigned int, unsigned int, uint16_t, int);
+
+struct avstreams *find_avstreams(struct carousel *, int, int, int);
 
 #endif	/* __FINDMHEG_H__ */
 
