@@ -1,3 +1,9 @@
+don't keep malloc/free'ing memory for a/v frames
+
+
+if video size != VideoClass size, centre and draw a smaller transparent hole
+
+
 use ffmpeg to permenantly scale-up bitmaps in MHEGBitmap_fromRGBA
 (rather than having to apply an XRender xform matrix and filter each time)
 
