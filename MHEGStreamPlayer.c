@@ -179,7 +179,7 @@ MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *p, AudioClass *audio)
 void
 MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 {
-	verbose("MHEGStreamPlayer_play: audio_tag=%d video_tag=%d", p->audio_tag, p->video_tag);
+	verbose("MHEGStreamPlayer_play: service_id=%d audio_tag=%d video_tag=%d", p->service_id, p->audio_tag, p->video_tag);
 
 	/* make sure the VideoClass doesn't try to draw anything yet */
 	if(p->video != NULL)
