@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <netinet/in.h>
 
 #include "carousel.h"
@@ -78,6 +79,10 @@ struct data_broadcast_id_descriptor
 #define DATA_BROADCAST_ID	0x0106
 #define APPLICATION_TYPE_CODE	0x0101
 
+static struct avstreams *find_current_avstreams(struct carousel *, int, int);
+static struct avstreams *find_service_avstreams(struct carousel *, int, int, int);
+static unsigned char *read_pmt(char *, uint16_t, unsigned int);
+
 bool
 is_audio_stream(uint8_t stream_type)
 {
@@ -102,12 +107,9 @@ static struct carousel _car;
 struct carousel *
 find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
 {
-	unsigned char *pat;
+	unsigned char *pmt;
 	uint16_t section_length;
 	uint16_t offset;
-	uint16_t map_pid = 0;
-	bool found;
-	unsigned char *pmt;
 	uint8_t stream_type;
 	uint16_t elementary_pid;
 	uint16_t info_length;
@@ -141,36 +143,8 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 	_car.nmodules = 0;
 	_car.modules = NULL;
 
-	/* get the PAT */
-	if((pat = read_table(_car.demux_device, PID_PAT, TID_PAT, timeout)) == NULL)
-		fatal("Unable to read PAT");
-
-	section_length = 3 + (((pat[1] & 0x0f) << 8) + pat[2]);
-
-	/* find the PMT for this service_id */
-	found = false;
-	offset = 8;
-	/* -4 for the CRC at the end */
-	while((offset < (section_length - 4)) && !found)
-	{
-		if((pat[offset] << 8) + pat[offset+1] == service_id)
-		{
-			map_pid = ((pat[offset+2] & 0x1f) << 8) + pat[offset+3];
-			found = true;
-		}
-		else
-		{
-			offset += 4;
-		}
-	}
-
-	if(!found)
-		fatal("Unable to find PMT PID for service_id %u", service_id);
-
-	vverbose("PMT PID: %u", map_pid);
-
 	/* get the PMT */
-	if((pmt = read_table(_car.demux_device, map_pid, TID_PMT, timeout)) == NULL)
+	if((pmt = read_pmt(_car.demux_device, service_id, timeout)) == NULL)
 		fatal("Unable to read PMT");
 
 	section_length = 3 + (((pmt[1] & 0x0f) << 8) + pmt[2]);
@@ -288,8 +262,15 @@ static struct avstreams _streams;
 struct avstreams *
 find_avstreams(struct carousel *car, int service_id, int audio_tag, int video_tag)
 {
-if(service_id != -1) printf("TODO: find_avstreams %d\n", service_id);
+	if(service_id == -1)
+		return find_current_avstreams(car, audio_tag, video_tag);
+	else
+		return find_service_avstreams(car, service_id, audio_tag, video_tag);
+}
 
+static struct avstreams *
+find_current_avstreams(struct carousel *car, int audio_tag, int video_tag)
+{
 	/* map the tags to PIDs and stream types, or use the defaults */
 	if(audio_tag == -1)
 	{
@@ -316,5 +297,154 @@ if(service_id != -1) printf("TODO: find_avstreams %d\n", service_id);
 	}
 
 	return &_streams;
+}
+
+static struct avstreams *
+find_service_avstreams(struct carousel *car, int service_id, int audio_tag, int video_tag)
+{
+	unsigned char *pmt;
+	uint16_t section_length;
+	uint16_t offset;
+	uint8_t stream_type;
+	uint16_t elementary_pid;
+	uint16_t info_length;
+	uint8_t desc_tag;
+	uint8_t desc_length;
+	uint16_t component_tag;
+
+	verbose("find_service_avstreams: %d %d %d", service_id, audio_tag, video_tag);
+
+	/* in case we don't find them */
+	bzero(&_streams, sizeof(_streams));
+
+	/* get the PMT */
+	if((pmt = read_pmt(car->demux_device, service_id, car->timeout)) == NULL)
+		fatal("Unable to read PMT");
+
+	section_length = 3 + (((pmt[1] & 0x0f) << 8) + pmt[2]);
+
+	/* skip the program_info descriptors */
+	offset = 10;
+	info_length = ((pmt[offset] & 0x0f) << 8) + pmt[offset+1];
+	offset += 2 + info_length;
+
+	/* find the streams */
+	while(offset < (section_length - 4))
+	{
+		stream_type = pmt[offset];
+		offset += 1;
+		elementary_pid = ((pmt[offset] & 0x1f) << 8) + pmt[offset+1];
+		offset += 2;
+		/* do we want the default video stream for this service */
+		if(video_tag == -1 && stream_type == STREAM_TYPE_VIDEO_MPEG2)
+		{
+			_streams.video_pid = elementary_pid;
+			_streams.video_type = stream_type;
+			vverbose("PID=%u video stream_type=0x%x", elementary_pid, stream_type);
+		}
+		/* read the descriptors */
+		info_length = ((pmt[offset] & 0x0f) << 8) + pmt[offset+1];
+		offset += 2;
+		while(info_length != 0)
+		{
+			desc_tag = pmt[offset];
+			desc_length = pmt[offset+1];
+			offset += 2;
+			info_length -= 2;
+			if(desc_tag == TAG_STREAM_ID_DESCRIPTOR)
+			{
+				struct stream_id_descriptor *desc;
+				desc = (struct stream_id_descriptor *) &pmt[offset];
+				component_tag = desc->component_tag;
+				vverbose("PID=%u component_tag=%u", elementary_pid, component_tag);
+				/* is it one we want */
+				if(audio_tag == component_tag)
+				{
+					_streams.audio_pid = elementary_pid;
+					_streams.audio_type = stream_type;
+					vverbose("PID=%u audio stream_type=0x%x", elementary_pid, stream_type);
+				}
+				else if(video_tag == component_tag)
+				{
+					_streams.video_pid = elementary_pid;
+					_streams.video_type = stream_type;
+					vverbose("PID=%u video stream_type=0x%x", elementary_pid, stream_type);
+				}
+			}
+			/* do we want the default audio */
+			else if(audio_tag == -1 && desc_tag == TAG_LANGUAGE_DESCRIPTOR && is_audio_stream(stream_type))
+			{
+				struct language_descriptor *desc;
+				desc = (struct language_descriptor *) &pmt[offset];
+				/* only remember the normal audio stream (not visually impaired stream) */
+				if(desc->audio_type == 0)
+				{
+					_streams.audio_pid = elementary_pid;
+					_streams.audio_type = stream_type;
+					vverbose("PID=%u audio stream_type=0x%x", elementary_pid, stream_type);
+				}
+			}
+			else
+			{
+				vverbose("PID=%u descriptor=0x%x", elementary_pid, desc_tag);
+				vhexdump(&pmt[offset], desc_length);
+			}
+			offset += desc_length;
+			info_length -= desc_length;
+		}
+	}
+
+	verbose("Audio PID=%u type=0x%x", _streams.audio_pid, _streams.audio_type);
+	verbose("Video PID=%u type=0x%x", _streams.video_pid, _streams.video_type);
+
+	return &_streams;
+}
+
+static unsigned char *
+read_pmt(char *demux, uint16_t service_id, unsigned int timeout)
+{
+	unsigned char *pat;
+	uint16_t section_length;
+	uint16_t offset;
+	uint16_t map_pid = 0;
+	bool found;
+	unsigned char *pmt;
+
+	/* get the PAT */
+	if((pat = read_table(_car.demux_device, PID_PAT, TID_PAT, timeout)) == NULL)
+	{
+		error("Unable to read PAT");
+		return NULL;
+	}
+
+	section_length = 3 + (((pat[1] & 0x0f) << 8) + pat[2]);
+
+	/* find the PMT for this service_id */
+	found = false;
+	offset = 8;
+	/* -4 for the CRC at the end */
+	while((offset < (section_length - 4)) && !found)
+	{
+		if((pat[offset] << 8) + pat[offset+1] == service_id)
+		{
+			map_pid = ((pat[offset+2] & 0x1f) << 8) + pat[offset+3];
+			found = true;
+		}
+		else
+		{
+			offset += 4;
+		}
+	}
+
+	if(!found)
+		fatal("Unable to find PMT PID for service_id %u", service_id);
+
+	vverbose("PMT PID: %u", map_pid);
+
+	/* get the PMT */
+	if((pmt = read_table(_car.demux_device, map_pid, TID_PMT, timeout)) == NULL)
+		error("Unable to read PMT");
+
+	return pmt;
 }
 
