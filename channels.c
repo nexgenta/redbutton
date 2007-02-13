@@ -234,6 +234,7 @@ bool
 tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 {
 	char fe_dev[PATH_MAX];
+	bool got_info;
 	struct dvb_frontend_info fe_info;
 	struct dvb_frontend_parameters current_params;
 	struct dvb_frontend_parameters *needed_params;
@@ -261,8 +262,14 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 
 	vverbose("Getting frontend info");
 
-	if(ioctl(fe_fd, FE_GET_INFO, &fe_info) < 0)
-		fatal("ioctl FE_GET_INFO: %s", strerror(errno));
+	do
+	{
+		/* maybe interrupted by a signal */
+		got_info = (ioctl(fe_fd, FE_GET_INFO, &fe_info) >= 0);
+		if(!got_info && errno != EINTR)
+			fatal("ioctl FE_GET_INFO: %s", strerror(errno));
+	}
+	while(!got_info);
 
 	if(fe_info.type != FE_OFDM)
 	{
