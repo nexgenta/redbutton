@@ -9,6 +9,8 @@
 
 #include "ISO13522-MHEG-5.h"
 
+void StreamComponent_registerStreamClass(StreamComponent *, StreamClass *);
+
 RootClass *StreamComponent_rootClass(StreamComponent *);
 bool StreamComponent_isInitiallyActive(StreamComponent *);
 

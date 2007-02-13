@@ -9,6 +9,32 @@
 #include "RTGraphicsClass.h"
 #include "utils.h"
 
+void
+StreamComponent_registerStreamClass(StreamComponent *s, StreamClass *owner)
+{
+
+	switch(s->choice)
+	{
+	case StreamComponent_audio:
+		s->u.audio.inst.owner = owner;
+		break;
+
+	case StreamComponent_video:
+		s->u.video.inst.owner = owner;
+		break;
+
+	case StreamComponent_rtgraphics:
+		s->u.rtgraphics.inst.owner = owner;
+		break;
+
+	default:
+		error("Unknown StreamComponent type: %d", s->choice);
+		break;
+	}
+
+	return;
+}
+
 RootClass *
 StreamComponent_rootClass(StreamComponent *s)
 {

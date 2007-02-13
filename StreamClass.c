@@ -13,6 +13,8 @@
 void
 default_StreamClassInstanceVars(StreamClass *t, StreamClassInstanceVars *v)
 {
+	LIST_TYPE(StreamComponent) *comp;
+
 	bzero(v, sizeof(StreamClassInstanceVars));
 
 	v->Speed.numerator = 1;
@@ -23,6 +25,14 @@ default_StreamClassInstanceVars(StreamClass *t, StreamClassInstanceVars *v)
 	v->CounterEndPosition = -1;
 
 	v->CounterTriggers = NULL;
+
+	/* let the StreamComponents know who they belong to */
+	comp = t->multiplex;
+	while(comp)
+	{
+		StreamComponent_registerStreamClass(&comp->item, t);
+		comp = comp->next;
+	}
 
 	MHEGStreamPlayer_init(&v->player);
 
