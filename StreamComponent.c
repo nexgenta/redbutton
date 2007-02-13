@@ -12,7 +12,6 @@
 void
 StreamComponent_registerStreamClass(StreamComponent *s, StreamClass *owner)
 {
-
 	switch(s->choice)
 	{
 	case StreamComponent_audio:
