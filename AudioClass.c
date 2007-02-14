@@ -5,6 +5,7 @@
 #include "MHEGEngine.h"
 #include "AudioClass.h"
 #include "RootClass.h"
+#include "StreamClass.h"
 #include "ExternalReference.h"
 
 void
@@ -13,6 +14,8 @@ default_AudioClassInstanceVars(AudioClass *t, AudioClassInstanceVars *v)
 	bzero(v, sizeof(AudioClassInstanceVars));
 
 	v->Volume = t->original_volume;
+
+	v->owner = NULL;
 
 	return;
 }
@@ -58,6 +61,15 @@ AudioClass_Activation(AudioClass *t)
 	/* generate IsRunning event */
 	MHEGEngine_generateEvent(&t->rootClass.inst.ref, EventType_is_running, NULL);
 
+	/*
+	 * tell our StreamClass to start playing us
+	 * owner maybe NULL if our StreamClass is in the process of activating itself
+	 * in which case, it will start us when needed
+	 */
+	if(t->inst.owner != NULL)
+		StreamClass_activateAudioComponent(t->inst.owner, t);
+else printf("TODO: AudioClass_Activation: un-owned (tag=%d)\n", t->component_tag);
+
 	return;
 }
 
@@ -66,7 +78,18 @@ AudioClass_Deactivation(AudioClass *t)
 {
 	verbose("AudioClass: %s; Deactivation", ExternalReference_name(&t->rootClass.inst.ref));
 
-	RootClass_Deactivation(&t->rootClass);
+	/* is it already deactivated */
+	if(!RootClass_Deactivation(&t->rootClass))
+		return;
+
+	/*
+	 * tell our StreamClass to stop playing us
+	 * owner maybe NULL if our StreamClass is in the process of deactivating itself
+	 * in which case, it will stop us when needed
+	 */
+	if(t->inst.owner != NULL)
+		StreamClass_deactivateAudioComponent(t->inst.owner, t);
+else printf("TODO: AudioClass_Deactivation: un-owned (tag=%d)\n", t->component_tag);
 
 	return;
 }

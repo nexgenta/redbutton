@@ -5,6 +5,7 @@
 #include "MHEGEngine.h"
 #include "ISO13522-MHEG-5.h"
 #include "RootClass.h"
+#include "StreamClass.h"
 #include "ExternalReference.h"
 #include "ObjectReference.h"
 #include "GenericInteger.h"
@@ -29,6 +30,8 @@ default_VideoClassInstanceVars(VideoClass *t, VideoClassInstanceVars *v)
 	/* VideoClass */
 	v->VideoDecodeOffset.x_position = 0;
 	v->VideoDecodeOffset.y_position = 0;
+
+	v->owner = NULL;
 
 	pthread_mutex_init(&v->bbox_lock, NULL);
 	pthread_mutex_init(&v->scaled_lock, NULL);
@@ -85,6 +88,15 @@ VideoClass_Activation(VideoClass *t)
 	t->rootClass.inst.RunningStatus = true;
 	MHEGEngine_generateEvent(&t->rootClass.inst.ref, EventType_is_running, NULL);
 
+	/*
+	 * tell our StreamClass to start playing us
+	 * owner maybe NULL if our StreamClass is in the process of activating itself
+	 * in which case, it will start us when needed
+	 */
+	if(t->inst.owner != NULL)
+		StreamClass_activateVideoComponent(t->inst.owner, t);
+else printf("TODO: VideoClass_Activation: un-owned (tag=%d)\n", t->component_tag);
+
 	/* now its RunningStatus is true, get it drawn at its position in the application's DisplayStack */
 	MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
 
@@ -99,6 +111,15 @@ VideoClass_Deactivation(VideoClass *t)
 	/* is it already deactivated */
 	if(!RootClass_Deactivation(&t->rootClass))
 		return;
+
+	/*
+	 * tell our StreamClass to stop playing us
+	 * owner maybe NULL if our StreamClass is in the process of deactivating itself
+	 * in which case, it will stop us when needed
+	 */
+	if(t->inst.owner != NULL)
+		StreamClass_deactivateVideoComponent(t->inst.owner, t);
+else printf("TODO: VideoClass_Deactivation: un-owned (tag=%d)\n", t->component_tag);
 
 	/* now its RunningStatus is false, redraw the area it covered */
 	MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);

@@ -13,8 +13,6 @@
 void
 default_StreamClassInstanceVars(StreamClass *t, StreamClassInstanceVars *v)
 {
-	LIST_TYPE(StreamComponent) *comp;
-
 	bzero(v, sizeof(StreamClassInstanceVars));
 
 	v->Speed.numerator = 1;
@@ -25,14 +23,6 @@ default_StreamClassInstanceVars(StreamClass *t, StreamClassInstanceVars *v)
 	v->CounterEndPosition = -1;
 
 	v->CounterTriggers = NULL;
-
-	/* let the StreamComponents know who they belong to */
-	comp = t->multiplex;
-	while(comp)
-	{
-		StreamComponent_registerStreamClass(&comp->item, t);
-		comp = comp->next;
-	}
 
 	MHEGStreamPlayer_init(&v->player);
 
@@ -155,6 +145,14 @@ printf("TODO: StreamClass: service='%.*s'\n", service->size, service->data);
 	t->rootClass.inst.RunningStatus = true;
 	MHEGEngine_generateEvent(&t->rootClass.inst.ref, EventType_is_running, NULL);
 
+	/* now we are fully activated, let our StreamComponents know who they belong to */
+	comp = t->multiplex;
+	while(comp)
+	{
+		StreamComponent_registerStreamClass(&comp->item, t);
+		comp = comp->next;
+	}
+
 	return;
 }
 
@@ -169,6 +167,14 @@ StreamClass_Deactivation(StreamClass *t)
 	/* are we already deactivated */
 	if(!t->rootClass.inst.RunningStatus)
 		return;
+
+	/* disown all our StreamComponents */
+	comp = t->multiplex;
+	while(comp)
+	{
+		StreamComponent_registerStreamClass(&comp->item, NULL);
+		comp = comp->next;
+	}
 
 	/* stop playing all active StreamComponents */
 	MHEGStreamPlayer_stop(&t->inst.player);
@@ -233,6 +239,53 @@ StreamClass_Destruction(StreamClass *t)
 	/* generate an IsDeleted event */
 	t->rootClass.inst.AvailabilityStatus = false;
 	MHEGEngine_generateEvent(&t->rootClass.inst.ref, EventType_is_deleted, NULL);
+
+	return;
+}
+
+void
+StreamClass_activateVideoComponent(StreamClass *t, VideoClass *c)
+{
+/* TODO */
+printf("TODO: StreamClass_activateVideoComponent (tag=%d)\n", c->component_tag);
+// basically:
+// MHEGStreamPlayer_stop(t)
+// MHEGStreamPlayer_setVideoStream(t, c) - may get the "only using last video stream" warning
+// MHEGStreamPlayer_play(t)
+// MHEGEngine_generateAstncEvent(&t->rootClass.inst.ref, EventType_stream_playing, NULL)
+
+	return;
+}
+
+void
+StreamClass_activateAudioComponent(StreamClass *t, AudioClass *c)
+{
+/* TODO */
+printf("TODO: StreamClass_activateAudioComponent (tag=%d)\n", c->component_tag);
+
+	return;
+}
+
+void
+StreamClass_deactivateVideoComponent(StreamClass *t, VideoClass *c)
+{
+/* TODO */
+printf("TODO: StreamClass_deactivateVideoComponent (tag=%d)\n", c->component_tag);
+// basically:
+// MHEGStreamPlayer_stop(t)
+// MHEGStreamPlayer_setVideoStream(t, NULL)
+// MHEGStreamPlayer_play(t)
+// MHEGEngine_generateAstncEvent(&t->rootClass.inst.ref, EventType_stream_stopped, NULL)
+// => need to make MHEGStreamPlayer_setVideoStream(t, NULL) disable video
+
+	return;
+}
+
+void
+StreamClass_deactivateAudioComponent(StreamClass *t, AudioClass *c)
+{
+/* TODO */
+printf("TODO: StreamClass_deactivateAudioComponent (tag=%d)\n", c->component_tag);
 
 	return;
 }
