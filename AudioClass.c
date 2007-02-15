@@ -11,11 +11,17 @@
 void
 default_AudioClassInstanceVars(AudioClass *t, AudioClassInstanceVars *v)
 {
-	bzero(v, sizeof(AudioClassInstanceVars));
+	/*
+	 * don't do:
+	 * bzero(v, sizeof(AudioClassInstanceVars));
+	 * or:
+	 * v->owner = NULL;
+	 * the whole AudioClass including these instance vars is zero'd when it is DER decoded
+	 * we need to make sure v->owner is not set to NULL here
+	 * in case our StreamClass is already active and has set our owner
+	 */
 
 	v->Volume = t->original_volume;
-
-	v->owner = NULL;
 
 	return;
 }
@@ -68,7 +74,6 @@ AudioClass_Activation(AudioClass *t)
 	 */
 	if(t->inst.owner != NULL)
 		StreamClass_activateAudioComponent(t->inst.owner, t);
-else printf("TODO: AudioClass_Activation: un-owned (tag=%d)\n", t->component_tag);
 
 	return;
 }
@@ -89,7 +94,6 @@ AudioClass_Deactivation(AudioClass *t)
 	 */
 	if(t->inst.owner != NULL)
 		StreamClass_deactivateAudioComponent(t->inst.owner, t);
-else printf("TODO: AudioClass_Deactivation: un-owned (tag=%d)\n", t->component_tag);
 
 	return;
 }

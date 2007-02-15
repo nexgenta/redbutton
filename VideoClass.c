@@ -18,7 +18,15 @@
 void
 default_VideoClassInstanceVars(VideoClass *t, VideoClassInstanceVars *v)
 {
-	bzero(v, sizeof(VideoClassInstanceVars));
+	/*
+	 * don't do:
+	 * bzero(v, sizeof(VideoClassInstanceVars));
+	 * or:
+	 * v->owner = NULL;
+	 * the whole VideoClass including these instance vars is zero'd when it is DER decoded
+	 * we need to make sure v->owner is not set to NULL here
+	 * in case our StreamClass is already active and has set our owner
+	 */
 
 	/* VisibleClass */
 	memcpy(&v->BoxSize, &t->original_box_size, sizeof(OriginalBoxSize));
@@ -30,8 +38,6 @@ default_VideoClassInstanceVars(VideoClass *t, VideoClassInstanceVars *v)
 	/* VideoClass */
 	v->VideoDecodeOffset.x_position = 0;
 	v->VideoDecodeOffset.y_position = 0;
-
-	v->owner = NULL;
 
 	pthread_mutex_init(&v->bbox_lock, NULL);
 	pthread_mutex_init(&v->scaled_lock, NULL);
@@ -95,7 +101,6 @@ VideoClass_Activation(VideoClass *t)
 	 */
 	if(t->inst.owner != NULL)
 		StreamClass_activateVideoComponent(t->inst.owner, t);
-else printf("TODO: VideoClass_Activation: un-owned (tag=%d)\n", t->component_tag);
 
 	/* now its RunningStatus is true, get it drawn at its position in the application's DisplayStack */
 	MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
@@ -119,7 +124,6 @@ VideoClass_Deactivation(VideoClass *t)
 	 */
 	if(t->inst.owner != NULL)
 		StreamClass_deactivateVideoComponent(t->inst.owner, t);
-else printf("TODO: VideoClass_Deactivation: un-owned (tag=%d)\n", t->component_tag);
 
 	/* now its RunningStatus is false, redraw the area it covered */
 	MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
