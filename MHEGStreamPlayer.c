@@ -221,7 +221,8 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 		p->video->inst.no_video = true;
 
 	/* is audio/video output totally disabled */
-	if(MHEGEngine_avDisabled())
+	if(MHEGEngine_avDisabled()
+	|| (!p->have_video && !p->have_audio))
 		return;
 
 	p->audio_pid = p->audio_tag;
@@ -240,6 +241,17 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 
 	p->playing = true;
 	p->stop = false;
+
+	/*
+	 * the MPEG type for some streams is set to 6 (STREAM_TYPE_PRIVATE_DATA)
+	 * eg the streams for BBC News Multiscreen
+	 * presumably, this is stop them getting accidentally picked up when you scan for channels
+	 * luckily we know what type MPEG audio and video streams should be
+	 */
+	if(p->have_video && p->video_type == STREAM_TYPE_PRIVATE_DATA)
+		p->video_type = STREAM_TYPE_VIDEO_MPEG2;
+	if(p->have_audio && p->audio_type == STREAM_TYPE_PRIVATE_DATA)
+		p->audio_type = STREAM_TYPE_AUDIO_MPEG2;
 
 	/*
 	 * we have three threads:
