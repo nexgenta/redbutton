@@ -246,13 +246,21 @@ StreamClass_Destruction(StreamClass *t)
 void
 StreamClass_activateVideoComponent(StreamClass *t, VideoClass *c)
 {
-/* TODO */
-printf("TODO: StreamClass_activateVideoComponent (tag=%d)\n", c->component_tag);
-// basically:
-// MHEGStreamPlayer_stop(t)
-// MHEGStreamPlayer_setVideoStream(t, c) - may get the "only using last video stream" warning
-// MHEGStreamPlayer_play(t)
-// MHEGEngine_generateAstncEvent(&t->rootClass.inst.ref, EventType_stream_playing, NULL)
+	verbose("StreamClass_activateVideoComponent (tag=%d)", c->component_tag);
+
+	/*
+	 * don't think we need to generate stream_playing/stopped events
+	 * but I'm not entirely shore
+	 */
+
+	/* if we are activated, stop playing while we change the component */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGStreamPlayer_stop(&t->inst.player);
+
+	MHEGStreamPlayer_setVideoStream(&t->inst.player, c);
+
+	if(t->rootClass.inst.RunningStatus)
+		MHEGStreamPlayer_play(&t->inst.player);
 
 	return;
 }
@@ -260,8 +268,21 @@ printf("TODO: StreamClass_activateVideoComponent (tag=%d)\n", c->component_tag);
 void
 StreamClass_activateAudioComponent(StreamClass *t, AudioClass *c)
 {
-/* TODO */
-printf("TODO: StreamClass_activateAudioComponent (tag=%d)\n", c->component_tag);
+	verbose("StreamClass_activateAudioComponent (tag=%d)", c->component_tag);
+
+	/*
+	 * don't think we need to generate stream_playing/stopped events
+	 * but I'm not entirely shore
+	 */
+
+	/* if we are activated, stop playing while we change the component */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGStreamPlayer_stop(&t->inst.player);
+
+	MHEGStreamPlayer_setAudioStream(&t->inst.player, c);
+
+	if(t->rootClass.inst.RunningStatus)
+		MHEGStreamPlayer_play(&t->inst.player);
 
 	return;
 }
@@ -269,14 +290,21 @@ printf("TODO: StreamClass_activateAudioComponent (tag=%d)\n", c->component_tag);
 void
 StreamClass_deactivateVideoComponent(StreamClass *t, VideoClass *c)
 {
-/* TODO */
-printf("TODO: StreamClass_deactivateVideoComponent (tag=%d)\n", c->component_tag);
-// basically:
-// MHEGStreamPlayer_stop(t)
-// MHEGStreamPlayer_setVideoStream(t, NULL)
-// MHEGStreamPlayer_play(t)
-// MHEGEngine_generateAstncEvent(&t->rootClass.inst.ref, EventType_stream_stopped, NULL)
-// => need to make MHEGStreamPlayer_setVideoStream(t, NULL) disable video
+	verbose("StreamClass_deactivateVideoComponent (tag=%d)", c->component_tag);
+
+	/*
+	 * don't think we need to generate stream_playing/stopped events
+	 * but I'm not entirely shore
+	 */
+
+	/* if we are activated, stop playing while we change the component */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGStreamPlayer_stop(&t->inst.player);
+
+	MHEGStreamPlayer_setVideoStream(&t->inst.player, NULL);
+
+	if(t->rootClass.inst.RunningStatus)
+		MHEGStreamPlayer_play(&t->inst.player);
 
 	return;
 }
@@ -284,8 +312,21 @@ printf("TODO: StreamClass_deactivateVideoComponent (tag=%d)\n", c->component_tag
 void
 StreamClass_deactivateAudioComponent(StreamClass *t, AudioClass *c)
 {
-/* TODO */
-printf("TODO: StreamClass_deactivateAudioComponent (tag=%d)\n", c->component_tag);
+	verbose("StreamClass_deactivateAudioComponent (tag=%d)", c->component_tag);
+
+	/*
+	 * don't think we need to generate stream_playing/stopped events
+	 * but I'm not entirely shore
+	 */
+
+	/* if we are activated, stop playing while we change the component */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGStreamPlayer_stop(&t->inst.player);
+
+	MHEGStreamPlayer_setAudioStream(&t->inst.player, NULL);
+
+	if(t->rootClass.inst.RunningStatus)
+		MHEGStreamPlayer_play(&t->inst.player);
 
 	return;
 }
