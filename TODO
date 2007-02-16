@@ -1,3 +1,6 @@
+find out what MPEG stream type 6 means!
+
+
 don't keep malloc/free'ing memory for a/v frames
 
 
