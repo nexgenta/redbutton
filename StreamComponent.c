@@ -155,9 +155,11 @@ StreamComponent_stop(StreamComponent *s, MHEGStreamPlayer *player)
 	switch(s->choice)
 	{
 	case StreamComponent_audio:
+		MHEGStreamPlayer_setAudioStream(player, NULL);
 		break;
 
 	case StreamComponent_video:
+		MHEGStreamPlayer_setVideoStream(player, NULL);
 		break;
 
 	case StreamComponent_rtgraphics:

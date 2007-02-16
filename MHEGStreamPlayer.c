@@ -139,6 +139,23 @@ MHEGStreamPlayer_setServiceID(MHEGStreamPlayer *p, int id)
 void
 MHEGStreamPlayer_setVideoStream(MHEGStreamPlayer *p, VideoClass *video)
 {
+	/* assert */
+	if(p->playing)
+		fatal("MHEGStreamPlayer_setVideoStream: trying to set stream while playing");
+
+	if(video)
+		verbose("MHEGStreamPlayer_setVideoStream: tag=%d", video->component_tag);
+	else
+		verbose("MHEGStreamPlayer_setVideoStream: NULL");
+
+	/* video==NULL => forget any existing stream */
+	if(video == NULL)
+	{
+		p->have_video = false;
+		p->video = NULL;
+		return;
+	}
+
 	if(p->have_video)
 		error("MHEGStreamPlayer: more than one video stream; only using the last one (%d)", video->component_tag);
 
@@ -158,6 +175,24 @@ MHEGStreamPlayer_setVideoStream(MHEGStreamPlayer *p, VideoClass *video)
 void
 MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *p, AudioClass *audio)
 {
+	/* assert */
+	if(p->playing)
+		fatal("MHEGStreamPlayer_setAudioStream: trying to set stream while playing");
+
+	if(audio)
+		verbose("MHEGStreamPlayer_setAudioStream: tag=%d", audio->component_tag);
+	else
+		verbose("MHEGStreamPlayer_setAudioStream: NULL");
+
+	/* audio==NULL => forget any existing stream */
+	if(audio == NULL)
+	{
+		p->have_audio = false;
+		p->audio = NULL;
+		p->audio_codec = NULL;
+		return;
+	}
+
 	if(p->have_audio)
 		error("MHEGStreamPlayer: more than one audio stream; only using the last one (%d)", audio->component_tag);
 
@@ -257,13 +292,6 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 		fclose(p->ts);
 		p->ts = NULL;
 	}
-
-	/* forget any existing streams */
-	p->have_video = false;
-	p->have_audio = false;
-	p->video = NULL;
-	p->audio = NULL;
-	p->audio_codec = NULL;
 
 	p->playing = false;
 
