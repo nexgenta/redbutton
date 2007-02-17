@@ -250,7 +250,7 @@ StreamClass_activateVideoComponent(StreamClass *t, VideoClass *c)
 
 	/*
 	 * don't think we need to generate stream_playing/stopped events
-	 * but I'm not entirely shore
+	 * but I'm not entirely sure
 	 */
 
 	/* if we are activated, stop playing while we change the component */
@@ -272,7 +272,7 @@ StreamClass_activateAudioComponent(StreamClass *t, AudioClass *c)
 
 	/*
 	 * don't think we need to generate stream_playing/stopped events
-	 * but I'm not entirely shore
+	 * but I'm not entirely sure
 	 */
 
 	/* if we are activated, stop playing while we change the component */
@@ -294,7 +294,7 @@ StreamClass_deactivateVideoComponent(StreamClass *t, VideoClass *c)
 
 	/*
 	 * don't think we need to generate stream_playing/stopped events
-	 * but I'm not entirely shore
+	 * but I'm not entirely sure
 	 */
 
 	/* if we are activated, stop playing while we change the component */
@@ -316,7 +316,7 @@ StreamClass_deactivateAudioComponent(StreamClass *t, AudioClass *c)
 
 	/*
 	 * don't think we need to generate stream_playing/stopped events
-	 * but I'm not entirely shore
+	 * but I'm not entirely sure
 	 */
 
 	/* if we are activated, stop playing while we change the component */
