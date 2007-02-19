@@ -447,8 +447,7 @@ read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *
 	vverbose("PMT PID: %u", map_pid);
 
 	/* get the PMT */
-	rc = read_table(_car.demux_device, map_pid, TID_PMT, timeout, out);
-	if(!rc)
+	if(!(rc = read_table(_car.demux_device, map_pid, TID_PMT, timeout, out)))
 		error("Unable to read PMT");
 
 	return rc;
