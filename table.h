@@ -24,12 +24,16 @@
 #define __TABLE_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "module.h"
 
-unsigned char *read_table(char *, uint16_t, uint8_t, unsigned int);
+/* max size of a DVB table */
+#define MAX_TABLE_LEN   4096
 
-unsigned char *read_dsmcc_tables(struct carousel *);
+bool read_table(char *, uint16_t, uint8_t, unsigned int, unsigned char *);
+
+bool read_dsmcc_tables(struct carousel *, unsigned char *);
 
 void add_dsmcc_pid(struct carousel *, uint16_t);
 

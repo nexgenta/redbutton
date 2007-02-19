@@ -81,7 +81,7 @@ struct data_broadcast_id_descriptor
 
 static struct avstreams *find_current_avstreams(struct carousel *, int, int);
 static struct avstreams *find_service_avstreams(struct carousel *, int, int, int);
-static unsigned char *read_pmt(char *, uint16_t, unsigned int);
+static bool read_pmt(char *, uint16_t, unsigned int, unsigned char *);
 
 bool
 is_audio_stream(uint8_t stream_type)
@@ -107,7 +107,7 @@ static struct carousel _car;
 struct carousel *
 find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
 {
-	unsigned char *pmt;
+	unsigned char pmt[MAX_TABLE_LEN];
 	uint16_t section_length;
 	uint16_t offset;
 	uint8_t stream_type;
@@ -144,7 +144,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 	_car.modules = NULL;
 
 	/* get the PMT */
-	if((pmt = read_pmt(_car.demux_device, service_id, timeout)) == NULL)
+	if(!read_pmt(_car.demux_device, service_id, timeout, pmt))
 		fatal("Unable to read PMT");
 
 	section_length = 3 + (((pmt[1] & 0x0f) << 8) + pmt[2]);
@@ -302,7 +302,7 @@ find_current_avstreams(struct carousel *car, int audio_tag, int video_tag)
 static struct avstreams *
 find_service_avstreams(struct carousel *car, int service_id, int audio_tag, int video_tag)
 {
-	unsigned char *pmt;
+	unsigned char pmt[MAX_TABLE_LEN];
 	uint16_t section_length;
 	uint16_t offset;
 	uint8_t stream_type;
@@ -318,7 +318,7 @@ find_service_avstreams(struct carousel *car, int service_id, int audio_tag, int 
 	bzero(&_streams, sizeof(_streams));
 
 	/* get the PMT */
-	if((pmt = read_pmt(car->demux_device, service_id, car->timeout)) == NULL)
+	if(!read_pmt(car->demux_device, service_id, car->timeout, pmt))
 		fatal("Unable to read PMT");
 
 	section_length = 3 + (((pmt[1] & 0x0f) << 8) + pmt[2]);
@@ -400,21 +400,26 @@ find_service_avstreams(struct carousel *car, int service_id, int audio_tag, int 
 	return &_streams;
 }
 
-static unsigned char *
-read_pmt(char *demux, uint16_t service_id, unsigned int timeout)
+/*
+ * output buffer must be at least MAX_TABLE_LEN bytes
+ * returns false if it timesout
+ */
+
+bool
+read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *out)
 {
-	unsigned char *pat;
+	unsigned char pat[MAX_TABLE_LEN];
 	uint16_t section_length;
 	uint16_t offset;
 	uint16_t map_pid = 0;
 	bool found;
-	unsigned char *pmt;
+	bool rc;
 
 	/* get the PAT */
-	if((pat = read_table(_car.demux_device, PID_PAT, TID_PAT, timeout)) == NULL)
+	if(!read_table(_car.demux_device, PID_PAT, TID_PAT, timeout, pat))
 	{
 		error("Unable to read PAT");
-		return NULL;
+		return false;
 	}
 
 	section_length = 3 + (((pat[1] & 0x0f) << 8) + pat[2]);
@@ -442,9 +447,10 @@ read_pmt(char *demux, uint16_t service_id, unsigned int timeout)
 	vverbose("PMT PID: %u", map_pid);
 
 	/* get the PMT */
-	if((pmt = read_table(_car.demux_device, map_pid, TID_PMT, timeout)) == NULL)
+	rc = read_table(_car.demux_device, map_pid, TID_PMT, timeout, out);
+	if(!rc)
 		error("Unable to read PMT");
 
-	return pmt;
+	return rc;
 }
 

@@ -34,7 +34,7 @@
 void
 load_carousel(struct carousel *car)
 {
-	unsigned char *table;
+	unsigned char table[MAX_TABLE_LEN];
 	bool done;
 
 	/* no modules yet */
@@ -46,7 +46,7 @@ load_carousel(struct carousel *car)
 	do
 	{
 		struct dsmccMessageHeader *dsmcc;
-		if((table = read_dsmcc_tables(car)) == NULL)
+		if(!read_dsmcc_tables(car, table))
 			fatal("Unable to read PID");
 		dsmcc = (struct dsmccMessageHeader *) &table[8];
 		if(dsmcc->protocolDiscriminator == DSMCC_PROTOCOL

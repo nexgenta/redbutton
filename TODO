@@ -1,5 +1,4 @@
 cache PAT and PMTs
-also, better if caller provides output buffer for tables
 
 need to kill all existing command connections on retune
 (listen_data->carousel is stale for them)

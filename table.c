@@ -38,21 +38,23 @@
 #include <linux/dvb/dmx.h>
 #endif
 
+#include "table.h"
 #include "dsmcc.h"
 #include "carousel.h"
 #include "biop.h"
 #include "utils.h"
 
-#define MAX_TABLE_LEN	4096
-
 /* DSMCC table ID's we want */
 #define TID_DSMCC_CONTROL	0x3b	/* DSI or DII */
 #define TID_DSMCC_DATA		0x3c	/* DDB */
 
-static unsigned char _buf[MAX_TABLE_LEN];
+/*
+ * output buffer must be at least MAX_TABLE_LEN bytes
+ * returns false if it timesout
+ */
 
-unsigned char *
-read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs)
+bool
+read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs, unsigned char *out)
 {
 	int fd_data;
 	struct dmx_sct_filter_params sctFilterParams;
@@ -63,7 +65,7 @@ read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs)
 	if((fd_data = open(device, O_RDWR)) < 0)
 	{
 		error("open '%s': %s", device, strerror(errno));
-		return NULL;
+		return false;
 	}
 
 	memset(&sctFilterParams, 0, sizeof(sctFilterParams));
@@ -77,14 +79,15 @@ read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs)
 	{
 		error("ioctl DMX_SET_FILTER: %s", strerror(errno));
 		close(fd_data);
-		return NULL;
+		return false;
 	}
 
 	timeout.tv_sec = secs;
 	timeout.tv_usec = 0;
 	do
 	{
-		_buf[0] = 0xff;	/* we never want table ID 0xff */
+		/* we check for out[0]==tid to see if we read the table */
+		out[0] = ~tid;
 		FD_ZERO(&readfds);
 		FD_SET(fd_data, &readfds);
 		if(select(fd_data + 1, &readfds, NULL, NULL, &timeout) < 0)
@@ -93,36 +96,38 @@ read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs)
 				continue;
 			error("read_table: select: %s", strerror(errno));
 			close(fd_data);
-			return NULL;
+			return false;
 		}
 		if(FD_ISSET(fd_data, &readfds))
 		{
-			if((n = read(fd_data, _buf, sizeof(_buf))) < 0)
+			if((n = read(fd_data, out, MAX_TABLE_LEN)) < 0)
 			{
 				error("read: %s", strerror(errno));
 				close(fd_data);
-				return NULL;
+				return false;
 			}
 		}
 		else
 		{
 			error("Timeout reading %s", device);
 			close(fd_data);
-			return NULL;
+			return false;
 		}
 	}
-	while(_buf[0] != tid);
-
-//	printf("PID: 0x%x table_id: 0x%x length: %d bytes\n", pid, _buf[0], n);
-//	hexdump(_buf, n);
+	while(out[0] != tid);
 
 	close(fd_data);
 
-	return _buf;
+	return true;
 }
 
-unsigned char *
-read_dsmcc_tables(struct carousel *car)
+/*
+ * output buffer must be at least MAX_TABLE_LEN bytes
+ * returns false if it timesout
+ */
+
+bool
+read_dsmcc_tables(struct carousel *car, unsigned char *out)
 {
 	struct timeval timeout;
 	unsigned int i;
@@ -135,7 +140,7 @@ read_dsmcc_tables(struct carousel *car)
 	timeout.tv_usec = 0;
 	do
 	{
-		_buf[0] = 0;
+		out[0] = 0;
 		/* work out the max fd number and set the fds we want to read from */
 		max = 0;
 		FD_ZERO(&readfds);
@@ -150,7 +155,7 @@ read_dsmcc_tables(struct carousel *car)
 		if(select(max + 1, &readfds, NULL, NULL, &timeout) < 0)
 		{
 			error("read_dsmcc_tables: select: %s", strerror(errno));
-			return NULL;
+			return false;
 		}
 		/* see which fd is ready */
 		fd = -1;
@@ -172,25 +177,22 @@ read_dsmcc_tables(struct carousel *car)
 		if(fd == -1)
 		{
 			error("Timeout reading %s", car->demux_device);
-			return NULL;
+			return false;
 		}
 		/* read the table */
-		if((n = read(fd, _buf, sizeof(_buf))) < 0)
+		if((n = read(fd, out, MAX_TABLE_LEN)) < 0)
 		{
 			/*
 			 * may get EOVERFLOW if we don't read quick enough,
 			 * so just report it and have another go
 			 */
 			error("read: %s", strerror(errno));
-			_buf[0] = 0;
+			out[0] = 0;
 		}
 	}
-	while(_buf[0] != TID_DSMCC_CONTROL && _buf[0] != TID_DSMCC_DATA);
+	while(out[0] != TID_DSMCC_CONTROL && out[0] != TID_DSMCC_DATA);
 
-//	printf("PID: 0x%x table_id: 0x%x length: %d bytes\n", car->current_pid, _buf[0], n);
-//	hexdump(_buf, n);
-
-	return _buf;
+	return out;
 }
 
 void

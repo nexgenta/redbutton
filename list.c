@@ -37,7 +37,7 @@ void
 list_channels(unsigned int adapter, unsigned int timeout)
 {
 	char demux_dev[PATH_MAX];
-	unsigned char *sds;
+	unsigned char sds[MAX_TABLE_LEN];
 	uint16_t size;
 	uint16_t offset;
 	uint16_t service_id;
@@ -53,7 +53,7 @@ list_channels(unsigned int adapter, unsigned int timeout)
 	printf("==\t=======\n");
 
 	/* grab the Service Description Section table */
-	if((sds = read_table(demux_dev, PID_SDT, TID_SDS, timeout)) == NULL)
+	if(!read_table(demux_dev, PID_SDT, TID_SDS, timeout, sds))
 		fatal("Unable to read SDT");
 
 	/* 12 bit section_length field */
