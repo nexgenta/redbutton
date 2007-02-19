@@ -30,6 +30,7 @@
 #include "findmheg.h"
 #include "table.h"
 #include "assoc.h"
+#include "cache.h"
 #include "utils.h"
 
 /* Programme Association Table and Section */
@@ -81,6 +82,7 @@ struct data_broadcast_id_descriptor
 
 static struct avstreams *find_current_avstreams(struct carousel *, int, int);
 static struct avstreams *find_service_avstreams(struct carousel *, int, int, int);
+static bool read_pat(char *, unsigned int, unsigned char *);
 static bool read_pmt(char *, uint16_t, unsigned int, unsigned char *);
 
 bool
@@ -405,9 +407,35 @@ find_service_avstreams(struct carousel *car, int service_id, int audio_tag, int 
  * returns false if it timesout
  */
 
-bool
+static bool
+read_pat(char *demux, unsigned int timeout, unsigned char *out)
+{
+	/* is it in the cache */
+	if(cache_load("pat", out))
+		return true;
+
+	/* read it from the DVB card */
+	if(!read_table(demux, PID_PAT, TID_PAT, timeout, out))
+	{
+		error("Unable to read PAT");
+		return false;
+	}
+
+	/* cache it */
+	cache_save("pat", out);
+
+	return true;
+}
+
+/*
+ * output buffer must be at least MAX_TABLE_LEN bytes
+ * returns false if it timesout
+ */
+
+static bool
 read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *out)
 {
+	char cache_item[PATH_MAX];
 	unsigned char pat[MAX_TABLE_LEN];
 	uint16_t section_length;
 	uint16_t offset;
@@ -415,12 +443,14 @@ read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *
 	bool found;
 	bool rc;
 
+	/* is it in the cache */
+	snprintf(cache_item, sizeof(cache_item), "pmt-%u", service_id);
+	if(cache_load(cache_item, out))
+		return true;
+
 	/* get the PAT */
-	if(!read_table(demux, PID_PAT, TID_PAT, timeout, pat))
-	{
-		error("Unable to read PAT");
+	if(!read_pat(demux, timeout, pat))
 		return false;
-	}
 
 	section_length = 3 + (((pat[1] & 0x0f) << 8) + pat[2]);
 
@@ -447,7 +477,12 @@ read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *
 	vverbose("PMT PID: %u", map_pid);
 
 	/* get the PMT */
-	if(!(rc = read_table(demux, map_pid, TID_PMT, timeout, out)))
+	rc = read_table(demux, map_pid, TID_PMT, timeout, out);
+
+	/* cache it */
+	if(rc)
+		cache_save(cache_item, out);
+	else
 		error("Unable to read PMT");
 
 	return rc;

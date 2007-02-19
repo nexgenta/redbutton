@@ -17,6 +17,7 @@ OBJS=	rb-download.o	\
 	biop.o		\
 	fs.o		\
 	channels.o	\
+	cache.o		\
 	utils.o
 
 LIBS=-lz

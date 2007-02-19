@@ -1,5 +1,3 @@
-cache PAT and PMTs
-
 need to kill all existing command connections on retune
 (listen_data->carousel is stale for them)
 

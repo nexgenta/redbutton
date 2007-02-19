@@ -20,6 +20,7 @@
 #include "findmheg.h"
 #include "carousel.h"
 #include "channels.h"
+#include "cache.h"
 #include "utils.h"
 
 /* listen() backlog, 5 is max for BSD apparently */
@@ -177,6 +178,7 @@ start_listener(struct sockaddr_in *listen_addr, unsigned int adapter, unsigned i
 			verbose("Retune to service_id %d", retune_id);
 			/* kill the current downloader process and start a new one */
 			kill(listen_data.carousel->downloader, SIGKILL);
+			cache_flush();
 			listen_data.carousel = start_downloader(adapter, timeout, retune_id, -1);
 			retune_id = -1;
 		}

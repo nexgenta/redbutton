@@ -71,6 +71,7 @@
 #include "carousel.h"
 #include "listen.h"
 #include "channels.h"
+#include "cache.h"
 #include "utils.h"
 
 /* seconds before we assume no DSMCC data is available on this PID */
@@ -145,6 +146,9 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	if(!cache_init())
+		fatal("Unable to initialise cache");
 
 	/* initialise channels.conf */
 	if(!init_channels_conf(channels_file))
