@@ -147,9 +147,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if(!cache_init())
-		fatal("Unable to initialise cache");
-
 	/* initialise channels.conf */
 	if(!init_channels_conf(channels_file))
 		error("Unable to open channels.conf file");
@@ -158,6 +155,9 @@ main(int argc, char *argv[])
 	if(base_dir != NULL
 	&& chdir(base_dir) < 0)
 		fatal("Unable to cd to '%s': %s", base_dir, strerror(errno));
+
+	if(!cache_init())
+		fatal("Unable to initialise cache");
 
 	if(argc == optind)
 	{
