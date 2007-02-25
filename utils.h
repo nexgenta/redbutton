@@ -43,6 +43,7 @@ int next_utf8(unsigned char *, int, int *);
 void *safe_malloc(size_t);
 void *safe_mallocz(size_t);
 void *safe_realloc(void *, size_t);
+void *safe_fast_realloc(void *, size_t *, size_t);
 void safe_free(void *);
 
 char *safe_strdup(const char *);

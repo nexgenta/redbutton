@@ -23,12 +23,32 @@ static void set_avsync_base(MHEGStreamPlayer *, double, int64_t);
 static void thread_usleep(unsigned long);
 static enum CodecID find_av_codec_id(int);
 
+/* global pool of spare VideoFrame's */
+LIST_OF(VideoFrame) *free_vframes = NULL;
+pthread_mutex_t free_vframes_lock = PTHREAD_MUTEX_INITIALIZER;
+
 LIST_TYPE(VideoFrame) *
 new_VideoFrameListItem(double pts, enum PixelFormat pix_fmt, unsigned int width, unsigned int height, AVFrame *frame)
 {
-	LIST_TYPE(VideoFrame) *vf = safe_malloc(sizeof(LIST_TYPE(VideoFrame)));
+	LIST_TYPE(VideoFrame) *vf;
 	int frame_size;
 
+	/* do we have a spare frame we can use */
+	pthread_mutex_lock(&free_vframes_lock);
+	if(free_vframes != NULL)
+	{
+		vf = free_vframes;
+		LIST_REMOVE(&free_vframes, vf);
+	}
+	else
+	{
+		vf = safe_malloc(sizeof(LIST_TYPE(VideoFrame)));
+		vf->item.frame_data = NULL;
+		vf->item.nalloced = 0;
+	}
+	pthread_mutex_unlock(&free_vframes_lock);
+
+	/* frame info */
 	vf->item.pts = pts;
 	vf->item.pix_fmt = pix_fmt;
 	vf->item.width = width;
@@ -40,7 +60,7 @@ new_VideoFrameListItem(double pts, enum PixelFormat pix_fmt, unsigned int width,
 	 */
 	if((frame_size = avpicture_get_size(pix_fmt, width, height)) < 0)
 		fatal("Invalid frame_size");
-	vf->item.frame_data = safe_malloc(frame_size);
+	vf->item.frame_data = safe_fast_realloc(vf->item.frame_data, &vf->item.nalloced, frame_size);
 	avpicture_fill(&vf->item.frame, vf->item.frame_data, pix_fmt, width, height);
 	img_copy(&vf->item.frame, (AVPicture*) frame, pix_fmt, width, height);
 
@@ -50,17 +70,35 @@ new_VideoFrameListItem(double pts, enum PixelFormat pix_fmt, unsigned int width,
 void
 free_VideoFrameListItem(LIST_TYPE(VideoFrame) *vf)
 {
-	safe_free(vf->item.frame_data);
-
-	safe_free(vf);
+	/* add it to the free list */
+	pthread_mutex_lock(&free_vframes_lock);
+	LIST_APPEND(&free_vframes, vf);
+	pthread_mutex_unlock(&free_vframes_lock);
 
 	return;
 }
 
+/* global pool of spare AudioFrame's */
+LIST_OF(AudioFrame) *free_aframes = NULL;
+pthread_mutex_t free_aframes_lock = PTHREAD_MUTEX_INITIALIZER;
+
 LIST_TYPE(AudioFrame) *
 new_AudioFrameListItem(void)
 {
-	LIST_TYPE(AudioFrame) *af = safe_malloc(sizeof(LIST_TYPE(AudioFrame)));
+	LIST_TYPE(AudioFrame) *af;
+
+	/* do we have a spare frame we can use */
+	pthread_mutex_lock(&free_aframes_lock);
+	if(free_aframes != NULL)
+	{
+		af = free_aframes;
+		LIST_REMOVE(&free_aframes, af);
+	}
+	else
+	{
+		af = safe_malloc(sizeof(LIST_TYPE(AudioFrame)));
+	}
+	pthread_mutex_unlock(&free_aframes_lock);
 
 	af->item.pts = AV_NOPTS_VALUE;
 
@@ -72,7 +110,10 @@ new_AudioFrameListItem(void)
 void
 free_AudioFrameListItem(LIST_TYPE(AudioFrame) *af)
 {
-	safe_free(af);
+	/* add it to the free list */
+	pthread_mutex_lock(&free_aframes_lock);
+	LIST_APPEND(&free_aframes, af);
+	pthread_mutex_unlock(&free_aframes_lock);
 
 	return;
 }

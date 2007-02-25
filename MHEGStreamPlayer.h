@@ -28,6 +28,7 @@ typedef struct
 	unsigned int height;
 	AVPicture frame;
 	unsigned char *frame_data;
+	size_t nalloced;		/* number of bytes malloc'ed to frame_data */
 } VideoFrame;
 
 DEFINE_LIST_OF(VideoFrame);

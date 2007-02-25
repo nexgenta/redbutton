@@ -1,9 +1,6 @@
 VideoDecodeOffset
 
 
-don't keep malloc/free'ing memory for a/v frames
-
-
 if video size != VideoClass size, centre and draw a smaller transparent hole
 
 

@@ -188,6 +188,23 @@ safe_realloc(void *oldbuf, size_t nbytes)
 }
 
 /*
+ * only calls safe_realloc if nbytes > *oldsize
+ * updates *oldsize if it calls safe_realloc
+ */
+
+void *
+safe_fast_realloc(void *oldbuf, size_t *oldsize, size_t nbytes)
+{
+	if(nbytes > *oldsize)
+	{
+		oldbuf = safe_realloc(oldbuf, nbytes);
+		*oldsize = nbytes;
+	}
+
+	return oldbuf;
+}
+
+/*
  * safe_free(NULL) is okay
  */
 
