@@ -209,7 +209,10 @@ cmd_astream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 
 	/* check we have a default stream */
 	if(streams->audio_pid == 0)
+	{
 		SEND_RESPONSE(500, "Unable to resolve audio PID");
+		return false;
+	}
 
 	/* add the PID to the demux device */
 	if((audio_fd = add_demux_filter(car->demux_device, streams->audio_pid, DMX_PES_AUDIO)) < 0)
@@ -281,7 +284,10 @@ cmd_vstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 
 	/* check we have a default stream */
 	if(streams->video_pid == 0)
+	{
 		SEND_RESPONSE(500, "Unable to resolve video PID");
+		return false;
+	}
 
 	/* add the PID to the demux device */
 	if((video_fd = add_demux_filter(car->demux_device, streams->video_pid, DMX_PES_VIDEO)) < 0)
@@ -357,9 +363,15 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 
 	/* check we have a default stream */
 	if(streams->audio_pid == 0)
+	{
 		SEND_RESPONSE(500, "Unable to resolve audio PID");
+		return false;
+	}
 	if(streams->video_pid == 0)
+	{
 		SEND_RESPONSE(500, "Unable to resolve video PID");
+		return false;
+	}
 
 	/* add the PIDs to the demux device */
 	if((audio_fd = add_demux_filter(car->demux_device, streams->audio_pid, DMX_PES_AUDIO)) < 0)
