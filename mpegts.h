@@ -19,7 +19,7 @@
 
 typedef struct MpegTSContext MpegTSContext;
 
-MpegTSContext *mpegts_open(FILE *);
+MpegTSContext *mpegts_open(FILE *, int, int);
 int mpegts_demux_frame(MpegTSContext *, AVPacket *);
 int mpegts_demux_packet(MpegTSContext *, AVPacket *);
 void mpegts_close(MpegTSContext *);

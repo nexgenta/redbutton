@@ -37,21 +37,8 @@
 #include "MHEGEngine.h"
 
 #define TS_PACKET_SIZE	188
-#define NB_PID_MAX	2
 /* expands as necessary */
 #define INIT_FRAME_BUFF_SIZE	(128 * 1024)
-
-typedef struct PESContext PESContext;
-
-struct MpegTSContext
-{
-	FILE *ts_stream;		/* transport stream we are reading from */
-	AVPacket *pkt;			/* packet containing av data */
-	int stop_parse;			/* stop parsing loop */
-	PESContext *pids[NB_PID_MAX];	/* PIDs we are demuxing */
-	int is_start;			/* is the current packet the first of a frame */
-	int last_cc;			/* last Continuity Check value we saw (<0 => none seen yet) */
-};
 
 /* TS stream handling */
 enum MpegTSState
@@ -85,16 +72,38 @@ struct PESContext
 	unsigned int alloc_size;	/* number of bytes malloc'ed to frame_data */
 };
 
+typedef struct PESContext PESContext;
+
+struct MpegTSContext
+{
+	FILE *ts_stream;	/* transport stream we are reading from */
+	int apid;		/* audio PID we want, -1 => no audio */
+	int vpid;		/* video PID we want, -1 => no video */
+	AVPacket *pkt;		/* packet containing av data */
+	int stop_parse;		/* stop parsing loop */
+	PESContext apes;	/* audio PES we are demuxing */
+	PESContext vpes;	/* video PES we are demuxing */
+	int is_start;		/* is the current packet the first of a frame */
+	int last_cc;		/* last Continuity Check value we saw (<0 => none seen yet) */
+};
+
 static int read_packet(FILE *, uint8_t *);
 static void handle_packet(MpegTSContext *, const uint8_t *);
-static PESContext *add_pes_stream(MpegTSContext *, int);
+static int init_pes_stream(MpegTSContext *, PESContext *, int);
+static void free_pes_stream(PESContext *);
+static PESContext *find_pes_stream(MpegTSContext *, int);
 static void mpegts_push_data(PESContext *, const uint8_t *, int, int);
 static int64_t get_pts(const uint8_t *);
 
 /* my interface */
 
+/*
+ * demux the given audio and video PIDs from the transport stream
+ * if apid or vpid is -1, ignore it
+ */
+
 MpegTSContext *
-mpegts_open(FILE *ts)
+mpegts_open(FILE *ts, int apid, int vpid)
 {
 	MpegTSContext *ctx;
 
@@ -102,6 +111,20 @@ mpegts_open(FILE *ts)
 		return NULL;
 
 	ctx->ts_stream = ts;
+	ctx->apid = apid;
+	ctx->vpid = vpid;
+
+	if(init_pes_stream(ctx, &ctx->apes, apid) < 0)
+	{
+		av_free(ctx);
+		return NULL;
+	}
+	if(init_pes_stream(ctx, &ctx->vpes, vpid) < 0)
+	{
+		free_pes_stream(&ctx->apes);
+		av_free(ctx);
+		return NULL;
+	}
 
 	ctx->is_start = 0;
 
@@ -126,8 +149,8 @@ mpegts_demux_frame(MpegTSContext *ctx, AVPacket *frame)
 			return -1;
 		}
 		/* find the stream */
-		if((pes = add_pes_stream(ctx, packet.stream_index)) == NULL)
-			fatal("mpegts_demux_frame: internal error");
+		if((pes = find_pes_stream(ctx, packet.stream_index)) == NULL)
+			fatal("mpegts_demux_frame: unexpected PID %d", packet.stream_index);
 		/* is it the first packet of the next frame */
 		if(ctx->is_start == 0)
 		{
@@ -211,16 +234,9 @@ mpegts_demux_packet(MpegTSContext *ctx, AVPacket *pkt)
 void
 mpegts_close(MpegTSContext *ctx)
 {
-	int i;
+	free_pes_stream(&ctx->apes);
+	free_pes_stream(&ctx->vpes);
 
-	for(i=0; i<NB_PID_MAX; i++)
-	{
-		if(ctx->pids[i])
-		{
-			av_free(ctx->pids[i]->frame_data);
-			av_free(ctx->pids[i]);
-		}
-	}
 	av_free(ctx);
 
 	return;
@@ -276,8 +292,11 @@ handle_packet(MpegTSContext *ctx, const uint8_t *packet)
 
 	pid = ((packet[1] & 0x1f) << 8) | packet[2];
 
-	if((pes = add_pes_stream(ctx, pid)) == NULL)
+	if((pes = find_pes_stream(ctx, pid)) == NULL)
+	{
+		verbose("MPEG TS demux: ignoring unexpected PID %d", pid);
 		return;
+	}
 
 	ctx->is_start = packet[1] & 0x40;
 
@@ -311,38 +330,42 @@ handle_packet(MpegTSContext *ctx, const uint8_t *packet)
 	return;
 }
 
-static PESContext *
-add_pes_stream(MpegTSContext *ctx, int pid)
+static int
+init_pes_stream(MpegTSContext *ctx, PESContext *pes, int pid)
 {
-	PESContext *pes;
-	int i;
+	bzero(pes, sizeof(PESContext));
 
-	/* have we already added this PID */
-	for(i=0; i<NB_PID_MAX && ctx->pids[i]!=NULL; i++)
-		if(ctx->pids[i]->pid == pid)
-			return ctx->pids[i];
-	if(i == NB_PID_MAX)
-		return NULL;
-
-	/* if no pid found, then add a pid context */
-	if((pes = av_mallocz(sizeof(PESContext))) == NULL)
-		return NULL;
 	pes->ts = ctx;
 	pes->pid = pid;
 
 	pes->alloc_size = INIT_FRAME_BUFF_SIZE;
 	if((pes->frame_data = av_malloc(pes->alloc_size)) == NULL)
-	{
-		av_free(pes);
-		return NULL;
-	}
+		return -1;
 
 	pes->frame_pts = AV_NOPTS_VALUE;
 	pes->frame_dts = AV_NOPTS_VALUE;
 
-	ctx->pids[i] = pes;
+	return 0;
+}
 
-	return pes;
+static void
+free_pes_stream(PESContext *pes)
+{
+	if(pes->frame_data)
+		av_free(pes->frame_data);
+
+	return;
+}
+
+static PESContext *
+find_pes_stream(MpegTSContext *ctx, int pid)
+{
+	if(pid == ctx->apid)
+		return &ctx->apes;
+	else if(pid == ctx->vpid)
+		return &ctx->vpes;
+	else
+		return NULL;
 }
 
 /* return non zero if a packet could be constructed */

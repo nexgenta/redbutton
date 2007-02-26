@@ -362,6 +362,8 @@ static void *
 decode_thread(void *arg)
 {
 	MHEGStreamPlayer *p = (MHEGStreamPlayer *) arg;
+	int demux_apid;
+	int demux_vpid;
 	MpegTSContext *tsdemux;
 	AVPacket pkt;
 	AVCodecContext *audio_codec_ctx = NULL;
@@ -411,7 +413,9 @@ decode_thread(void *arg)
 	if((frame = avcodec_alloc_frame()) == NULL)
 		fatal("Out of memory");
 
-	if((tsdemux = mpegts_open(p->ts)) == NULL)
+	demux_apid = p->have_audio ? p->audio_pid : -1;
+	demux_vpid = p->have_video ? p->video_pid : -1;
+	if((tsdemux = mpegts_open(p->ts, demux_apid, demux_vpid)) == NULL)
 		fatal("Out of memory");
 
 	while(!p->stop && !feof(p->ts))
