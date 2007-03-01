@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 
 #include "command.h"
 #include "findmheg.h"
@@ -240,8 +241,9 @@ cmd_astream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	stream_ts(ts_fd, client);
 
 	/* clean up */
-	close(ts_fd);
+	ioctl(audio_fd, DMX_STOP);
 	close(audio_fd);
+	close(ts_fd);
 
 	/* close the connection */
 	return true;
@@ -315,8 +317,9 @@ cmd_vstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	stream_ts(ts_fd, client);
 
 	/* clean up */
-	close(ts_fd);
+	ioctl(video_fd, DMX_STOP);
 	close(video_fd);
+	close(ts_fd);
 
 	/* close the connection */
 	return true;
@@ -407,9 +410,11 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 	stream_ts(ts_fd, client);
 
 	/* clean up */
-	close(ts_fd);
+	ioctl(audio_fd, DMX_STOP);
+	ioctl(video_fd, DMX_STOP);
 	close(audio_fd);
 	close(video_fd);
+	close(ts_fd);
 
 	/* close the connection */
 	return true;
