@@ -12,11 +12,12 @@
 #include "ExternalReference.h"
 
 void
-GroupClass_SetTimer(ExternalReference *ref, LIST_OF(Timer) **timer_list, struct timeval *start_time,
-		    SetTimer *params, OctetString *caller_gid)
+GroupClass_SetTimer(ExternalReference *ref, LIST_OF(Timer) **timer_list, LIST_OF(MHEGTimer) **removed_timers,
+		    struct timeval *start_time, SetTimer *params, OctetString *caller_gid)
 {
 	int id;
 	LIST_TYPE(Timer) *timer;
+	LIST_TYPE(MHEGTimer) *old_timer;
 	int value;
 	bool absolute;
 	int interval;
@@ -51,6 +52,13 @@ GroupClass_SetTimer(ExternalReference *ref, LIST_OF(Timer) **timer_list, struct 
 			if(interval < 0)
 				interval = 0;
 			timer->item.position = value;
+			/*
+			 * don't want timers going off after the GroupClass has been deleted
+			 * so, remember the old mheg_id
+			 */
+			old_timer = safe_malloc(sizeof(LIST_TYPE(MHEGTimer)));
+			old_timer->item = timer->item.mheg_id;
+			LIST_APPEND(removed_timers, old_timer);
 			/* update its mheg_id */
 			timer->item.mheg_id = MHEGTimer_addGroupClassTimer(interval, ref, timer->item.id, timer_list);
 		}
@@ -87,6 +95,10 @@ GroupClass_SetTimer(ExternalReference *ref, LIST_OF(Timer) **timer_list, struct 
 		/* no new timer value => remove the timer */
 		if(timer != NULL)
 		{
+			/* remember the old mheg_id */
+			old_timer = safe_malloc(sizeof(LIST_TYPE(MHEGTimer)));
+			old_timer->item = timer->item.mheg_id;
+			LIST_APPEND(removed_timers, old_timer);
 			/* removing a timer does not surpress events from the previous timer */
 			LIST_REMOVE(timer_list, timer);
 			safe_free(timer);
@@ -129,9 +141,10 @@ GroupClass_timerFired(ExternalReference *ref, int id, MHEGTimer mheg_id, LIST_OF
 }
 
 void
-GroupClass_freeTimers(LIST_OF(Timer) **timer_list)
+GroupClass_freeTimers(LIST_OF(Timer) **timer_list, LIST_OF(MHEGTimer) **removed_timers)
 {
 	LIST_TYPE(Timer) *timer = *timer_list;
+	LIST_TYPE(MHEGTimer) *old_timer = *removed_timers;
 
 	while(timer)
 	{
@@ -140,6 +153,15 @@ GroupClass_freeTimers(LIST_OF(Timer) **timer_list)
 	}
 
 	LIST_FREE(timer_list, Timer, safe_free);
+
+	/* remove the timers that have been updated or removed */
+	while(old_timer)
+	{
+		MHEGTimer_removeGroupClassTimer(old_timer->item);
+		old_timer = old_timer->next;
+	}
+
+	LIST_FREE(removed_timers, MHEGTimer, safe_free);
 
 	return;
 }

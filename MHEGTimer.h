@@ -10,6 +10,8 @@
 
 typedef XtIntervalId MHEGTimer;
 
+DEFINE_LIST_OF(MHEGTimer);
+
 MHEGTimer MHEGTimer_addGroupClassTimer(unsigned int, ExternalReference *, int, void *);
 void MHEGTimer_removeGroupClassTimer(MHEGTimer);
 

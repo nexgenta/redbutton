@@ -45,6 +45,7 @@ default_ApplicationClassInstanceVars(ApplicationClass *t, ApplicationClassInstan
 	/* GroupClass */
 	v->GroupCachePriority = t->original_group_cache_priority;
 	v->Timers = NULL;
+	v->removed_timers = NULL;
 
 	/* ApplicationClass */
 	v->LockCount = 0;
@@ -58,7 +59,7 @@ default_ApplicationClassInstanceVars(ApplicationClass *t, ApplicationClassInstan
 void
 free_ApplicationClassInstanceVars(ApplicationClassInstanceVars *v)
 {
-	GroupClass_freeTimers(&v->Timers);
+	GroupClass_freeTimers(&v->Timers, &v->removed_timers);
 
 	LIST_FREE(&v->DisplayStack, RootClassPtr, safe_free);
 
@@ -586,7 +587,7 @@ ApplicationClass_SetTimer(ApplicationClass *t, SetTimer *params, OctetString *ca
 {
 	verbose("ApplicationClass: %s; SetTimer", ExternalReference_name(&t->rootClass.inst.ref));
 
-	GroupClass_SetTimer(&t->rootClass.inst.ref, &t->inst.Timers, &t->inst.start_time, params, caller_gid);
+	GroupClass_SetTimer(&t->rootClass.inst.ref, &t->inst.Timers, &t->inst.removed_timers, &t->inst.start_time, params, caller_gid);
 
 	return;
 }

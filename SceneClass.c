@@ -23,6 +23,7 @@ default_SceneClassInstanceVars(SceneClass *t, SceneClassInstanceVars *v)
 	/* GroupClass */
 	v->GroupCachePriority = t->original_group_cache_priority;
 	v->Timers = NULL;
+	v->removed_timers = NULL;
 
 	v->next_clone = FIRST_CLONED_OBJ_NUM;
 
@@ -32,7 +33,7 @@ default_SceneClassInstanceVars(SceneClass *t, SceneClassInstanceVars *v)
 void
 free_SceneClassInstanceVars(SceneClassInstanceVars *v)
 {
-	GroupClass_freeTimers(&v->Timers);
+	GroupClass_freeTimers(&v->Timers, &v->removed_timers);
 
 	return;
 }
@@ -210,7 +211,7 @@ SceneClass_SetTimer(SceneClass *t, SetTimer *params, OctetString *caller_gid)
 {
 	verbose("SceneClass: %s; SetTimer", ExternalReference_name(&t->rootClass.inst.ref));
 
-	GroupClass_SetTimer(&t->rootClass.inst.ref, &t->inst.Timers, &t->inst.start_time, params, caller_gid);
+	GroupClass_SetTimer(&t->rootClass.inst.ref, &t->inst.Timers, &t->inst.removed_timers, &t->inst.start_time, params, caller_gid);
 
 	return;
 }
