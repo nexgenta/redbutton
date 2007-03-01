@@ -512,6 +512,8 @@ video_thread(void *arg)
 	int out_y;
 	unsigned int out_width;
 	unsigned int out_height;
+	unsigned int vid_width;
+	unsigned int vid_height;
 	VideoFrame *vf;
 	double buffered;
 	double last_pts;
@@ -650,17 +652,24 @@ video_thread(void *arg)
 				if(p->have_audio)
 					set_avsync_base(p, last_pts, last_time);
 			}
-			/* origin of VideoClass */
+			/* origin and size of VideoClass */
 			pthread_mutex_lock(&p->video->inst.bbox_lock);
 			out_x = p->video->inst.Position.x_position;
 			out_y = p->video->inst.Position.y_position;
+			vid_width = p->video->inst.BoxSize.x_length;
+			vid_height = p->video->inst.BoxSize.y_length;
 			pthread_mutex_unlock(&p->video->inst.bbox_lock);
 			/* scale if fullscreen */
 			if(d->fullscreen)
 			{
 				out_x = (out_x * d->xres) / MHEG_XRES;
 				out_y = (out_y * d->yres) / MHEG_YRES;
+				vid_width = (vid_width * d->xres) / MHEG_XRES;
+				vid_height = (vid_height * d->yres) / MHEG_YRES;
 			}
+			/* if the frame is smaller or larger than the VideoClass, centre it */
+			out_x += (vid_width - out_width) / 2;
+			out_y += (vid_height - out_height) / 2;
 			/* draw the current frame */
 			MHEGVideoOutput_drawFrame(&vo, out_x, out_y);
 			/* redraw objects above the video */

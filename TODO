@@ -1,7 +1,11 @@
+aspect ratio
+
+
 VideoDecodeOffset
 
 
-if video size != VideoClass size, centre and draw a smaller transparent hole
+if video size != VideoClass size, draw a smaller transparent hole
+or fill the frame edges with black
 
 
 clear overlay on boot/retune/launch/etc
