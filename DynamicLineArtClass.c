@@ -8,6 +8,10 @@
 #include "RootClass.h"
 #include "ExternalReference.h"
 #include "GenericObjectReference.h"
+#include "GenericInteger.h"
+#include "VariableClass.h"
+#include "IntegerVariableClass.h"
+#include "rtti.h"
 
 void
 DynamicLineArtClass_Preparation(DynamicLineArtClass *t)
@@ -117,43 +121,124 @@ printf("TODO: DynamicLineArtClass_Clone not yet implemented\n");
 void
 DynamicLineArtClass_SetPosition(DynamicLineArtClass *t, SetPosition *params, OctetString *caller_gid)
 {
+	XYPosition old;
+
 	verbose("DynamicLineArtClass: %s; SetPosition", ExternalReference_name(&t->rootClass.inst.ref));
 
 	/* corrigendum says we don't need to clear to OriginalRefFillColour */
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_SetPosition not yet implemented\n");
+	old.x_position = t->inst.Position.x_position;
+	old.y_position = t->inst.Position.y_position;
+
+	t->inst.Position.x_position = GenericInteger_getInteger(&params->new_x_position, caller_gid);
+	t->inst.Position.y_position = GenericInteger_getInteger(&params->new_y_position, caller_gid);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+	{
+		MHEGEngine_redrawArea(&old, &t->inst.BoxSize);
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+	}
+
 	return;
 }
 
 void
 DynamicLineArtClass_GetPosition(DynamicLineArtClass *t, GetPosition *params, OctetString *caller_gid)
 {
+	VariableClass *var;
+
 	verbose("DynamicLineArtClass: %s; GetPosition", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_GetPosition not yet implemented\n");
+	/* X position */
+	if((var = (VariableClass *) MHEGEngine_findObjectReference(&params->x_position_var, caller_gid)) == NULL)
+		return;
+
+	if(var->rootClass.inst.rtti != RTTI_VariableClass
+	|| VariableClass_type(var) != OriginalValue_integer)
+	{
+		error("DynamicLineArtClass: GetPosition: type mismatch");
+		return;
+	}
+
+	IntegerVariableClass_setInteger(var, t->inst.Position.x_position);
+
+	/* Y position */
+	if((var = (VariableClass *) MHEGEngine_findObjectReference(&params->y_position_var, caller_gid)) == NULL)
+		return;
+
+	if(var->rootClass.inst.rtti != RTTI_VariableClass
+	|| VariableClass_type(var) != OriginalValue_integer)
+	{
+		error("DynamicLineArtClass: GetPosition: type mismatch");
+		return;
+	}
+
+	IntegerVariableClass_setInteger(var, t->inst.Position.y_position);
+
 	return;
 }
 
 void
 DynamicLineArtClass_SetBoxSize(DynamicLineArtClass *t, SetBoxSize *params, OctetString *caller_gid)
 {
+	OriginalBoxSize old;
+
 	verbose("DynamicLineArtClass: %s; SetBoxSize", ExternalReference_name(&t->rootClass.inst.ref));
 
+	old.x_length = t->inst.BoxSize.x_length;
+	old.y_length = t->inst.BoxSize.y_length;
+
+	t->inst.BoxSize.x_length = GenericInteger_getInteger(&params->x_new_box_size, caller_gid);
+	t->inst.BoxSize.y_length = GenericInteger_getInteger(&params->y_new_box_size, caller_gid);
+
 /* TODO */
-printf("TODO: DynamicLineArtClass_SetBoxSize not yet implemented\n");
 /* clear to OriginalRefFillColour */
+printf("TODO: DynamicLineArtClass_SetBoxSize clear to OriginalRefFillColour\n");
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+	{
+		MHEGEngine_redrawArea(&t->inst.Position, &old);
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+	}
+
 	return;
 }
 
 void
 DynamicLineArtClass_GetBoxSize(DynamicLineArtClass *t, GetBoxSize *params, OctetString *caller_gid)
 {
+	VariableClass *var;
+
 	verbose("DynamicLineArtClass: %s; GetBoxSize", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_GetBoxSize not yet implemented\n");
+	/* width */
+	if((var = (VariableClass *) MHEGEngine_findObjectReference(&params->x_box_size_var, caller_gid)) == NULL)
+		return;
+
+	if(var->rootClass.inst.rtti != RTTI_VariableClass
+	|| VariableClass_type(var) != OriginalValue_integer)
+	{
+		error("DynamicLineArtClass: GetBoxSize: type mismatch");
+		return;
+	}
+
+	IntegerVariableClass_setInteger(var, t->inst.BoxSize.x_length);
+
+	/* height */
+	if((var = (VariableClass *) MHEGEngine_findObjectReference(&params->y_box_size_var, caller_gid)) == NULL)
+		return;
+
+	if(var->rootClass.inst.rtti != RTTI_VariableClass
+	|| VariableClass_type(var) != OriginalValue_integer)
+	{
+		error("DynamicLineArtClass: GetBoxSize: type mismatch");
+		return;
+	}
+
+	IntegerVariableClass_setInteger(var, t->inst.BoxSize.y_length);
+
 	return;
 }
 
