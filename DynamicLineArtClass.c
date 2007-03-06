@@ -31,8 +31,21 @@ DynamicLineArtClass_Activation(DynamicLineArtClass *t)
 {
 	verbose("DynamicLineArtClass: %s; Activation", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_Activation not yet implemented\n");
+	/* has it been prepared yet */
+	if(!t->rootClass.inst.AvailabilityStatus)
+		DynamicLineArtClass_Preparation(t);
+
+	/* has it already been activated */
+	if(!RootClass_Activation(&t->rootClass))
+		return;
+
+	/* set its RunningStatus */
+	t->rootClass.inst.RunningStatus = true;
+	MHEGEngine_generateEvent(&t->rootClass.inst.ref, EventType_is_running, NULL);
+
+	/* now its RunningStatus is true, get it drawn at its position in the application's DisplayStack */
+	MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 
@@ -41,8 +54,13 @@ DynamicLineArtClass_Deactivation(DynamicLineArtClass *t)
 {
 	verbose("DynamicLineArtClass: %s; Deactivation", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_Deactivation not yet implemented\n");
+	/* is it already deactivated */
+	if(!RootClass_Deactivation(&t->rootClass))
+		return;
+
+	/* now its RunningStatus is false, redraw the area it covered */
+	MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 
@@ -101,6 +119,8 @@ DynamicLineArtClass_SetPosition(DynamicLineArtClass *t, SetPosition *params, Oct
 {
 	verbose("DynamicLineArtClass: %s; SetPosition", ExternalReference_name(&t->rootClass.inst.ref));
 
+	/* corrigendum says we don't need to clear to OriginalRefFillColour */
+
 /* TODO */
 printf("TODO: DynamicLineArtClass_SetPosition not yet implemented\n");
 	return;
@@ -123,6 +143,7 @@ DynamicLineArtClass_SetBoxSize(DynamicLineArtClass *t, SetBoxSize *params, Octet
 
 /* TODO */
 printf("TODO: DynamicLineArtClass_SetBoxSize not yet implemented\n");
+/* clear to OriginalRefFillColour */
 	return;
 }
 
@@ -143,8 +164,7 @@ DynamicLineArtClass_BringToFront(DynamicLineArtClass *t)
 
 	MHEGEngine_bringToFront(&t->rootClass);
 
-/* TODO */
-/* clear to OriginalRefFillColour */
+	/* corrigendum says we don't need to clear to OriginalRefFillColour */
 
 	/* if it is active, redraw it */
 	if(t->rootClass.inst.RunningStatus)
@@ -160,8 +180,7 @@ DynamicLineArtClass_SendToBack(DynamicLineArtClass *t)
 
 	MHEGEngine_sendToBack(&t->rootClass);
 
-/* TODO */
-/* clear to OriginalRefFillColour */
+	/* corrigendum says we don't need to clear to OriginalRefFillColour */
 
 	/* if it is active, redraw it */
 	if(t->rootClass.inst.RunningStatus)
@@ -182,8 +201,7 @@ DynamicLineArtClass_PutBefore(DynamicLineArtClass *t, PutBefore *params, OctetSt
 	&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 	{
 		MHEGEngine_putBefore(&t->rootClass, obj);
-/* TODO */
-/* clear to OriginalRefFillColour */
+		/* corrigendum says we don't need to clear to OriginalRefFillColour */
 		/* if it is active, redraw it */
 		if(t->rootClass.inst.RunningStatus)
 			MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
@@ -204,8 +222,7 @@ DynamicLineArtClass_PutBehind(DynamicLineArtClass *t, PutBehind *params, OctetSt
 	&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 	{
 		MHEGEngine_putBehind(&t->rootClass, obj);
-/* TODO */
-/* clear to OriginalRefFillColour */
+		/* corrigendum says we don't need to clear to OriginalRefFillColour */
 		/* if it is active, redraw it */
 		if(t->rootClass.inst.RunningStatus)
 			MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
