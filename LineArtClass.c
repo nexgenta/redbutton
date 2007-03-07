@@ -37,6 +37,9 @@ default_LineArtClassInstanceVars(LineArtClass *t, LineArtClassInstanceVars *v)
 	else
 		MHEGColour_transparent(&v->RefFillColour);
 
+	/* derived classes must init this if they want to use it */
+	v->canvas = NULL;
+
 	return;
 }
 
@@ -45,6 +48,9 @@ free_LineArtClassInstanceVars(LineArtClassInstanceVars *v)
 {
 	if(v->have_PaletteRef)
 		free_ObjectReference(&v->PaletteRef);
+
+	if(v->canvas != NULL)
+		free_MHEGCanvas(v->canvas);
 
 	return;
 }

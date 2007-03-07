@@ -65,6 +65,7 @@ CLASSES=ActionClass.o	\
 OBJS=	rb-browser.o		\
 	MHEGEngine.o		\
 	MHEGDisplay.o		\
+	MHEGCanvas.o		\
 	MHEGBackend.o		\
 	MHEGApp.o		\
 	MHEGColour.o		\

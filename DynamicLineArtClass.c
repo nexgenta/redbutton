@@ -24,6 +24,9 @@ DynamicLineArtClass_Preparation(DynamicLineArtClass *t)
 
 	default_LineArtClassInstanceVars(t, &t->inst);
 
+	/* offscreen canvas to draw on */
+	t->inst.canvas = new_MHEGCanvas(t->inst.BoxSize.x_length, t->inst.BoxSize.y_length);
+
 	/* add it to the DisplayStack of the active application */
 	MHEGEngine_addVisibleObject(&t->rootClass);
 
