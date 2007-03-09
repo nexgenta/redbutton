@@ -27,6 +27,16 @@ DynamicLineArtClass_Preparation(DynamicLineArtClass *t)
 	/* offscreen canvas to draw on */
 	t->inst.canvas = new_MHEGCanvas(t->inst.BoxSize.x_length, t->inst.BoxSize.y_length);
 
+	/*
+	 * default value for BorderedBoundingBox is true
+	 * the border uses OriginalLineWidth/Style/Colour
+	 * ie it can never change
+	 */
+	if(!t->have_bordered_bounding_box || t->bordered_bounding_box)
+		MHEGCanvas_setBorder(t->inst.canvas, t->original_line_width, t->original_line_style, &t->inst.OriginalRefLineColour);
+	/* now we have set the border, clear the drawing area */
+	MHEGCanvas_clear(t->inst.canvas, &t->inst.OriginalRefFillColour);
+
 	/* add it to the DisplayStack of the active application */
 	MHEGEngine_addVisibleObject(&t->rootClass);
 
@@ -197,6 +207,7 @@ DynamicLineArtClass_SetBoxSize(DynamicLineArtClass *t, SetBoxSize *params, Octet
 
 /* TODO */
 /* clear to OriginalRefFillColour */
+/* dont forget to update the border */
 printf("TODO: DynamicLineArtClass_SetBoxSize clear to OriginalRefFillColour\n");
 
 	/* if it is active, redraw it */

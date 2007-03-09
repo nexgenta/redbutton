@@ -27,15 +27,19 @@ default_LineArtClassInstanceVars(LineArtClass *t, LineArtClassInstanceVars *v)
 
 	/* default colour is black */
 	if(t->have_original_ref_line_colour)
-		MHEGColour_fromColour(&v->RefLineColour, &t->original_ref_line_colour);
+		MHEGColour_fromColour(&v->OriginalRefLineColour, &t->original_ref_line_colour);
 	else
-		MHEGColour_black(&v->RefLineColour);
+		MHEGColour_black(&v->OriginalRefLineColour);
+	/* initial line colour */
+	memcpy(&v->RefLineColour, &v->OriginalRefLineColour, sizeof(MHEGColour));
 
 	/* default is transparent */
 	if(t->have_original_ref_fill_colour)
-		MHEGColour_fromColour(&v->RefFillColour, &t->original_ref_fill_colour);
+		MHEGColour_fromColour(&v->OriginalRefFillColour, &t->original_ref_fill_colour);
 	else
-		MHEGColour_transparent(&v->RefFillColour);
+		MHEGColour_transparent(&v->OriginalRefFillColour);
+	/* initial fill colour */
+	memcpy(&v->RefFillColour, &v->OriginalRefFillColour, sizeof(MHEGColour));
 
 	/* derived classes must init this if they want to use it */
 	v->canvas = NULL;
