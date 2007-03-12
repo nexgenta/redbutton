@@ -77,8 +77,9 @@ struct data_broadcast_id_descriptor
 } __attribute__((__packed__));
 
 /* data_broadcast_id_descriptor values we want */
-#define DATA_BROADCAST_ID	0x0106
-#define APPLICATION_TYPE_CODE	0x0101
+#define DATA_BROADCAST_ID		0x0106
+#define UK_APPLICATION_TYPE_CODE	0x0101
+#define NZ_APPLICATION_TYPE_CODE	0x0505
 
 static struct avstreams *find_current_avstreams(struct carousel *, int, int);
 static struct avstreams *find_service_avstreams(struct carousel *, int, int, int);
@@ -189,11 +190,17 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 			{
 				struct data_broadcast_id_descriptor *desc;
 				desc = (struct data_broadcast_id_descriptor *) &pmt[offset];
-				if(ntohs(desc->data_broadcast_id) == DATA_BROADCAST_ID
-				&& ntohs(desc->application_type_code) == APPLICATION_TYPE_CODE)
+				if(ntohs(desc->data_broadcast_id) == DATA_BROADCAST_ID)
 				{
 					desc_boot_pid = elementary_pid;
 					vverbose("PID=%u boot_priority_hint=%u", elementary_pid, desc->boot_priority_hint);
+					/* haven't seen the NZ MHEG Profile, but let's download the data anyway */
+					if(ntohs(desc->application_type_code) == UK_APPLICATION_TYPE_CODE)
+						vverbose("UK application_type_code (0x%04x)", UK_APPLICATION_TYPE_CODE);
+					else if(ntohs(desc->application_type_code) == NZ_APPLICATION_TYPE_CODE)
+						vverbose("NZ application_type_code (0x%04x)", NZ_APPLICATION_TYPE_CODE);
+					else
+						vverbose("Unknown application_type_code (0x%04x)", ntohs(desc->application_type_code));
 				}
 				else
 				{
