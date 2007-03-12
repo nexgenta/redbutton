@@ -205,10 +205,18 @@ DynamicLineArtClass_SetBoxSize(DynamicLineArtClass *t, SetBoxSize *params, Octet
 	t->inst.BoxSize.x_length = GenericInteger_getInteger(&params->x_new_box_size, caller_gid);
 	t->inst.BoxSize.y_length = GenericInteger_getInteger(&params->y_new_box_size, caller_gid);
 
-/* TODO */
-/* clear to OriginalRefFillColour */
-/* dont forget to update the border */
-printf("TODO: DynamicLineArtClass_SetBoxSize clear to OriginalRefFillColour\n");
+	/* spec says we should fill the drawing area with OriginalRefFillColour */
+
+	/* delete the old drawing area and create a new one at the new size */
+	free_MHEGCanvas(t->inst.canvas);
+	t->inst.canvas = new_MHEGCanvas(t->inst.BoxSize.x_length, t->inst.BoxSize.y_length);
+
+	/* default value for BorderedBoundingBox is true */
+	if(!t->have_bordered_bounding_box || t->bordered_bounding_box)
+		MHEGCanvas_setBorder(t->inst.canvas, t->original_line_width, t->original_line_style, &t->inst.OriginalRefLineColour);
+
+	/* now we have set the border, clear the drawing area */
+	MHEGCanvas_clear(t->inst.canvas, &t->inst.OriginalRefFillColour);
 
 	/* if it is active, redraw it */
 	if(t->rootClass.inst.RunningStatus)
@@ -345,8 +353,8 @@ DynamicLineArtClass_SetLineWidth(DynamicLineArtClass *t, SetLineWidth *params, O
 {
 	verbose("DynamicLineArtClass: %s; SetLineWidth", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_SetLineWidth not yet implemented\n");
+	t->inst.LineWidth = GenericInteger_getInteger(&params->new_line_width, caller_gid);
+
 	return;
 }
 
@@ -355,8 +363,8 @@ DynamicLineArtClass_SetLineStyle(DynamicLineArtClass *t, SetLineStyle *params, O
 {
 	verbose("DynamicLineArtClass: %s; SetLineStyle", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_SetLineStyle not yet implemented\n");
+	t->inst.LineStyle = GenericInteger_getInteger(&params->new_line_style, caller_gid);
+
 	return;
 }
 
@@ -365,8 +373,8 @@ DynamicLineArtClass_SetLineColour(DynamicLineArtClass *t, SetLineColour *params,
 {
 	verbose("DynamicLineArtClass: %s; SetLineColour", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_SetLineColour not yet implemented\n");
+	MHEGColour_fromNewColour(&t->inst.RefLineColour, &params->new_line_colour, caller_gid);
+
 	return;
 }
 
@@ -375,28 +383,56 @@ DynamicLineArtClass_SetFillColour(DynamicLineArtClass *t, SetFillColour *params,
 {
 	verbose("DynamicLineArtClass: %s; SetFillColour", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_SetFillColour not yet implemented\n");
+	/* if no colour is given, use transparent */
+	if(params->have_new_fill_colour)
+		MHEGColour_fromNewColour(&t->inst.RefFillColour, &params->new_fill_colour, caller_gid);
+	else
+		MHEGColour_transparent(&t->inst.RefFillColour);
+
 	return;
 }
 
 void
 DynamicLineArtClass_GetLineWidth(DynamicLineArtClass *t, GetLineWidth *params, OctetString *caller_gid)
 {
+	VariableClass *var;
+
 	verbose("DynamicLineArtClass: %s; GetLineWidth", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_GetLineWidth not yet implemented\n");
+	if((var = (VariableClass *) MHEGEngine_findObjectReference(&params->line_width_var, caller_gid)) == NULL)
+		return;
+
+	if(var->rootClass.inst.rtti != RTTI_VariableClass
+	|| VariableClass_type(var) != OriginalValue_integer)
+	{
+		error("DynamicLineArtClass: GetLineWidth: type mismatch");
+		return;
+	}
+
+	IntegerVariableClass_setInteger(var, t->inst.LineWidth);
+
 	return;
 }
 
 void
 DynamicLineArtClass_GetLineStyle(DynamicLineArtClass *t, GetLineStyle *params, OctetString *caller_gid)
 {
+	VariableClass *var;
+
 	verbose("DynamicLineArtClass: %s; GetLineStyle", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_GetLineStyle not yet implemented\n");
+	if((var = (VariableClass *) MHEGEngine_findObjectReference(&params->line_style_var, caller_gid)) == NULL)
+		return;
+
+	if(var->rootClass.inst.rtti != RTTI_VariableClass
+	|| VariableClass_type(var) != OriginalValue_integer)
+	{
+		error("DynamicLineArtClass: GetLineStyle: type mismatch");
+		return;
+	}
+
+	IntegerVariableClass_setInteger(var, t->inst.LineStyle);
+
 	return;
 }
 
@@ -495,8 +531,13 @@ DynamicLineArtClass_Clear(DynamicLineArtClass *t)
 {
 	verbose("DynamicLineArtClass: %s; Clear", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_Clear not yet implemented\n");
+	/* fill with OriginalRefFillColour */
+	MHEGCanvas_clear(t->inst.canvas, &t->inst.OriginalRefFillColour);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 
