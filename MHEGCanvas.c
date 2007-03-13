@@ -88,13 +88,13 @@ MHEGCanvas_setBorder(MHEGCanvas *c, int width, int style, MHEGColour *colour)
 	gcvals.foreground = pixel_value(c->pic_format, colour);
 	XChangeGC(d->dpy, c->gc, GCForeground, &gcvals);
 	/* top */
-	XFillRectangle(d->dpy, c->contents, c->gc, 0, 0, c->width, c->border - 1);
+	XFillRectangle(d->dpy, c->contents, c->gc, 0, 0, c->width, c->border);
 	/* bottom */
-	XFillRectangle(d->dpy, c->contents, c->gc, 0, (c->height - c->border) - 1, c->width, c->border - 1);
+	XFillRectangle(d->dpy, c->contents, c->gc, 0, c->height - c->border, c->width, c->border);
 	/* left */
-	XFillRectangle(d->dpy, c->contents, c->gc, 0, 0, c->border - 1, c->height);
+	XFillRectangle(d->dpy, c->contents, c->gc, 0, 0, c->border, c->height);
 	/* right */
-	XFillRectangle(d->dpy, c->contents, c->gc, (c->width - c->border) - 1, 0, c->border - 1, c->height);
+	XFillRectangle(d->dpy, c->contents, c->gc, c->width - c->border, 0, c->border, c->height);
 
 	/* set a clip mask, so no futher drawing will change the border */
 	clip_rect.x = c->border;
