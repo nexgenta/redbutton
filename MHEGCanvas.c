@@ -122,8 +122,14 @@ MHEGCanvas_setBorder(MHEGCanvas *c, int width, int style, MHEGColour *colour)
 void
 MHEGCanvas_clear(MHEGCanvas *c, MHEGColour *colour)
 {
-/* TODO */
-printf("TODO: MHEGCanvas_clear: RGBT=%02x%02x%02x%02x\n", colour->r, colour->g, colour->b, colour->t);
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	XGCValues gcvals;
+
+	gcvals.foreground = pixel_value(c->pic_format, colour);
+	XChangeGC(d->dpy, c->gc, GCForeground, &gcvals);
+
+	/* width/height are already scaled as needed */
+	XFillRectangle(d->dpy, c->contents, c->gc, c->border, c->border, c->width - (2 * c->border), c->height - (2 * c->border));
 
 	return;
 }
