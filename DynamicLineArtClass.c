@@ -546,6 +546,7 @@ DynamicLineArtClass_render(DynamicLineArtClass *t, MHEGDisplay *d, XYPosition *p
 {
 	XYPosition ins_pos;
 	OriginalBoxSize ins_box;
+	XYPosition src;
 
 	verbose("DynamicLineArtClass: %s; render", ExternalReference_name(&t->rootClass.inst.ref));
 
@@ -554,8 +555,11 @@ DynamicLineArtClass_render(DynamicLineArtClass *t, MHEGDisplay *d, XYPosition *p
 
 	MHEGDisplay_setClipRectangle(d, &ins_pos, &ins_box);
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_render\n");
+	/* work out where the intersection starts on the canvas */
+	src.x_position = ins_pos.x_position - t->inst.Position.x_position;
+	src.y_position = ins_pos.y_position - t->inst.Position.y_position;
+
+	MHEGDisplay_drawCanvas(d, &src, &ins_box, t->inst.canvas, &ins_pos);
 
 	MHEGDisplay_unsetClipRectangle(d);
 

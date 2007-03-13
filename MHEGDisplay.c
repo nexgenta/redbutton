@@ -591,6 +591,33 @@ MHEGDisplay_drawBitmap(MHEGDisplay *d, XYPosition *src, OriginalBoxSize *box, MH
 	XRenderComposite(d->dpy, PictOpOver, bitmap->image_pic, None, d->next_overlay_pic,
 			 src_x, src_y, src_x, src_y, dst_x, dst_y, w, h);
 
+	return;
+}
+
+/*
+ * coords should be in the range 0-MHEG_XRES, 0-MHEG_YRES
+ */
+
+void
+MHEGDisplay_drawCanvas(MHEGDisplay *d, XYPosition *src, OriginalBoxSize *box, MHEGCanvas *canvas, XYPosition *dst)
+{
+	int src_x, src_y;
+	int dst_x, dst_y;
+	unsigned int w, h;
+
+	/*
+	 * scale up if fullscreen
+	 * the canvas image itself is scaled when it is created
+	 */
+	src_x = (src->x_position * d->xres) / MHEG_XRES;
+	src_y = (src->y_position * d->yres) / MHEG_YRES;
+	w = (box->x_length * d->xres) / MHEG_XRES;
+	h = (box->y_length * d->yres) / MHEG_YRES;
+	dst_x = (dst->x_position * d->xres) / MHEG_XRES;
+	dst_y = (dst->y_position * d->yres) / MHEG_YRES;
+
+	XRenderComposite(d->dpy, PictOpOver, canvas->contents_pic, None, d->next_overlay_pic,
+			 src_x, src_y, src_x, src_y, dst_x, dst_y, w, h);
 
 	return;
 }

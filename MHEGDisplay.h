@@ -72,6 +72,7 @@ void MHEGDisplay_drawVertLine(MHEGDisplay *, XYPosition *, unsigned int, int, in
 void MHEGDisplay_fillTransparentRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 void MHEGDisplay_fillRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *, MHEGColour *);
 void MHEGDisplay_drawBitmap(MHEGDisplay *, XYPosition *, OriginalBoxSize *, MHEGBitmap *, XYPosition *);
+void MHEGDisplay_drawCanvas(MHEGDisplay *, XYPosition *, OriginalBoxSize *, MHEGCanvas *, XYPosition *);
 void MHEGDisplay_drawTextElement(MHEGDisplay *, XYPosition *, MHEGFont *, MHEGTextElement *, bool);
 
 void MHEGDisplay_useOverlay(MHEGDisplay *);
