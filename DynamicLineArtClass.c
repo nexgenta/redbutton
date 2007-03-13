@@ -479,20 +479,46 @@ printf("TODO: DynamicLineArtClass_DrawSector not yet implemented\n");
 void
 DynamicLineArtClass_DrawLine(DynamicLineArtClass *t, DrawLine *params, OctetString *caller_gid)
 {
+	XYPosition p1;
+	XYPosition p2;
+
 	verbose("DynamicLineArtClass: %s; DrawLine", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_DrawLine not yet implemented\n");
+	p1.x_position = GenericInteger_getInteger(&params->x1, caller_gid);
+	p1.y_position = GenericInteger_getInteger(&params->y1, caller_gid);
+	p2.x_position = GenericInteger_getInteger(&params->x2, caller_gid);
+	p2.y_position = GenericInteger_getInteger(&params->y2, caller_gid);
+
+	MHEGCanvas_drawLine(t->inst.canvas, &p1, &p2, t->inst.LineWidth, t->inst.LineStyle, &t->inst.RefLineColour);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 
 void
 DynamicLineArtClass_DrawOval(DynamicLineArtClass *t, DrawOval *params, OctetString *caller_gid)
 {
+	XYPosition pos;
+	OriginalBoxSize box;
+
 	verbose("DynamicLineArtClass: %s; DrawOval", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_DrawOval not yet implemented\n");
+	pos.x_position = GenericInteger_getInteger(&params->x, caller_gid);
+	pos.y_position = GenericInteger_getInteger(&params->y, caller_gid);
+	box.x_length = GenericInteger_getInteger(&params->ellipse_width, caller_gid);
+	box.y_length = GenericInteger_getInteger(&params->ellipse_height, caller_gid);
+
+	MHEGCanvas_drawOval(t->inst.canvas, &pos, &box,
+			    t->inst.LineWidth, t->inst.LineStyle,
+			    &t->inst.RefLineColour, &t->inst.RefFillColour);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 
@@ -519,10 +545,24 @@ printf("TODO: DynamicLineArtClass_DrawPolyline not yet implemented\n");
 void
 DynamicLineArtClass_DrawRectangle(DynamicLineArtClass *t, DrawRectangle *params, OctetString *caller_gid)
 {
+	XYPosition pos;
+	OriginalBoxSize box;
+
 	verbose("DynamicLineArtClass: %s; DrawRectangle", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_DrawRectangle not yet implemented\n");
+	pos.x_position = GenericInteger_getInteger(&params->x1, caller_gid);
+	pos.y_position = GenericInteger_getInteger(&params->y1, caller_gid);
+	box.x_length = GenericInteger_getInteger(&params->x2, caller_gid) - pos.x_position;
+	box.y_length = GenericInteger_getInteger(&params->y2, caller_gid) - pos.y_position;
+
+	MHEGCanvas_drawRectangle(t->inst.canvas, &pos, &box,
+				 t->inst.LineWidth, t->inst.LineStyle,
+				 &t->inst.RefLineColour, &t->inst.RefFillColour);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 

@@ -110,7 +110,12 @@ MHEGCanvas_setBorder(MHEGCanvas *c, int width, int style, MHEGColour *colour)
  * drawing routine notes:
  * if border width is W, then coord {W,W} is the first pixel that will not be hidden by the border
  * all coords will be scaled up by these drawing routines if we are using full screen mode
- * UK MHEG Profile says we can treat ALL line styles as solid
+ * the line width will also be scaled up in full screen mode (based on the resolution in the X direction)
+ * line style should be one of:
+ * LineStyle_solid
+ * LineStyle_dashed
+ * LineStyle_dotted
+ * but, the UK MHEG Profile says we can treat ALL line styles as solid
  * UK MHEG Profile says no alpha blending is done within the DynamicLineArtClass canvas
  * ie all pixel values are put directly onto the canvas, replacing what was there before
  */
@@ -130,6 +135,125 @@ MHEGCanvas_clear(MHEGCanvas *c, MHEGColour *colour)
 
 	/* width/height are already scaled as needed */
 	XFillRectangle(d->dpy, c->contents, c->gc, c->border, c->border, c->width - (2 * c->border), c->height - (2 * c->border));
+
+	return;
+}
+
+/*
+ * draw a line between p1 and p2
+ */
+
+void
+MHEGCanvas_drawLine(MHEGCanvas *c, XYPosition *p1, XYPosition *p2, int width, int style, MHEGColour *colour)
+{
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	XGCValues gcvals;
+	int x1, y1, x2, y2;
+
+	if(width <= 0)
+		return;
+
+	if(style != LineStyle_solid)
+		error("MHEGCanvas_drawLine: LineStyle %d not supported (using a solid line)", style);
+
+	/* scale up if fullscreen */
+	x1 = (p1->x_position * d->xres) / MHEG_XRES;
+	y1 = (p1->y_position * d->yres) / MHEG_YRES;
+	x2 = (p2->x_position * d->xres) / MHEG_XRES;
+	y2 = (p2->y_position * d->yres) / MHEG_YRES;
+	width = (width * d->xres) / MHEG_XRES;
+
+	/* set up the GC values */
+	gcvals.foreground = pixel_value(c->pic_format, colour);
+	gcvals.line_width = width;
+	XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
+
+	XDrawLine(d->dpy, c->contents, c->gc, x1, y1, x2, y2);
+
+	return;
+}
+
+/*
+ * draw an oval enclosed by the given box
+ * the outline is drawn width pixels wide (ie it may stick out of the box) in line_col
+ * the oval is filled with fill_col
+ */
+
+void
+MHEGCanvas_drawOval(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, int width, int style, MHEGColour *line_col, MHEGColour *fill_col)
+{
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	XGCValues gcvals;
+	int x, y, w, h;
+
+	/* corrigendum puts these limits on the ellipse size */
+	if(box->x_length < 0 || box->y_length < 0)
+	{
+		error("MHEGCanvas_drawOval: invalid box size (%d,%d)", box->x_length, box->y_length);
+		return;
+	}
+
+	if(style != LineStyle_solid)
+		error("MHEGCanvas_drawOval: LineStyle %d not supported (using a solid line)", style);
+
+	/* scale up if fullscreen */
+	x = (pos->x_position * d->xres) / MHEG_XRES;
+	y = (pos->y_position * d->yres) / MHEG_YRES;
+	w = (box->x_length * d->xres) / MHEG_XRES;
+	h = (box->y_length * d->yres) / MHEG_YRES;
+	width = (width * d->xres) / MHEG_XRES;
+
+	/* fill it */
+	gcvals.foreground = pixel_value(c->pic_format, fill_col);
+	XChangeGC(d->dpy, c->gc, GCForeground, &gcvals);
+
+	XFillArc(d->dpy, c->contents, c->gc, x, y, w, h, 0, 360 * 64);
+
+	/* draw the outline */
+	gcvals.foreground = pixel_value(c->pic_format, line_col);
+	gcvals.line_width = width;
+	XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
+
+	XDrawArc(d->dpy, c->contents, c->gc, x, y, w, h, 0, 360 * 64);
+
+	return;
+}
+
+/*
+ * draw a rectangle
+ * the outline is drawn width pixels wide (ie it may stick out of the box) in line_col
+ * it is filled with fill_col
+ */
+
+void
+MHEGCanvas_drawRectangle(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, int width, int style, MHEGColour *line_col, MHEGColour *fill_col)
+{
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	XGCValues gcvals;
+	int x, y, w, h;
+
+	if(style != LineStyle_solid)
+		error("MHEGCanvas_drawRectangle: LineStyle %d not supported (using a solid line)", style);
+
+	/* scale up if fullscreen */
+	x = (pos->x_position * d->xres) / MHEG_XRES;
+	y = (pos->y_position * d->yres) / MHEG_YRES;
+	w = (box->x_length * d->xres) / MHEG_XRES;
+	h = (box->y_length * d->yres) / MHEG_YRES;
+	width = (width * d->xres) / MHEG_XRES;
+
+	/* fill it */
+	gcvals.foreground = pixel_value(c->pic_format, fill_col);
+	XChangeGC(d->dpy, c->gc, GCForeground, &gcvals);
+
+	XFillRectangle(d->dpy, c->contents, c->gc, x, y, w, h);
+
+	/* draw the outline */
+	gcvals.foreground = pixel_value(c->pic_format, line_col);
+	gcvals.line_width = width;
+	XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
+
+	XDrawRectangle(d->dpy, c->contents, c->gc, x, y, w, h);
 
 	return;
 }

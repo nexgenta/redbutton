@@ -25,6 +25,9 @@ void free_MHEGCanvas(MHEGCanvas *);
 void MHEGCanvas_setBorder(MHEGCanvas *, int, int, MHEGColour *);
 
 void MHEGCanvas_clear(MHEGCanvas *, MHEGColour *);
+void MHEGCanvas_drawLine(MHEGCanvas *, XYPosition *, XYPosition *, int, int, MHEGColour *);
+void MHEGCanvas_drawOval(MHEGCanvas *, XYPosition *, OriginalBoxSize *, int, int, MHEGColour *, MHEGColour *);
+void MHEGCanvas_drawRectangle(MHEGCanvas *, XYPosition *, OriginalBoxSize *, int, int, MHEGColour *, MHEGColour *);
 
 #endif	/* __MHEGCANVAS_H__ */
 
