@@ -10,9 +10,13 @@
 
 typedef struct
 {
-	Pixmap contents;	/* current image */
-	Picture contents_pic;	/* XRender wrapper */
-	GC gc;			/* contains the clip mask for the border */
+	unsigned int width;		/* in pixels, will be the scaled up value in fullscreen mode */
+	unsigned int height;		/* in pixels, will be the scaled up value in fullscreen mode */
+	unsigned int border;		/* border width in pixels (the scaled value in fullscreen mode) */
+	Pixmap contents;		/* current image */
+	Picture contents_pic;		/* XRender wrapper */
+	XRenderPictFormat *pic_format;	/* pixel format */
+	GC gc;				/* contains the clip mask for the border */
 } MHEGCanvas;
 
 MHEGCanvas *new_MHEGCanvas(unsigned int, unsigned int);
