@@ -459,20 +459,67 @@ printf("TODO: DynamicLineArtClass_GetFillColour not yet implemented\n");
 void
 DynamicLineArtClass_DrawArc(DynamicLineArtClass *t, DrawArc *params, OctetString *caller_gid)
 {
+	XYPosition pos;
+	OriginalBoxSize box;
+	int start;
+	int arc;
+
 	verbose("DynamicLineArtClass: %s; DrawArc", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_DrawArc not yet implemented\n");
+	pos.x_position = GenericInteger_getInteger(&params->x, caller_gid);
+	pos.y_position = GenericInteger_getInteger(&params->y, caller_gid);
+	box.x_length = GenericInteger_getInteger(&params->ellipse_width, caller_gid);
+	box.y_length = GenericInteger_getInteger(&params->ellipse_height, caller_gid);
+	start = GenericInteger_getInteger(&params->start_angle, caller_gid);
+	arc = GenericInteger_getInteger(&params->arc_angle, caller_gid);
+
+	/* ISO spec says ArcAngle should not be 0 */
+	if(arc == 0)
+	{
+		error("DynamicLineArtClass_DrawArc: invalid ArcAngle (%d)", arc);
+		return;
+	}
+
+	MHEGCanvas_drawArc(t->inst.canvas, &pos, &box, start, arc, t->inst.LineWidth, t->inst.LineStyle, &t->inst.RefLineColour);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 
 void
 DynamicLineArtClass_DrawSector(DynamicLineArtClass *t, DrawSector *params, OctetString *caller_gid)
 {
+	XYPosition pos;
+	OriginalBoxSize box;
+	int start;
+	int arc;
+
 	verbose("DynamicLineArtClass: %s; DrawSector", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_DrawSector not yet implemented\n");
+	pos.x_position = GenericInteger_getInteger(&params->x, caller_gid);
+	pos.y_position = GenericInteger_getInteger(&params->y, caller_gid);
+	box.x_length = GenericInteger_getInteger(&params->ellipse_width, caller_gid);
+	box.y_length = GenericInteger_getInteger(&params->ellipse_height, caller_gid);
+	start = GenericInteger_getInteger(&params->start_angle, caller_gid);
+	arc = GenericInteger_getInteger(&params->arc_angle, caller_gid);
+
+	/* ISO spec says ArcAngle should not be 0 */
+	if(arc == 0)
+	{
+		error("DynamicLineArtClass_DrawSector: invalid ArcAngle (%d)", arc);
+		return;
+	}
+
+	MHEGCanvas_drawSector(t->inst.canvas, &pos, &box, start, arc,
+			      t->inst.LineWidth, t->inst.LineStyle, &t->inst.RefLineColour, &t->inst.RefFillColour);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 

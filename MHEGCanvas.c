@@ -2,6 +2,7 @@
  * MHEGCanvas.c
  */
 
+#include <math.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 
@@ -140,6 +141,113 @@ MHEGCanvas_clear(MHEGCanvas *c, MHEGColour *colour)
 }
 
 /*
+ * draw an arc enclosed by the given box, starting at start (0 = 3 o' clock) for arc degrees anticlockwise
+ * start and arc should be in degrees * 64
+ * the arc is drawn width pixels wide (ie it may stick out of the box) in the given colour
+ */
+
+void
+MHEGCanvas_drawArc(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, int start, int arc, int width, int style, MHEGColour *colour)
+{
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	XGCValues gcvals;
+	int x, y, w, h;
+
+	if(width <= 0)
+		return;
+
+	if(style != LineStyle_solid)
+		error("MHEGCanvas_drawArc: LineStyle %d not supported (using a solid line)", style);
+
+	/* scale up if fullscreen */
+	x = (pos->x_position * d->xres) / MHEG_XRES;
+	y = (pos->y_position * d->yres) / MHEG_YRES;
+	w = (box->x_length * d->xres) / MHEG_XRES;
+	h = (box->y_length * d->yres) / MHEG_YRES;
+	width = (width * d->xres) / MHEG_XRES;
+
+	/* set up the GC values */
+	gcvals.foreground = pixel_value(c->pic_format, colour);
+	gcvals.line_width = width;
+	XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
+
+	/* luckily X uses the same params as MHEG */
+	XDrawArc(d->dpy, c->contents, c->gc, x, y, w, h, start, arc);
+
+	return;
+}
+
+/*
+ * draw a pie chart sector enclosed by the given box, starting at start (0 = 3 o' clock) for arc degrees anticlockwise
+ * start and arc should be in degrees * 64
+ * the sector is drawn in fill_col
+ * the sector is outlined with a line width pixels wide (ie it may stick out of the box) in line_col
+ */
+
+void
+MHEGCanvas_drawSector(MHEGCanvas *c,
+		      XYPosition *pos, OriginalBoxSize *box, int start, int arc,
+		      int width, int style, MHEGColour *line_col, MHEGColour *fill_col)
+{
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	XGCValues gcvals;
+	int x, y, w, h;
+	int cx, cy;
+	double start_rads, end_rads;
+	int edgex, edgey;
+
+	if(style != LineStyle_solid)
+		error("MHEGCanvas_drawSector: LineStyle %d not supported (using a solid line)", style);
+
+	/* scale up if fullscreen */
+	x = (pos->x_position * d->xres) / MHEG_XRES;
+	y = (pos->y_position * d->yres) / MHEG_YRES;
+	w = (box->x_length * d->xres) / MHEG_XRES;
+	h = (box->y_length * d->yres) / MHEG_YRES;
+	width = (width * d->xres) / MHEG_XRES;
+
+	/* fill it */
+	gcvals.foreground = pixel_value(c->pic_format, fill_col);
+	gcvals.arc_mode = ArcPieSlice;
+	XChangeGC(d->dpy, c->gc, GCForeground | GCArcMode, &gcvals);
+
+	/* luckily X uses the same params as MHEG */
+	XFillArc(d->dpy, c->contents, c->gc, x, y, w, h, start, arc);
+
+	/* draw the outline */
+	if(width <= 0)
+		return;
+
+	gcvals.foreground = pixel_value(c->pic_format, line_col);
+	gcvals.line_width = width;
+	XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
+
+	/* easy bit */
+	XDrawArc(d->dpy, c->contents, c->gc, x, y, w, h, start, arc);
+
+	/* lines from the centre to the start and end of the arc */
+	cx = x + (w / 2);
+	cy = y + (h / 2);
+	start_rads = ((double) start / 64.0) * M_PI / 180.0;
+	edgex = cos(start_rads) * (w / 2);
+	edgey = sin(start_rads) * (h / 2);
+	/* cy - edgey, because Y increases as we go down the screen */
+	XDrawLine(d->dpy, c->contents, c->gc, cx, cy, cx + edgex, cy - edgey);
+
+	end_rads = ((double) (start + arc) / 64.0) * M_PI / 180.0;
+	edgex = cos(end_rads) * (w / 2);
+	edgey = sin(end_rads) * (h / 2);
+	XDrawLine(d->dpy, c->contents, c->gc, cx, cy, cx + edgex, cy - edgey);
+
+/* TODO */
+/* make proper joins between the arc and the 2 lines */
+/* ends of the arc are on a tangent to the ellipse */
+/* can't join to a length 0 line because it has no direction, but a 1 pixel long line may be too long */
+
+	return;
+}
+
+/*
  * draw a line between p1 and p2
  */
 
@@ -210,6 +318,9 @@ MHEGCanvas_drawOval(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, int wi
 	XFillArc(d->dpy, c->contents, c->gc, x, y, w, h, 0, 360 * 64);
 
 	/* draw the outline */
+	if(width <= 0)
+		return;
+
 	gcvals.foreground = pixel_value(c->pic_format, line_col);
 	gcvals.line_width = width;
 	XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
@@ -249,6 +360,9 @@ MHEGCanvas_drawRectangle(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, i
 	XFillRectangle(d->dpy, c->contents, c->gc, x, y, w, h);
 
 	/* draw the outline */
+	if(width <= 0)
+		return;
+
 	gcvals.foreground = pixel_value(c->pic_format, line_col);
 	gcvals.line_width = width;
 	XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
