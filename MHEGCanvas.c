@@ -294,13 +294,6 @@ MHEGCanvas_drawOval(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, int wi
 	XGCValues gcvals;
 	int x, y, w, h;
 
-	/* corrigendum puts these limits on the ellipse size */
-	if(box->x_length < 0 || box->y_length < 0)
-	{
-		error("MHEGCanvas_drawOval: invalid box size (%d,%d)", box->x_length, box->y_length);
-		return;
-	}
-
 	if(style != LineStyle_solid)
 		error("MHEGCanvas_drawOval: LineStyle %d not supported (using a solid line)", style);
 

@@ -479,6 +479,12 @@ DynamicLineArtClass_DrawArc(DynamicLineArtClass *t, DrawArc *params, OctetString
 		error("DynamicLineArtClass_DrawArc: invalid ArcAngle (%d)", arc);
 		return;
 	}
+	/* corrigendum puts these limits on the ellipse size */
+	if(box.x_length < 0 || box.y_length < 0)
+	{
+		error("DynamicLineArtClass_DrawArc: invalid ellipse size (%d,%d)", box.x_length, box.y_length);
+		return;
+	}
 
 	MHEGCanvas_drawArc(t->inst.canvas, &pos, &box, start, arc, t->inst.LineWidth, t->inst.LineStyle, &t->inst.RefLineColour);
 
@@ -510,6 +516,12 @@ DynamicLineArtClass_DrawSector(DynamicLineArtClass *t, DrawSector *params, Octet
 	if(arc == 0)
 	{
 		error("DynamicLineArtClass_DrawSector: invalid ArcAngle (%d)", arc);
+		return;
+	}
+	/* corrigendum puts these limits on the ellipse size */
+	if(box.x_length < 0 || box.y_length < 0)
+	{
+		error("DynamicLineArtClass_DrawSector: invalid ellipse size (%d,%d)", box.x_length, box.y_length);
 		return;
 	}
 
@@ -557,6 +569,13 @@ DynamicLineArtClass_DrawOval(DynamicLineArtClass *t, DrawOval *params, OctetStri
 	pos.y_position = GenericInteger_getInteger(&params->y, caller_gid);
 	box.x_length = GenericInteger_getInteger(&params->ellipse_width, caller_gid);
 	box.y_length = GenericInteger_getInteger(&params->ellipse_height, caller_gid);
+
+	/* corrigendum puts these limits on the ellipse size */
+	if(box.x_length < 0 || box.y_length < 0)
+	{
+		error("DynamicLineArtClass_DrawOval: invalid ellipse size (%d,%d)", box.x_length, box.y_length);
+		return;
+	}
 
 	MHEGCanvas_drawOval(t->inst.canvas, &pos, &box,
 			    t->inst.LineWidth, t->inst.LineStyle,
