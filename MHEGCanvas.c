@@ -324,6 +324,72 @@ MHEGCanvas_drawOval(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, int wi
 }
 
 /*
+ * draw a closed polygon
+ * the outline is drawn width pixels wide (ie it may stick out of the box) in line_col
+ * it is filled with fill_col
+ * UK MHEG Profile says polygons must be convex
+ */
+
+void
+MHEGCanvas_drawPolygon(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, int style, MHEGColour *line_col, MHEGColour *fill_col)
+{
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	LIST_TYPE(XYPosition) *pos;
+	unsigned int nxpts;
+	XPoint *xpts;
+	unsigned int i;
+	XGCValues gcvals;
+
+	if(style != LineStyle_solid)
+		error("MHEGCanvas_drawPolygon: LineStyle %d not supported (using a solid line)", style);
+
+	/* scale up if fullscreen */
+	width = (width * d->xres) / MHEG_XRES;
+
+	/* convert the XYPosition list into an array of XPoint's */
+	nxpts = 0;
+	for(pos=xy_list; pos; pos=pos->next)
+		nxpts ++;
+
+	/* +1 so we can close it for XDrawLines */
+	xpts = safe_malloc((nxpts + 1) * sizeof(XPoint));
+
+	pos = xy_list;
+	for(i=0; i<nxpts; i++)
+	{
+		/* scale up if fullscreen */
+		xpts[i].x = (pos->item.x_position * d->xres) / MHEG_XRES;
+		xpts[i].y = (pos->item.y_position * d->yres) / MHEG_YRES;
+		pos = pos->next;
+	}
+
+	/* fill it */
+	gcvals.foreground = pixel_value(c->pic_format, fill_col);
+	XChangeGC(d->dpy, c->gc, GCForeground, &gcvals);
+
+	XFillPolygon(d->dpy, c->contents, c->gc, xpts, nxpts, Convex, CoordModeOrigin);
+
+	/* draw the outline */
+	if(width > 0)
+	{
+		/* close the polygon */
+		xpts[nxpts].x = (xy_list->item.x_position * d->xres) / MHEG_XRES;
+		xpts[nxpts].y = (xy_list->item.y_position * d->yres) / MHEG_YRES;
+		/* set the line width and colour */
+		gcvals.foreground = pixel_value(c->pic_format, line_col);
+		gcvals.line_width = width;
+		XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
+		/* draw it */
+		XDrawLines(d->dpy, c->contents, c->gc, xpts, nxpts + 1, CoordModeOrigin);
+	}
+
+	/* clean up */
+	safe_free(xpts);
+
+	return;
+}
+
+/*
  * draw a rectangle
  * the outline is drawn width pixels wide (ie it may stick out of the box) in line_col
  * it is filled with fill_col

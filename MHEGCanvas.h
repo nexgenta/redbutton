@@ -29,6 +29,7 @@ void MHEGCanvas_drawArc(MHEGCanvas *, XYPosition *, OriginalBoxSize *, int, int,
 void MHEGCanvas_drawSector(MHEGCanvas *, XYPosition *, OriginalBoxSize *, int, int, int, int, MHEGColour *, MHEGColour *);
 void MHEGCanvas_drawLine(MHEGCanvas *, XYPosition *, XYPosition *, int, int, MHEGColour *);
 void MHEGCanvas_drawOval(MHEGCanvas *, XYPosition *, OriginalBoxSize *, int, int, MHEGColour *, MHEGColour *);
+void MHEGCanvas_drawPolygon(MHEGCanvas *, LIST_OF(XYPosition) *, int, int, MHEGColour *, MHEGColour *);
 void MHEGCanvas_drawRectangle(MHEGCanvas *, XYPosition *, OriginalBoxSize *, int, int, MHEGColour *, MHEGColour *);
 
 #endif	/* __MHEGCANVAS_H__ */
