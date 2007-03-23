@@ -626,10 +626,30 @@ DynamicLineArtClass_DrawPolygon(DynamicLineArtClass *t, DrawPolygon *params, Oct
 void
 DynamicLineArtClass_DrawPolyline(DynamicLineArtClass *t, DrawPolyline *params, OctetString *caller_gid)
 {
+	LIST_OF(XYPosition) *xy_list = NULL;
+	LIST_TYPE(XYPosition) *xy;
+	LIST_TYPE(Point) *pt;
+
 	verbose("DynamicLineArtClass: %s; DrawPolyline", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_DrawPolyline not yet implemented\n");
+	for(pt=params->pointlist; pt; pt=pt->next)
+	{
+		xy = safe_malloc(sizeof(LIST_TYPE(XYPosition)));
+		xy->item.x_position = GenericInteger_getInteger(&pt->item.x, caller_gid);
+		xy->item.y_position = GenericInteger_getInteger(&pt->item.y, caller_gid);
+		LIST_APPEND(&xy_list, xy);
+	}
+
+	MHEGCanvas_drawPolyline(t->inst.canvas, xy_list,
+			       t->inst.LineWidth, t->inst.LineStyle,
+			       &t->inst.RefLineColour);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
+	LIST_FREE(&xy_list, XYPosition, safe_free);
+
 	return;
 }
 

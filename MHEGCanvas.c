@@ -390,6 +390,60 @@ MHEGCanvas_drawPolygon(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, i
 }
 
 /*
+ * draw a set of joined lines
+ * the lines are drawn width pixels wide in the given colour
+ */
+
+void
+MHEGCanvas_drawPolyline(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, int style, MHEGColour *colour)
+{
+	MHEGDisplay *d = MHEGEngine_getDisplay();
+	LIST_TYPE(XYPosition) *pos;
+	unsigned int nxpts;
+	XPoint *xpts;
+	unsigned int i;
+	XGCValues gcvals;
+
+	if(width <= 0)
+		return;
+
+	if(style != LineStyle_solid)
+		error("MHEGCanvas_drawPolyline: LineStyle %d not supported (using a solid line)", style);
+
+	/* scale up if fullscreen */
+	width = (width * d->xres) / MHEG_XRES;
+
+	/* convert the XYPosition list into an array of XPoint's */
+	nxpts = 0;
+	for(pos=xy_list; pos; pos=pos->next)
+		nxpts ++;
+
+	xpts = safe_malloc(nxpts * sizeof(XPoint));
+
+	pos = xy_list;
+	for(i=0; i<nxpts; i++)
+	{
+		/* scale up if fullscreen */
+		xpts[i].x = (pos->item.x_position * d->xres) / MHEG_XRES;
+		xpts[i].y = (pos->item.y_position * d->yres) / MHEG_YRES;
+		pos = pos->next;
+	}
+
+	/* set the line width and colour */
+	gcvals.foreground = pixel_value(c->pic_format, colour);
+	gcvals.line_width = width;
+	XChangeGC(d->dpy, c->gc, GCForeground | GCLineWidth, &gcvals);
+
+	/* draw it */
+	XDrawLines(d->dpy, c->contents, c->gc, xpts, nxpts, CoordModeOrigin);
+
+	/* clean up */
+	safe_free(xpts);
+
+	return;
+}
+
+/*
  * draw a rectangle
  * the outline is drawn width pixels wide (ie it may stick out of the box) in line_col
  * it is filled with fill_col
