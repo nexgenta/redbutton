@@ -351,6 +351,9 @@ MHEGCanvas_drawPolygon(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, i
 	for(pos=xy_list; pos; pos=pos->next)
 		nxpts ++;
 
+	if(nxpts == 0)
+		return;
+
 	/* +1 so we can close it for XDrawLines */
 	xpts = safe_malloc((nxpts + 1) * sizeof(XPoint));
 
@@ -417,6 +420,9 @@ MHEGCanvas_drawPolyline(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, 
 	nxpts = 0;
 	for(pos=xy_list; pos; pos=pos->next)
 		nxpts ++;
+
+	if(nxpts == 0)
+		return;
 
 	xpts = safe_malloc(nxpts * sizeof(XPoint));
 
