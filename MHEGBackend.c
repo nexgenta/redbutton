@@ -207,6 +207,7 @@ open_stream(MHEGBackend *t,
 	unsigned int video_pid = 0;
 	bool err;
 	char *ts_dev;
+	int tail;
 
 	/* are the backend and frontend on the same host */
 	loopback = (t->addr.sin_addr.s_addr == htonl(INADDR_LOOPBACK));
@@ -278,6 +279,10 @@ open_stream(MHEGBackend *t,
 			return NULL;
 		}
 		ts_dev = pids + 7;
+		/* chop off any trailing \n */
+		tail = strlen(ts_dev) - 1;
+		while(tail > 0 && ts_dev[tail] == '\n')
+			ts_dev[tail--] = '\0';
 		if((stream->ts = fopen(ts_dev, "r")) == NULL)
 		{
 			fclose(be);

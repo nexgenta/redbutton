@@ -1,9 +1,3 @@
-openStream:
-if "remote" backend is 127.0.0.1, open dvr device in rb-browser
-- ask rb-download to set the PID filters, it returns the dvr dev name
-- when connection is closed, rb-download clears filters
-
-
 posix_fadvise() when streaming data from the backend?
 
 
