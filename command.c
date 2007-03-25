@@ -158,7 +158,6 @@ cmd_assoc(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 
 	SEND_RESPONSE(200, "OK");
 
-	/* if this is ever used by rb-browser, you will need to send a length first */
 	fprintf(client, "Tag\tPID\tType\n");
 	fprintf(client, "===\t===\t====\n");
 
@@ -169,6 +168,9 @@ cmd_assoc(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 	/* component tag mappings */
 	for(i=0; i<car->assoc.nassocs; i++)
 		fprintf(client, "%u\t%u\t%u\n", car->assoc.sids[i], car->assoc.pids[i], car->assoc.types[i]);
+
+	/* terminator */
+	fprintf(client, ".\n");
 
 	return false;
 }
