@@ -25,13 +25,16 @@
 
 /* the commands */
 bool cmd_assoc(struct listen_data *, FILE *, int, char **);
+bool cmd_ademux(struct listen_data *, FILE *, int, char **);
 bool cmd_astream(struct listen_data *, FILE *, int, char **);
+bool cmd_avdemux(struct listen_data *, FILE *, int, char **);
 bool cmd_avstream(struct listen_data *, FILE *, int, char **);
 bool cmd_check(struct listen_data *, FILE *, int, char **);
 bool cmd_file(struct listen_data *, FILE *, int, char **);
 bool cmd_help(struct listen_data *, FILE *, int, char **);
 bool cmd_quit(struct listen_data *, FILE *, int, char **);
 bool cmd_retune(struct listen_data *, FILE *, int, char **);
+bool cmd_vdemux(struct listen_data *, FILE *, int, char **);
 bool cmd_vstream(struct listen_data *, FILE *, int, char **);
 
 static struct
@@ -43,7 +46,9 @@ static struct
 } command[] =
 {
 	{ "assoc", "",						cmd_assoc,	"List component tag to PID mappings" },
+	{ "ademux", "[<ServiceID>] <ComponentTag>",		cmd_ademux,	"Demux the given audio component tag" },
 	{ "astream", "[<ServiceID>] <ComponentTag>",		cmd_astream,	"Stream the given audio component tag" },
+	{ "avdemux", "[<ServiceID>] <AudioTag> <VideoTag>",	cmd_avdemux,	"Demux the given audio and video component tags" },
 	{ "avstream", "[<ServiceID>] <AudioTag> <VideoTag>",	cmd_avstream,	"Stream the given audio and video component tags" },
 	{ "check", "<ContentReference>",			cmd_check,	"Check if the given file exists on the carousel" },
 	{ "exit", "",						cmd_quit,	"Close the connection" },
@@ -51,6 +56,7 @@ static struct
 	{ "help", "",						cmd_help,	"List available commands" },
 	{ "quit", "",						cmd_quit,	"Close the connection" },
 	{ "retune", "<ServiceID>",				cmd_retune,	"Start downloading the carousel from ServiceID" },
+	{ "vdemux", "[<ServiceID>] <ComponentTag>",		cmd_vdemux,	"Demux the given video component tag" },
 	{ "vstream", "[<ServiceID>] <ComponentTag>",		cmd_vstream,	"Stream the given video component tag" },
 	{ NULL, NULL, NULL, NULL }
 };
@@ -176,6 +182,80 @@ cmd_assoc(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
 }
 
 /*
+ * ademux [<service_id>] <tag>
+ * add the given audio stream to the PID filter
+ * return the name of the dvr device to read the transport stream from
+ * if service_id is not specified or is -1, use the service we are downloading the carousel from
+ * the tag should be an association/component_tag number as found in the PMT
+ * the tag is converted to a PID and that PID is used as a demux filter
+ * if tag is -1, the default audio stream for the service_id is used
+ */
+
+bool
+cmd_ademux(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+	int service;
+	int tag;
+	struct avstreams *streams;
+	int audio_fd;
+	char hdr[64];
+
+	CHECK_VUSAGE(2, 3, "ademux [<ServiceID>] <ComponentTag>");
+
+	if(argc == 2)
+	{
+		service = -1;
+		tag = strtol(argv[1], NULL, 0);
+	}
+	else
+	{
+		service = strtol(argv[1], NULL, 0);
+		tag = strtol(argv[2], NULL, 0);
+	}
+
+	streams = find_avstreams(car, service, tag, -1);
+
+	/* check we have a default stream */
+	if(streams->audio_pid == 0)
+	{
+		SEND_RESPONSE(500, "Unable to resolve audio PID");
+		return false;
+	}
+
+	/* add the PID to the demux device */
+	if((audio_fd = add_demux_filter(car->demux_device, streams->audio_pid, DMX_PES_AUDIO)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open audio PID");
+		return false;
+	}
+
+	/* send the OK code */
+	SEND_RESPONSE(200, "OK");
+
+	/* tell the client what PID and stream type the component tag resolved to */
+	snprintf(hdr, sizeof(hdr), "AudioPID %u AudioType %u\n", streams->audio_pid, streams->audio_type);
+	fputs(hdr, client);
+
+	/* tell the client where the dvr device is */
+	snprintf(hdr, sizeof(hdr), "Device %s\n", car->dvr_device);
+	fputs(hdr, client);
+
+	fflush(client);
+
+	/* keep the filter in place until the client closes or we get an error */
+	while(!feof(client))
+		sleep(1);
+
+	/* clean up */
+	ioctl(audio_fd, DMX_STOP);
+	close(audio_fd);
+
+	/* close the connection */
+	return true;
+}
+
+/*
  * astream [<service_id>] <tag>
  * send the given audio stream down the connection
  * if service_id is not specified or is -1, use the service we are downloading the carousel from
@@ -252,6 +332,80 @@ cmd_astream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 }
 
 /*
+ * vdemux [<service_id>] <tag>
+ * add the given video stream to the PID filter
+ * return the name of the dvr device to read the transport stream from
+ * if service_id is not specified or is -1, use the service we are downloading the carousel from
+ * the tag should be an association/component_tag number as found in the PMT
+ * the tag is converted to a PID and that PID is used as a demux filter
+ * if tag is -1, the default video stream for the service_id is used
+ */
+
+bool
+cmd_vdemux(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+	int service;
+	int tag;
+	struct avstreams *streams;
+	int video_fd;
+	char hdr[64];
+
+	CHECK_VUSAGE(2, 3, "vdemux [<ServiceID>] <ComponentTag>");
+
+	if(argc == 2)
+	{
+		service = -1;
+		tag = strtol(argv[1], NULL, 0);
+	}
+	else
+	{
+		service = strtol(argv[1], NULL, 0);
+		tag = strtol(argv[2], NULL, 0);
+	}
+
+	streams = find_avstreams(car, service, -1, tag);
+
+	/* check we have a default stream */
+	if(streams->video_pid == 0)
+	{
+		SEND_RESPONSE(500, "Unable to resolve video PID");
+		return false;
+	}
+
+	/* add the PID to the demux device */
+	if((video_fd = add_demux_filter(car->demux_device, streams->video_pid, DMX_PES_VIDEO)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open video PID");
+		return false;
+	}
+
+	/* send the OK code */
+	SEND_RESPONSE(200, "OK");
+
+	/* tell the client what PID and stream type the component tag resolved to */
+	snprintf(hdr, sizeof(hdr), "VideoPID %u VideoType %u\n", streams->video_pid, streams->video_type);
+	fputs(hdr, client);
+
+	/* tell the client where the dvr device is */
+	snprintf(hdr, sizeof(hdr), "Device %s\n", car->dvr_device);
+	fputs(hdr, client);
+
+	fflush(client);
+
+	/* keep the filter in place until the client closes or we get an error */
+	while(!feof(client))
+		sleep(1);
+
+	/* clean up */
+	ioctl(video_fd, DMX_STOP);
+	close(video_fd);
+
+	/* close the connection */
+	return true;
+}
+
+/*
  * vstream [<service_id>] <tag>
  * send the given video stream down the connection
  * if service_id is not specified or is -1, use the service we are downloading the carousel from
@@ -322,6 +476,97 @@ cmd_vstream(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 	ioctl(video_fd, DMX_STOP);
 	close(video_fd);
 	close(ts_fd);
+
+	/* close the connection */
+	return true;
+}
+
+/*
+ * avdemux <audio_tag> <video_tag>
+ * add the given audio and video streams to the PID filter
+ * if service_id is not specified or is -1, use the service we are downloading the carousel from
+ * the tags should be association/component_tag numbers as found in the PMT
+ * the tags are converted to PIDs and those PIDs are used as the demux filter
+ * if a tag is -1, the default audio or video stream for the service_id is used
+ */
+
+bool
+cmd_avdemux(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+	int service;
+	int audio_tag;
+	int video_tag;
+	struct avstreams *streams;
+	int audio_fd;
+	int video_fd;
+	char hdr[64];
+
+	CHECK_VUSAGE(3, 4, "avdemux [<ServiceID>] <AudioTag> <VideoTag>");
+
+	if(argc == 3)
+	{
+		service = -1;
+		audio_tag = strtol(argv[1], NULL, 0);
+		video_tag = strtol(argv[2], NULL, 0);
+	}
+	else
+	{
+		service = strtol(argv[1], NULL, 0);
+		audio_tag = strtol(argv[2], NULL, 0);
+		video_tag = strtol(argv[3], NULL, 0);
+	}
+
+	streams = find_avstreams(car, service, audio_tag, video_tag);
+
+	/* check we have a default stream */
+	if(streams->audio_pid == 0)
+	{
+		SEND_RESPONSE(500, "Unable to resolve audio PID");
+		return false;
+	}
+	if(streams->video_pid == 0)
+	{
+		SEND_RESPONSE(500, "Unable to resolve video PID");
+		return false;
+	}
+
+	/* add the PIDs to the demux device */
+	if((audio_fd = add_demux_filter(car->demux_device, streams->audio_pid, DMX_PES_AUDIO)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open audio PID");
+		return false;
+	}
+	if((video_fd = add_demux_filter(car->demux_device, streams->video_pid, DMX_PES_VIDEO)) < 0)
+	{
+		SEND_RESPONSE(500, "Unable to open video PID");
+		close(audio_fd);
+		return false;
+	}
+
+	/* send the OK code */
+	SEND_RESPONSE(200, "OK");
+
+	/* tell the client what PIDs and stream types the component tags resolved to */
+	snprintf(hdr, sizeof(hdr), "AudioPID %u AudioType %u VideoPID %u VideoType %u\n",
+				    streams->audio_pid, streams->audio_type, streams->video_pid, streams->video_type);
+	fputs(hdr, client);
+
+	/* tell the client where the dvr device is */
+	snprintf(hdr, sizeof(hdr), "Device %s\n", car->dvr_device);
+	fputs(hdr, client);
+
+	fflush(client);
+
+	/* keep the filter in place until the client closes or we get an error */
+	while(!feof(client))
+		sleep(1);
+
+	/* clean up */
+	ioctl(audio_fd, DMX_STOP);
+	ioctl(video_fd, DMX_STOP);
+	close(audio_fd);
+	close(video_fd);
 
 	/* close the connection */
 	return true;
