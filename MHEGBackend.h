@@ -14,6 +14,13 @@
 
 #define DEFAULT_BACKEND		"127.0.0.1"
 
+/* MPEG Transport Stream */
+typedef struct
+{
+	FILE *ts;	/* the Transport Stream */
+	FILE *demux;	/* private */
+} MHEGStream;
+
 typedef struct MHEGBackend
 {
 	char *base_dir;			/* local Service Gateway root directory */
@@ -29,7 +36,9 @@ typedef struct MHEGBackend
 		/* open a carousel file */
 		FILE *(*openFile)(struct MHEGBackend *, OctetString *);
 		/* open an MPEG Transport Stream */
-		FILE *(*openStream)(struct MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
+		MHEGStream *(*openStream)(struct MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
+		/* close an MPEG Transport Stream */
+		void (*closeStream)(struct MHEGBackend *, MHEGStream *);
 		/* tune to the given service */
 		void (*retune)(struct MHEGBackend *, OctetString *);
 	} *fns;

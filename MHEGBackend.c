@@ -14,11 +14,22 @@
 #include "si.h"
 #include "utils.h"
 
+/* internal functions */
+static FILE *remote_command(MHEGBackend *, bool, char *);
+static unsigned int remote_response(FILE *);
+
+static MHEGStream *open_stream(MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
+static void close_stream(MHEGBackend *, MHEGStream *);
+
+static int parse_addr(char *, struct in_addr *, in_port_t *);
+static int get_host_addr(char *, struct in_addr *);
+
+static char *external_filename(MHEGBackend *, OctetString *);
+
 /* local backend funcs */
 bool local_checkContentRef(MHEGBackend *, ContentReference *);
 bool local_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *local_openFile(MHEGBackend *, OctetString *);
-FILE *local_openStream(MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
 void local_retune(MHEGBackend *, OctetString *);
 
 static struct MHEGBackendFns local_backend_fns =
@@ -26,7 +37,8 @@ static struct MHEGBackendFns local_backend_fns =
 	local_checkContentRef,	/* checkContentRef */
 	local_loadFile,		/* loadFile */
 	local_openFile,		/* openFile */
-	local_openStream,	/* openStream */
+	open_stream,		/* openStream */
+	close_stream,		/* closeStream */
 	local_retune,		/* retune */
 };
 
@@ -34,7 +46,6 @@ static struct MHEGBackendFns local_backend_fns =
 bool remote_checkContentRef(MHEGBackend *, ContentReference *);
 bool remote_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *remote_openFile(MHEGBackend *, OctetString *);
-FILE *remote_openStream(MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
 void remote_retune(MHEGBackend *, OctetString *);
 
 static struct MHEGBackendFns remote_backend_fns =
@@ -42,18 +53,10 @@ static struct MHEGBackendFns remote_backend_fns =
 	remote_checkContentRef,	/* checkContentRef */
 	remote_loadFile,	/* loadFile */
 	remote_openFile,	/* openFile */
-	remote_openStream,	/* openStream */
+	open_stream,		/* openStream */
+	close_stream,		/* closeStream */
 	remote_retune,		/* retune */
 };
-
-/* internal functions */
-static int parse_addr(char *, struct in_addr *, in_port_t *);
-static int get_host_addr(char *, struct in_addr *);
-
-static FILE *remote_command(MHEGBackend *, bool, char *);
-static unsigned int remote_response(FILE *);
-
-static char *external_filename(MHEGBackend *, OctetString *);
 
 /* public interface */
 void
@@ -100,60 +103,6 @@ MHEGBackend_fini(MHEGBackend *b)
 	safe_free(b->base_dir);
 
 	return;
-}
-
-/*
- * extract the IP addr and port number from a string in one of these forms:
- * host:port
- * ip-addr:port
- * host
- * ip-addr
- * if the port is not defined in the string, the value passed to this routine is unchanged
- * ip and port are both returned in network byte order
- * returns -1 on error (can't resolve host name)
- */
-
-static int
-parse_addr(char *str, struct in_addr *ip, in_port_t *port)
-{
-	char *p;
-
-	if((p = strchr(str, ':')) != NULL)
-	{
-		/* its either host:port or ip:port */
-		*(p++) = '\0';
-		if(get_host_addr(str, ip) < 0)
-			return -1;
-		*port = htons(atoi(p));
-		/* reconstruct the string */
-		*(--p) = ':';
-	}
-	else if(get_host_addr(str, ip) < 0)
-	{
-		return -1;
-	}
-
-	return 0;
-}
-
-/*
- * puts the IP address associated with the given host into output buffer
- * host can be a.b.c.d or a host name
- * returns 0 if successful, -1 on error
- */
-
-static int
-get_host_addr(char *host, struct in_addr *output)
-{
-	struct hostent *he;
-	int error = 0;
-
-	if(((he = gethostbyname(host)) != NULL) && (he->h_addrtype == AF_INET))
-		memcpy(output, he->h_addr, sizeof(struct in_addr));
-	else
-		error = -1;
-
-	return error;
 }
 
 /*
@@ -229,6 +178,193 @@ remote_response(FILE *file)
 	rc = atoi(buf);
 
 	return rc;
+}
+
+/*
+ * return a read-only FILE handle for an MPEG Transport Stream (in MHEGStream->ts)
+ * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
+ * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
+ * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the given Service ID is used
+ * if service_id is -1, it uses the Service ID we are downloading the carousel from
+ * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
+ * updates *audio_type and/or *video_type to the stream type IDs
+ * returns NULL on error
+ */
+
+static MHEGStream *
+open_stream(MHEGBackend *t,
+	    int service_id,
+	    bool have_audio, int *audio_tag, int *audio_type,
+	    bool have_video, int *video_tag, int *video_type)
+{
+	MHEGStream *stream;
+	bool loopback;
+	char *avcmd;
+	char cmd[PATH_MAX];
+	FILE *be;
+	char pids[PATH_MAX];
+	unsigned int audio_pid = 0;
+	unsigned int video_pid = 0;
+	bool err;
+	char *ts_dev;
+
+	/* are the backend and frontend on the same host */
+	loopback = (t->addr.sin_addr.s_addr == htonl(INADDR_LOOPBACK));
+	if(loopback)
+		avcmd = "demux";
+	else
+		avcmd = "stream";
+
+	/* no PIDs required */
+	if(!have_audio && !have_video)
+		return NULL;
+	/* video and audio */
+	else if(have_audio && have_video)
+		snprintf(cmd, sizeof(cmd), "av%s %d %d %d\n", avcmd, service_id, *audio_tag, *video_tag);
+	/* audio only */
+	else if(have_audio)
+		snprintf(cmd, sizeof(cmd), "a%s %d %d\n", avcmd, service_id, *audio_tag);
+	/* video only */
+	else
+		snprintf(cmd, sizeof(cmd), "v%s %d %d\n", avcmd, service_id, *video_tag);
+
+	/* false => create a new connection to the backend */
+	if((be = remote_command(t, false, cmd)) == NULL)
+		return NULL;
+
+	/* did it work */
+	if(remote_response(be) != BACKEND_RESPONSE_OK
+	|| fgets(pids, sizeof(pids), be) == NULL)
+	{
+		fclose(be);
+		return NULL;
+	}
+
+	/* update the PID variables */
+	if(have_audio && have_video)
+		err = (sscanf(pids, "AudioPID %u AudioType %u VideoPID %u VideoType %u",
+		       &audio_pid, audio_type, &video_pid, video_type) != 4);
+	else if(have_audio)
+		err = (sscanf(pids, "AudioPID %u AudioType %u", &audio_pid, audio_type) != 2);
+	else
+		err = (sscanf(pids, "VideoPID %u VideoType %u", &video_pid, video_type) != 2);
+
+	if(err)
+	{
+		fclose(be);
+		return NULL;
+	}
+
+	if(have_audio)
+		*audio_tag = audio_pid;
+	if(have_video)
+		*video_tag = video_pid;
+
+	/* set up the MHEGStream */
+	stream = safe_malloc(sizeof(MHEGStream));
+
+	/*
+	 * if we sent a "demux" command, open the DVR device
+	 * if we sent a "stream" command, the TS is streamed from the backend
+	 */
+	if(loopback)
+	{
+		/* backend tells us where the DVR device is */
+		if(fgets(pids, sizeof(pids), be) == NULL
+		|| strncmp(pids, "Device ", 7) != 0)
+		{
+			fclose(be);
+			safe_free(stream);
+			return NULL;
+		}
+		ts_dev = pids + 7;
+		if((stream->ts = fopen(ts_dev, "r")) == NULL)
+		{
+			fclose(be);
+			safe_free(stream);
+			return NULL;
+		}
+		/* backend keeps the PID filters in place until we close this connection */
+		stream->demux = be;
+	}
+	else
+	{
+		stream->ts = be;
+		stream->demux = NULL;
+	}
+
+	return stream;
+}
+
+static void
+close_stream(MHEGBackend *t, MHEGStream *stream)
+{
+	if(stream == NULL)
+		return;
+
+	if(stream->ts != NULL)
+		fclose(stream->ts);
+
+	if(stream->demux != NULL)
+		fclose(stream->demux);
+
+	safe_free(stream);
+
+	return;
+}
+
+/*
+ * extract the IP addr and port number from a string in one of these forms:
+ * host:port
+ * ip-addr:port
+ * host
+ * ip-addr
+ * if the port is not defined in the string, the value passed to this routine is unchanged
+ * ip and port are both returned in network byte order
+ * returns -1 on error (can't resolve host name)
+ */
+
+static int
+parse_addr(char *str, struct in_addr *ip, in_port_t *port)
+{
+	char *p;
+
+	if((p = strchr(str, ':')) != NULL)
+	{
+		/* its either host:port or ip:port */
+		*(p++) = '\0';
+		if(get_host_addr(str, ip) < 0)
+			return -1;
+		*port = htons(atoi(p));
+		/* reconstruct the string */
+		*(--p) = ':';
+	}
+	else if(get_host_addr(str, ip) < 0)
+	{
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * puts the IP address associated with the given host into output buffer
+ * host can be a.b.c.d or a host name
+ * returns 0 if successful, -1 on error
+ */
+
+static int
+get_host_addr(char *host, struct in_addr *output)
+{
+	struct hostent *he;
+	int error = 0;
+
+	if(((he = gethostbyname(host)) != NULL) && (he->h_addrtype == AF_INET))
+		memcpy(output, he->h_addr, sizeof(struct in_addr));
+	else
+		error = -1;
+
+	return error;
 }
 
 /*
@@ -327,31 +463,6 @@ local_openFile(MHEGBackend *t, OctetString *name)
 	char *external = external_filename(t, name);
 
 	return fopen(external, "r");
-}
-
-/*
- * return a read-only FILE handle for an MPEG Transport Stream
- * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
- * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
- * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the given Service ID is used
- * if service_id is -1, it uses the Service ID we are downloading the carousel from
- * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
- * updates *audio_type and/or *video_type to the stream type IDs
- * returns NULL on error
- */
-
-FILE *
-local_openStream(MHEGBackend *t, int service_id, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
-{
-	/*
-	 * we need to convert the audio/video_tag into PIDs
-	 * we could either:
-	 * 1. parse the PMT ourselves, and open the DVB device ourselves
-	 * 2. have a backend command to convert Component Tags to PIDs, then open the DVB device ourselves
-	 * 3. just stream the TS from the backend
-	 * we choose 3, to avoid duplicating code and having to pass "-d <device>" options etc
-	 */
-	return remote_openStream(t, service_id, have_audio, audio_tag, audio_type, have_video, video_tag, video_type);
 }
 
 /*
@@ -517,77 +628,6 @@ remote_openFile(MHEGBackend *t, OctetString *name)
 		rewind(out);
 
 	return out;
-}
-
-/*
- * return a read-only FILE handle for an MPEG Transport Stream
- * the TS will contain an audio stream (if have_audio is true) and a video stream (if have_video is true)
- * the *audio_tag and *video_tag numbers refer to Component/Association Tag values from the DVB PMT
- * if *audio_tag or *video_tag is -1, the default audio and/or video stream for the given Service ID is used
- * if service_id is -1, it uses the Service ID we are downloading the carousel from
- * updates *audio_tag and/or *video_tag to the actual PIDs in the Transport Stream
- * updates *audio_type and/or *video_type to the stream type IDs
- * returns NULL on error
- */
-
-FILE *
-remote_openStream(MHEGBackend *t, int service_id, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
-{
-	char cmd[PATH_MAX];
-	FILE *sock;
-	char pids[128];
-	unsigned int audio_pid = 0;
-	unsigned int video_pid = 0;
-	bool err;
-
-	/* no PIDs required */
-	if(!have_audio && !have_video)
-		return NULL;
-	/* video and audio */
-	else if(have_audio && have_video)
-		snprintf(cmd, sizeof(cmd), "avstream %d %d %d\n", service_id, *audio_tag, *video_tag);
-	/* audio only */
-	else if(have_audio)
-		snprintf(cmd, sizeof(cmd), "astream %d %d\n", service_id, *audio_tag);
-	/* video only */
-	else
-		snprintf(cmd, sizeof(cmd), "vstream %d %d\n", service_id, *video_tag);
-
-	/* false => create a new connection to the backend */
-	if((sock = remote_command(t, false, cmd)) == NULL)
-		return NULL;
-
-	/* did it work */
-	if(remote_response(sock) != BACKEND_RESPONSE_OK
-	|| fgets(pids, sizeof(pids), sock) == NULL)
-	{
-		fclose(sock);
-		return NULL;
-	}
-
-	/* update the PID variables */
-	if(have_audio && have_video)
-		err = (sscanf(pids, "AudioPID %u AudioType %u VideoPID %u VideoType %u",
-		       &audio_pid, audio_type, &video_pid, video_type) != 4);
-	else if(have_audio)
-		err = (sscanf(pids, "AudioPID %u AudioType %u", &audio_pid, audio_type) != 2);
-	else
-		err = (sscanf(pids, "VideoPID %u VideoType %u", &video_pid, video_type) != 2);
-
-	if(!err)
-	{
-		if(have_audio)
-			*audio_tag = audio_pid;
-		if(have_video)
-			*video_tag = video_pid;
-	}
-	else
-	{
-		fclose(sock);
-		sock = NULL;
-	}
-
-	return sock;
 }
 
 /*

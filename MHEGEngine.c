@@ -1415,13 +1415,19 @@ MHEGEngine_openFile(OctetString *name)
  * returns NULL on error
  */
 
-FILE *
+MHEGStream *
 MHEGEngine_openStream(int service_id, bool have_audio, int *audio_tag, int *audio_type, bool have_video, int *video_tag, int *video_type)
 {
 	return (*(engine.backend.fns->openStream))(&engine.backend,
 						   service_id,
 						   have_audio, audio_tag, audio_type,
 						   have_video, video_tag, video_type);
+}
+
+void
+MHEGEngine_closeStream(MHEGStream *stream)
+{
+	return (*(engine.backend.fns->closeStream))(&engine.backend, stream);
 }
 
 /*

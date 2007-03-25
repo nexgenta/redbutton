@@ -342,7 +342,7 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 
 	if(p->ts != NULL)
 	{
-		fclose(p->ts);
+		MHEGEngine_closeStream(p->ts);
 		p->ts = NULL;
 	}
 
@@ -415,10 +415,10 @@ decode_thread(void *arg)
 
 	demux_apid = p->have_audio ? p->audio_pid : -1;
 	demux_vpid = p->have_video ? p->video_pid : -1;
-	if((tsdemux = mpegts_open(p->ts, demux_apid, demux_vpid)) == NULL)
+	if((tsdemux = mpegts_open(p->ts->ts, demux_apid, demux_vpid)) == NULL)
 		fatal("Out of memory");
 
-	while(!p->stop && !feof(p->ts))
+	while(!p->stop && !feof(p->ts->ts))
 	{
 		/* get the next complete packet for one of the streams */
 		if(mpegts_demux_frame(tsdemux, &pkt) < 0)

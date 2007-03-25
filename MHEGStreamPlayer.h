@@ -12,6 +12,7 @@
 #include <ffmpeg/avcodec.h>
 
 #include "ISO13522-MHEG-5.h"
+#include "MHEGBackend.h"
 
 /* seconds of video to buffer before we start playing it */
 #define INIT_VIDEO_BUFFER_WAIT	1.0
@@ -66,7 +67,7 @@ typedef struct
 	int audio_pid;			/* PID in MPEG Transport Stream (-1 => not yet known) */
 	int audio_type;			/* audio stream type (-1 => not yet known) */
 	AVCodecContext *audio_codec;	/* audio ouput params */
-	FILE *ts;			/* MPEG Transport Stream */
+	MHEGStream *ts;			/* MPEG Transport Stream */
 	pthread_t decode_tid;		/* thread decoding the MPEG stream into audio/video frames */
 	pthread_t video_tid;		/* thread displaying video frames on the screen */
 	pthread_t audio_tid;		/* thread feeding audio frames into the sound card */
