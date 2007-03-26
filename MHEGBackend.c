@@ -256,11 +256,6 @@ open_stream(MHEGBackend *t,
 		return NULL;
 	}
 
-	if(have_audio)
-		*audio_tag = audio_pid;
-	if(have_video)
-		*video_tag = video_pid;
-
 	/* set up the MHEGStream */
 	stream = safe_malloc(sizeof(MHEGStream));
 
@@ -297,6 +292,12 @@ open_stream(MHEGBackend *t,
 		stream->ts = be;
 		stream->demux = NULL;
 	}
+
+	/* now we are sure it all worked, set up the return values */
+	if(have_audio)
+		*audio_tag = audio_pid;
+	if(have_video)
+		*video_tag = video_pid;
 
 	return stream;
 }
