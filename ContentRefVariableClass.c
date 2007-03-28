@@ -13,16 +13,6 @@
 #include "rtti.h"
 
 void
-ContentRefVariableClass_SetData(ContentRefVariableClass *t, SetData *params, OctetString *caller_gid)
-{
-	verbose("ContentRefVariableClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: ContentRefVariableClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 ContentRefVariableClass_Clone(ContentRefVariableClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("ContentRefVariableClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

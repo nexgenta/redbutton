@@ -12,7 +12,6 @@ void LinkClass_Activation(LinkClass *);
 void LinkClass_Deactivation(LinkClass *);
 void LinkClass_Destruction(LinkClass *);
 
-void LinkClass_SetData(LinkClass *, SetData *, OctetString *);
 void LinkClass_Clone(LinkClass *, Clone *, OctetString *);
 void LinkClass_Activate(LinkClass *);
 void LinkClass_Deactivate(LinkClass *);

@@ -7,7 +7,6 @@
 
 #include "ISO13522-MHEG-5.h"
 
-void BooleanVariableClass_SetData(BooleanVariableClass *, SetData *, OctetString *);
 void BooleanVariableClass_Clone(BooleanVariableClass *, Clone *, OctetString *);
 void BooleanVariableClass_SetVariable(BooleanVariableClass *, NewVariableValue *, OctetString *);
 void BooleanVariableClass_TestVariable(BooleanVariableClass *, int, bool);

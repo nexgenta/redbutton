@@ -17,16 +17,6 @@
 #include "rtti.h"
 
 void
-OctetStringVariableClass_SetData(OctetStringVariableClass *t, SetData *params, OctetString *caller_gid)
-{
-	verbose("OctetStringVariableClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: OctetStringVariableClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 OctetStringVariableClass_Clone(OctetStringVariableClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("OctetStringVariableClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

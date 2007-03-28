@@ -16,16 +16,6 @@
 #include "rtti.h"
 
 void
-IntegerVariableClass_SetData(IntegerVariableClass *t, SetData *params, OctetString *caller_gid)
-{
-	verbose("IntegerVariableClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: IntegerVariableClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 IntegerVariableClass_Clone(IntegerVariableClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("IntegerVariableClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

@@ -12,7 +12,6 @@ void VariableClass_Activation(VariableClass *);
 void VariableClass_Deactivation(VariableClass *);
 void VariableClass_Destruction(VariableClass *);
 
-void VariableClass_SetData(VariableClass *, SetData *, OctetString *);
 void VariableClass_Clone(VariableClass *, Clone *, OctetString *);
 void VariableClass_SetVariable(VariableClass *, NewVariableValue *, OctetString *);
 void VariableClass_TestVariable(VariableClass *, int, ComparisonValue *, OctetString *);

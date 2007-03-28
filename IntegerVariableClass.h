@@ -7,7 +7,6 @@
 
 #include "ISO13522-MHEG-5.h"
 
-void IntegerVariableClass_SetData(IntegerVariableClass *, SetData *, OctetString *);
 void IntegerVariableClass_Clone(IntegerVariableClass *, Clone *, OctetString *);
 void IntegerVariableClass_SetVariable(IntegerVariableClass *, NewVariableValue *, OctetString *);
 void IntegerVariableClass_TestVariable(IntegerVariableClass *, int, int);

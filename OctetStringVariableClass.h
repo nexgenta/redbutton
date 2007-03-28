@@ -7,7 +7,6 @@
 
 #include "ISO13522-MHEG-5.h"
 
-void OctetStringVariableClass_SetData(OctetStringVariableClass *, SetData *, OctetString *);
 void OctetStringVariableClass_Clone(OctetStringVariableClass *, Clone *, OctetString *);
 void OctetStringVariableClass_SetVariable(OctetStringVariableClass *, NewVariableValue *, OctetString *);
 void OctetStringVariableClass_TestVariable(OctetStringVariableClass *, int, OctetString *);

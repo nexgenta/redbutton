@@ -7,7 +7,6 @@
 
 #include "ISO13522-MHEG-5.h"
 
-void ContentRefVariableClass_SetData(ContentRefVariableClass *, SetData *, OctetString *);
 void ContentRefVariableClass_Clone(ContentRefVariableClass *, Clone *, OctetString *);
 void ContentRefVariableClass_SetVariable(ContentRefVariableClass *, NewVariableValue *, OctetString *);
 void ContentRefVariableClass_TestVariable(ContentRefVariableClass *, int, ContentReference *);

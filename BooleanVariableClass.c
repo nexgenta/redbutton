@@ -13,16 +13,6 @@
 #include "rtti.h"
 
 void
-BooleanVariableClass_SetData(BooleanVariableClass *t, SetData *params, OctetString *caller_gid)
-{
-	verbose("BooleanVariableClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: BooleanVariableClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 BooleanVariableClass_Clone(BooleanVariableClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("BooleanVariableClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

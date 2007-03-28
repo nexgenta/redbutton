@@ -87,16 +87,6 @@ LinkClass_Destruction(LinkClass *t)
 }
 
 void
-LinkClass_SetData(LinkClass *t, SetData *set, OctetString *caller_gid)
-{
-	verbose("LinkClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: LinkClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 LinkClass_Clone(LinkClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("LinkClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

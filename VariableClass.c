@@ -97,17 +97,6 @@ VariableClass_Destruction(VariableClass *t)
 }
 
 void
-VariableClass_SetData(VariableClass *t, SetData *set, OctetString *caller_gid)
-{
-	verbose("VariableClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-/* do we need the separate Boolean/Integer/etc/VariableClass_SetData funcs we have created? */
-printf("TODO: VariableClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 VariableClass_Clone(VariableClass *t, Clone *clone, OctetString *caller_gid)
 {
 	switch(t->inst.Value.choice)

@@ -1183,11 +1183,7 @@ printf("TODO: Select: target: %s\n", ExternalReference_name(&obj->inst.ref));
 		if(((ref = GenericObjectReference_getObjectReference(&e->u.set_data.target, caller_gid)) != NULL)
 		&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 		{
-			if(obj->inst.rtti == RTTI_VariableClass)
-				VariableClass_SetData((VariableClass *) obj, &e->u.set_data, caller_gid);
-			else if(obj->inst.rtti == RTTI_LinkClass)
-				LinkClass_SetData((LinkClass *) obj, &e->u.set_data, caller_gid);
-			else if(obj->inst.rtti == RTTI_BitmapClass)
+			if(obj->inst.rtti == RTTI_BitmapClass)
 				BitmapClass_SetData((BitmapClass *) obj, &e->u.set_data, caller_gid);
 			else if(obj->inst.rtti == RTTI_DynamicLineArtClass)
 				DynamicLineArtClass_SetData((DynamicLineArtClass *) obj, &e->u.set_data, caller_gid);
