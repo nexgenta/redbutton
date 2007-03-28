@@ -1367,8 +1367,6 @@ printf("TODO: SetLabel: target: %s\n", ExternalReference_name(&obj->inst.ref));
 				SliderClass_SetPaletteRef((SliderClass *) obj, &e->u.set_palette_ref, caller_gid);
 			else if(obj->inst.rtti == RTTI_TextClass)
 				TextClass_SetPaletteRef((TextClass *) obj, &e->u.set_palette_ref, caller_gid);
-			else if(obj->inst.rtti == RTTI_VideoClass)
-				VideoClass_SetPaletteRef((VideoClass *) obj, &e->u.set_palette_ref, caller_gid);
 			else
 				error("SetPaletteRef: unexpected target: %s", ExternalReference_name(&obj->inst.ref));
 		}

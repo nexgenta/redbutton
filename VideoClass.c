@@ -352,16 +352,6 @@ VideoClass_PutBehind(VideoClass *t, PutBehind *params, OctetString *caller_gid)
 }
 
 void
-VideoClass_SetPaletteRef(VideoClass *t, SetPaletteRef *params, OctetString *caller_gid)
-{
-	verbose("VideoClass: %s; SetPaletteRef", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: VideoClass_SetPaletteRef not yet implemented\n");
-	return;
-}
-
-void
 VideoClass_SetVideoDecodeOffset(VideoClass *t, SetVideoDecodeOffset *params, OctetString *caller_gid)
 {
 	verbose("VideoClass: %s; SetVideoDecodeOffset", ExternalReference_name(&t->rootClass.inst.ref));

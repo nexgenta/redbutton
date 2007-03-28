@@ -20,7 +20,6 @@ void VideoClass_BringToFront(VideoClass *);
 void VideoClass_SendToBack(VideoClass *);
 void VideoClass_PutBefore(VideoClass *, PutBefore *, OctetString *);
 void VideoClass_PutBehind(VideoClass *, PutBehind *, OctetString *);
-void VideoClass_SetPaletteRef(VideoClass *, SetPaletteRef *, OctetString *);
 void VideoClass_SetVideoDecodeOffset(VideoClass *, SetVideoDecodeOffset *, OctetString *);
 void VideoClass_GetVideoDecodeOffset(VideoClass *, GetVideoDecodeOffset *, OctetString *);
 void VideoClass_ScaleVideo(VideoClass *, ScaleVideo *, OctetString *);
