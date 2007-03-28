@@ -114,7 +114,11 @@ TokenGroupClass_Destruction(TokenGroupClass *t)
 	if(!RootClass_Destruction(&t->rootClass))
 		return;
 
-/* TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_TokenGroupClassInstanceVars(&t->inst);
 
 	return;

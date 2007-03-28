@@ -145,7 +145,11 @@ BitmapClass_Destruction(BitmapClass *t)
 		BitmapClass_Deactivation(t);
 	}
 
-/* TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_BitmapClassInstanceVars(&t->inst);
 
 	/* generate an IsDeleted event */

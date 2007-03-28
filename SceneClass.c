@@ -186,7 +186,11 @@ SceneClass_Destruction(SceneClass *s)
 		SceneClass_Deactivation(s);
 	}
 
-/* TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_SceneClassInstanceVars(&s->inst);
 
 	/* generate an IsDeleted event */
@@ -199,10 +203,8 @@ SceneClass_Destruction(SceneClass *s)
 void
 SceneClass_SetCachePriority(SceneClass *t, SetCachePriority *params, OctetString *caller_gid)
 {
-	verbose("SceneClass: %s; SetCachePriority", ExternalReference_name(&t->rootClass.inst.ref));
+	verbose("SceneClass: %s; SetCachePriority (ignored)", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: SceneClass_SetCachePriority not yet implemented\n");
 	return;
 }
 

@@ -219,7 +219,11 @@ ApplicationClass_Destruction(ApplicationClass *a)
 		ApplicationClass_Deactivation(a);
 	}
 
-/*TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_ApplicationClassInstanceVars(&a->inst);
 
 	/* generate an IsDeleted event */
@@ -232,10 +236,8 @@ ApplicationClass_Destruction(ApplicationClass *a)
 void
 ApplicationClass_SetCachePriority(ApplicationClass *t, SetCachePriority *params, OctetString *caller_gid)
 {
-	verbose("ApplicationClass: %s; SetCachePriority", ExternalReference_name(&t->rootClass.inst.ref));
+	verbose("ApplicationClass: %s; SetCachePriority (ignored)", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: ApplicationClass_SetCachePriority not yet implemented\n");
 	return;
 }
 

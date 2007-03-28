@@ -222,7 +222,11 @@ HyperTextClass_Destruction(HyperTextClass *t)
 		HyperTextClass_Deactivation(t);
 	}
 
-/* TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_HyperTextClassInstanceVars(&t->inst);
 
 	/* generate an IsDeleted event */

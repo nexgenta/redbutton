@@ -101,7 +101,11 @@ DynamicLineArtClass_Destruction(DynamicLineArtClass *t)
 		DynamicLineArtClass_Deactivation(t);
 	}
 
-/* TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_LineArtClassInstanceVars(&t->inst);
 
 	/* generate an IsDeleted event */

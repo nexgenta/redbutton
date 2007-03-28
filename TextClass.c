@@ -214,7 +214,11 @@ TextClass_Destruction(TextClass *t)
 		TextClass_Deactivation(t);
 	}
 
-/* TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_TextClassInstanceVars(&t->inst);
 
 	/* generate an IsDeleted event */

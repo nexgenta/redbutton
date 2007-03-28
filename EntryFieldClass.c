@@ -218,7 +218,11 @@ EntryFieldClass_Destruction(EntryFieldClass *t)
 		EntryFieldClass_Deactivation(t);
 	}
 
-/* TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_EntryFieldClassInstanceVars(&t->inst);
 
 	/* generate an IsDeleted event */

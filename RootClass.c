@@ -223,7 +223,10 @@ RootClass_Destruction(RootClass *r)
 		RootClass_Deactivation(r);
 	}
 
-/* TODO caching */
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
 
 	/* generate an IsDeleted event */
 	r->inst.AvailabilityStatus = false;

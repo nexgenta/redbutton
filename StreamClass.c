@@ -233,7 +233,12 @@ StreamClass_Destruction(StreamClass *t)
 	}
 
 	/* RootClass Destruction */
-/* TODO caching */
+
+	/*
+	 * spec says we should handle caching here
+	 * rb-download caches everything
+	 */
+
 	free_StreamClassInstanceVars(&t->inst);
 
 	/* generate an IsDeleted event */
