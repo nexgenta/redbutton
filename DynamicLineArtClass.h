@@ -12,7 +12,6 @@ void DynamicLineArtClass_Activation(DynamicLineArtClass *);
 void DynamicLineArtClass_Deactivation(DynamicLineArtClass *);
 void DynamicLineArtClass_Destruction(DynamicLineArtClass *);
 
-void DynamicLineArtClass_SetData(DynamicLineArtClass *, SetData *, OctetString *);
 void DynamicLineArtClass_Clone(DynamicLineArtClass *, Clone *, OctetString *);
 void DynamicLineArtClass_SetPosition(DynamicLineArtClass *, SetPosition *, OctetString *);
 void DynamicLineArtClass_GetPosition(DynamicLineArtClass *, GetPosition *, OctetString *);

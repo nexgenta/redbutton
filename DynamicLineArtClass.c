@@ -112,16 +112,6 @@ DynamicLineArtClass_Destruction(DynamicLineArtClass *t)
 }
 
 void
-DynamicLineArtClass_SetData(DynamicLineArtClass *t, SetData *set, OctetString *caller_gid)
-{
-	verbose("DynamicLineArtClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: DynamicLineArtClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 DynamicLineArtClass_Clone(DynamicLineArtClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("DynamicLineArtClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

@@ -138,16 +138,6 @@ TokenGroupClass_TransferToken(TokenGroupClass *t, unsigned int target)
 }
 
 void
-TokenGroupClass_SetData(TokenGroupClass *t, SetData *set, OctetString *caller_gid)
-{
-	verbose("TokenGroupClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: TokenGroupClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 TokenGroupClass_Clone(TokenGroupClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("TokenGroupClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

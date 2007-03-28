@@ -12,7 +12,6 @@ void ListGroupClass_Activation(ListGroupClass *);
 void ListGroupClass_Deactivation(ListGroupClass *);
 void ListGroupClass_Destruction(ListGroupClass *);
 
-void ListGroupClass_SetData(ListGroupClass *, SetData *, OctetString *);
 void ListGroupClass_Clone(ListGroupClass *, Clone *, OctetString *);
 void ListGroupClass_Move(ListGroupClass *, Move *, OctetString *);
 void ListGroupClass_MoveTo(ListGroupClass *, MoveTo *, OctetString *);

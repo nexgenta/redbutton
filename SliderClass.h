@@ -12,7 +12,6 @@ void SliderClass_Activation(SliderClass *);
 void SliderClass_Deactivation(SliderClass *);
 void SliderClass_Destruction(SliderClass *);
 
-void SliderClass_SetData(SliderClass *, SetData *, OctetString *);
 void SliderClass_Clone(SliderClass *, Clone *, OctetString *);
 void SliderClass_SetPosition(SliderClass *, SetPosition *, OctetString *);
 void SliderClass_GetPosition(SliderClass *, GetPosition *, OctetString *);

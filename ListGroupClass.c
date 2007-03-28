@@ -86,16 +86,6 @@ printf("TODO: ListGroupClass_Destruction not yet implemented\n");
 }
 
 void
-ListGroupClass_SetData(ListGroupClass *t, SetData *set, OctetString *caller_gid)
-{
-	verbose("ListGroupClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: ListGroupClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 ListGroupClass_Clone(ListGroupClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("ListGroupClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

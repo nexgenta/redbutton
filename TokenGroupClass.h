@@ -13,7 +13,6 @@ void TokenGroupClass_Deactivation(TokenGroupClass *);
 void TokenGroupClass_Destruction(TokenGroupClass *);
 void TokenGroupClass_TransferToken(TokenGroupClass *, unsigned int);
 
-void TokenGroupClass_SetData(TokenGroupClass *, SetData *, OctetString *);
 void TokenGroupClass_Clone(TokenGroupClass *, Clone *, OctetString *);
 void TokenGroupClass_Move(TokenGroupClass *, Move *, OctetString *);
 void TokenGroupClass_MoveTo(TokenGroupClass *, MoveTo *, OctetString *);

@@ -102,16 +102,6 @@ RectangleClass_Destruction(RectangleClass *t)
 }
 
 void
-RectangleClass_SetData(RectangleClass *t, SetData *set, OctetString *caller_gid)
-{
-	verbose("RectangleClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: RectangleClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 RectangleClass_Clone(RectangleClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("RectangleClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

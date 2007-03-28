@@ -12,7 +12,6 @@ void RectangleClass_Activation(RectangleClass *);
 void RectangleClass_Deactivation(RectangleClass *);
 void RectangleClass_Destruction(RectangleClass *);
 
-void RectangleClass_SetData(RectangleClass *, SetData *, OctetString *);
 void RectangleClass_Clone(RectangleClass *, Clone *, OctetString *);
 void RectangleClass_SetPosition(RectangleClass *, SetPosition *, OctetString *);
 void RectangleClass_GetPosition(RectangleClass *, GetPosition *, OctetString *);

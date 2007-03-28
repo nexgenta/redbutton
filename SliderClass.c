@@ -122,16 +122,6 @@ SliderClass_Destruction(SliderClass *t)
 }
 
 void
-SliderClass_SetData(SliderClass *t, SetData *set, OctetString *caller_gid)
-{
-	verbose("SliderClass: %s; SetData", ExternalReference_name(&t->rootClass.inst.ref));
-
-/* TODO */
-printf("TODO: SliderClass_SetData not yet implemented\n");
-	return;
-}
-
-void
 SliderClass_Clone(SliderClass *t, Clone *params, OctetString *caller_gid)
 {
 	verbose("SliderClass: %s; Clone", ExternalReference_name(&t->rootClass.inst.ref));

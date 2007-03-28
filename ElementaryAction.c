@@ -1185,22 +1185,12 @@ printf("TODO: Select: target: %s\n", ExternalReference_name(&obj->inst.ref));
 		{
 			if(obj->inst.rtti == RTTI_BitmapClass)
 				BitmapClass_SetData((BitmapClass *) obj, &e->u.set_data, caller_gid);
-			else if(obj->inst.rtti == RTTI_DynamicLineArtClass)
-				DynamicLineArtClass_SetData((DynamicLineArtClass *) obj, &e->u.set_data, caller_gid);
-			else if(obj->inst.rtti == RTTI_RectangleClass)
-				RectangleClass_SetData((RectangleClass *) obj, &e->u.set_data, caller_gid);
 			else if(obj->inst.rtti == RTTI_TextClass)
 				TextClass_SetData((TextClass *) obj, &e->u.set_data, caller_gid);
 			else if(obj->inst.rtti == RTTI_EntryFieldClass)
 				EntryFieldClass_SetData((EntryFieldClass *) obj, &e->u.set_data, caller_gid);
 			else if(obj->inst.rtti == RTTI_HyperTextClass)
 				HyperTextClass_SetData((HyperTextClass *) obj, &e->u.set_data, caller_gid);
-			else if(obj->inst.rtti == RTTI_SliderClass)
-				SliderClass_SetData((SliderClass *) obj, &e->u.set_data, caller_gid);
-			else if(obj->inst.rtti == RTTI_TokenGroupClass)
-				TokenGroupClass_SetData((TokenGroupClass *) obj, &e->u.set_data, caller_gid);
-			else if(obj->inst.rtti == RTTI_ListGroupClass)
-				ListGroupClass_SetData((ListGroupClass *) obj, &e->u.set_data, caller_gid);
 			else if(obj->inst.rtti == RTTI_StreamClass)
 				StreamClass_SetData((StreamClass *) obj, &e->u.set_data, caller_gid);
 			else
