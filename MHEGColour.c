@@ -15,10 +15,9 @@ MHEGColour_fromColour(MHEGColour *out, Colour *in)
 	{
 	case Colour_colour_index:
 		/* index into the palette */
-/****************************************************************************/
-/* will need PaletteRef as a param too */
-/****************************************************************************/
-fatal("MHEGColour_fromColour: need palette! (index=%d)", in->u.colour_index);
+		error("MHEGColour_fromColour: PaletteClass not supported (index=%d)", in->u.colour_index);
+		/* UK MHEG Profile says we don't support Palettes, so choose a default colour */
+		MHEGColour_black(out);
 		break;
 
 	case Colour_absolute_colour:
@@ -61,10 +60,9 @@ MHEGColour_fromNewColour(MHEGColour *out, NewColour *in, OctetString *caller_gid
 	case NewColour_new_colour_index:
 		/* index into the palette */
 		index = GenericInteger_getInteger(&in->u.new_colour_index, caller_gid);
-/****************************************************************************/
-/* will need PaletteRef as a param too */
-/****************************************************************************/
-fatal("MHEGColour_fromNewColour: need palette! (index=%d)", index);
+		error("MHEGColour_fromNewColour: PaletteClass not supported (index=%d)", index);
+		/* UK MHEG Profile says we don't support Palettes, so choose a default colour */
+		MHEGColour_black(out);
 		break;
 
 	case NewColour_new_absolute_colour:
