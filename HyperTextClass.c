@@ -376,10 +376,9 @@ HyperTextClass_PutBehind(HyperTextClass *t, PutBehind *params, OctetString *call
 void
 HyperTextClass_SetPaletteRef(HyperTextClass *t, SetPaletteRef *params, OctetString *caller_gid)
 {
-	verbose("HyperTextClass: %s; SetPaletteRef", ExternalReference_name(&t->rootClass.inst.ref));
+	/* UK MHEG Profile says we don't support PaletteClass */
+	error("HyperTextClass: %s; SetPaletteRef not supported", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: HyperTextClass_SetPaletteRef not yet implemented\n");
 	return;
 }
 

@@ -451,10 +451,9 @@ TextClass_PutBehind(TextClass *t, PutBehind *params, OctetString *caller_gid)
 void
 TextClass_SetPaletteRef(TextClass *t, SetPaletteRef *params, OctetString *caller_gid)
 {
-	verbose("TextClass: %s; SetPaletteRef", ExternalReference_name(&t->rootClass.inst.ref));
+	/* UK MHEG Profile says we don't support PaletteClass */
+	error("TextClass: %s; SetPaletteRef not supported", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: TextClass_SetPaletteRef not yet implemented\n");
 	return;
 }
 

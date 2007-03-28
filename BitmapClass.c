@@ -382,10 +382,9 @@ BitmapClass_PutBehind(BitmapClass *t, PutBehind *params, OctetString *caller_gid
 void
 BitmapClass_SetPaletteRef(BitmapClass *t, SetPaletteRef *params, OctetString *caller_gid)
 {
-	verbose("BitmapClass: %s; SetPaletteRef", ExternalReference_name(&t->rootClass.inst.ref));
+	/* UK MHEG Profile says we don't support PaletteClass */
+	error("BitmapClass: %s; SetPaletteRef not supported", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: BitmapClass_SetPaletteRef not yet implemented\n");
 	return;
 }
 

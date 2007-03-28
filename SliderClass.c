@@ -255,10 +255,9 @@ SliderClass_PutBehind(SliderClass *t, PutBehind *params, OctetString *caller_gid
 void
 SliderClass_SetPaletteRef(SliderClass *t, SetPaletteRef *params, OctetString *caller_gid)
 {
-	verbose("SliderClass: %s; SetPaletteRef", ExternalReference_name(&t->rootClass.inst.ref));
+	/* UK MHEG Profile says we don't support PaletteClass */
+	error("SliderClass: %s; SetPaletteRef not supported", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: SliderClass_SetPaletteRef not yet implemented\n");
 	return;
 }
 

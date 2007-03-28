@@ -331,10 +331,9 @@ DynamicLineArtClass_PutBehind(DynamicLineArtClass *t, PutBehind *params, OctetSt
 void
 DynamicLineArtClass_SetPaletteRef(DynamicLineArtClass *t, SetPaletteRef *params, OctetString *caller_gid)
 {
-	verbose("DynamicLineArtClass: %s; SetPaletteRef", ExternalReference_name(&t->rootClass.inst.ref));
+	/* UK MHEG Profile says we don't support PaletteClass */
+	error("DynamicLineArtClass: %s; SetPaletteRef not supported", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: DynamicLineArtClass_SetPaletteRef not yet implemented\n");
 	return;
 }
 

@@ -300,10 +300,9 @@ RectangleClass_PutBehind(RectangleClass *t, PutBehind *params, OctetString *call
 void
 RectangleClass_SetPaletteRef(RectangleClass *t, SetPaletteRef *params, OctetString *caller_gid)
 {
-	verbose("RectangleClass: %s; SetPaletteRef", ExternalReference_name(&t->rootClass.inst.ref));
+	/* UK MHEG Profile says we don't support PaletteClass */
+	error("RectangleClass: %s; SetPaletteRef not supported", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: RectangleClass_SetPaletteRef not yet implemented\n");
 	return;
 }
 

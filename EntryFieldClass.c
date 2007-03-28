@@ -372,10 +372,9 @@ EntryFieldClass_PutBehind(EntryFieldClass *t, PutBehind *params, OctetString *ca
 void
 EntryFieldClass_SetPaletteRef(EntryFieldClass *t, SetPaletteRef *params, OctetString *caller_gid)
 {
-	verbose("EntryFieldClass: %s; SetPaletteRef", ExternalReference_name(&t->rootClass.inst.ref));
+	/* UK MHEG Profile says we don't support PaletteClass */
+	error("EntryFieldClass: %s; SetPaletteRef not supported", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: EntryFieldClass_SetPaletteRef not yet implemented\n");
 	return;
 }
 
