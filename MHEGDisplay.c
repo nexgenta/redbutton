@@ -388,7 +388,7 @@ void
 MHEGDisplay_clearScreen(MHEGDisplay *d)
 {
 	XYPosition pos = {0, 0};
-	OriginalBoxSize box = {d->xres, d->yres};
+	OriginalBoxSize box;
 	MHEGColour black;
 
 	box.x_length = d->xres;
