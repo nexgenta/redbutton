@@ -199,6 +199,8 @@ MHEGEngine_run(void)
 
 	do
 	{
+		/* clear the display (if you want a splash screen, do it here) */
+		MHEGDisplay_clearScreen(&engine.display);
 		/* search for the boot object for timeout seconds */
 		found = false;
 		gettimeofday(&start, NULL);

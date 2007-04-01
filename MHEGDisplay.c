@@ -384,6 +384,30 @@ MHEGDisplay_refresh(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 	return;
 }
 
+void
+MHEGDisplay_clearScreen(MHEGDisplay *d)
+{
+	XYPosition pos = {0, 0};
+	OriginalBoxSize box = {d->xres, d->yres};
+	MHEGColour black;
+
+	box.x_length = d->xres;
+	box.y_length = d->yres;
+
+	MHEGColour_black(&black);
+	MHEGDisplay_fillRectangle(d, &pos, &box, &black);
+
+	/* use the new object we have just drawn */
+	MHEGDisplay_useOverlay(d);
+
+	/* refresh the screen */
+	MHEGDisplay_refresh(d, &pos, &box);
+
+	XFlush(d->dpy);
+
+	return;
+}
+
 /*
  * all these drawing routines draw onto next_overlay_pic
  * all coords should be in the range 0-MHEG_XRES, 0-MHEG_YRES

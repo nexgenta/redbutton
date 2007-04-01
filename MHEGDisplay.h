@@ -63,6 +63,8 @@ bool MHEGDisplay_processEvents(MHEGDisplay *, bool);
 
 void MHEGDisplay_refresh(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 
+void MHEGDisplay_clearScreen(MHEGDisplay *);
+
 /* drawing routines */
 void MHEGDisplay_setClipRectangle(MHEGDisplay *, XYPosition *, OriginalBoxSize *);
 void MHEGDisplay_unsetClipRectangle(MHEGDisplay *);
