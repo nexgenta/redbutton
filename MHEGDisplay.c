@@ -388,11 +388,8 @@ void
 MHEGDisplay_clearScreen(MHEGDisplay *d)
 {
 	XYPosition pos = {0, 0};
-	OriginalBoxSize box;
+	OriginalBoxSize box = {MHEG_XRES, MHEG_YRES};
 	MHEGColour black;
-
-	box.x_length = d->xres;
-	box.y_length = d->yres;
 
 	MHEGColour_black(&black);
 	MHEGDisplay_fillRectangle(d, &pos, &box, &black);
