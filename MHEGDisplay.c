@@ -60,6 +60,7 @@ static MHEGKeyMapEntry default_keymap[] =
 	{ XK_y, MHEGKey_Yellow },
 	{ XK_b, MHEGKey_Blue },
 	{ XK_t, MHEGKey_Text },
+	{ XK_e, MHEGKey_EPG },
 	{ 0, 0 }			/* terminator */
 };
 

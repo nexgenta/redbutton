@@ -47,6 +47,7 @@ main(int argc, char *argv[])
 		"Yellow",
 		"Blue",
 		"Text",
+		"EPG",
 		NULL
 	};
 	int i;

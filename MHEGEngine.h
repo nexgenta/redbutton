@@ -45,6 +45,8 @@
 #define EngineEvent_GreenKeyFunction	101
 #define EngineEvent_YellowKeyFunction	102
 #define EngineEvent_BlueKeyFunction	103
+/* from the NZ profile */
+#define EngineEvent_EPGKeyFunction	300
 /* all other values are reserved */
 
 /* EventTag key numbers for UserInput events */
@@ -69,6 +71,7 @@
 #define MHEGKey_Yellow	102
 #define MHEGKey_Blue	103
 #define MHEGKey_Text	104
+#define MHEGKey_EPG	300
 
 /* ContentHook values */
 #define ContentHook_Bitmap_MPEG		2

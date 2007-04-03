@@ -818,6 +818,11 @@ MHEGEngine_keyPressed(unsigned int key)
 		data.u.integer = EngineEvent_TextKeyFunction;
 		MHEGEngine_generateAsyncEvent(&app->rootClass.inst.ref, EventType_engine_event, &data);
 	}
+	else if(key == MHEGKey_EPG)
+	{
+		data.u.integer = EngineEvent_EPGKeyFunction;
+		MHEGEngine_generateAsyncEvent(&app->rootClass.inst.ref, EventType_engine_event, &data);
+	}
 	else if(key == MHEGKey_Cancel)
 	{
 		data.u.integer = EngineEvent_CancelKeyFunction;
