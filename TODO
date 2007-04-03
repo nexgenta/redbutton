@@ -11,9 +11,6 @@ if video size != VideoClass size, draw a smaller transparent hole
 or fill the frame edges with black
 
 
-clear overlay on boot/retune/launch/etc
-
-
 use ffmpeg to permenantly scale-up bitmaps in MHEGBitmap_fromRGBA
 (rather than having to apply an XRender xform matrix and filter each time)
 
