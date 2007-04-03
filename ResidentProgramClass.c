@@ -1031,7 +1031,7 @@ prog_SI_GetBasicSI(LIST_OF(Parameter) *params, OctetString *caller_gid)
 	GenericInteger_setInteger(transportStreamId_par, caller_gid, transport_id);
 	GenericInteger_setInteger(serviceId_par, caller_gid, service_id);
 
-	verbose("ResidentProgram: SI_GetBasicSI(%u, %u, %u, %u, %u)", si, network_id, network_id, transport_id, service_id);
+	verbose("ResidentProgram: SI_GetBasicSI(%d, %u, %u, %u, %u)", si, network_id, network_id, transport_id, service_id);
 
 	return true;
 }
