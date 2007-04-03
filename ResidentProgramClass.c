@@ -991,6 +991,17 @@ printf("TODO: program TII SI_TuneIndexInfo\n");
 bool
 prog_SI_GetBasicSI(LIST_OF(Parameter) *params, OctetString *caller_gid)
 {
+	GenericInteger *serviceIndex_par;
+	GenericInteger *networkId_par;
+	GenericInteger *origNetworkId_par;
+	GenericInteger *transportStreamId_par;
+	GenericInteger *serviceId_par;
+	int si;
+	OctetString *url;
+	unsigned int network_id;
+	unsigned int transport_id;
+	unsigned int service_id;
+
 	if(!check_parameters(params, 5, Parameter_new_generic_integer,	/* in: serviceIndex */
 					Parameter_new_generic_integer,	/* out: networkId */
 					Parameter_new_generic_integer,	/* out: origNetworkId */
@@ -1000,8 +1011,28 @@ prog_SI_GetBasicSI(LIST_OF(Parameter) *params, OctetString *caller_gid)
 		error("ResidentProgram: SI_GetBasicSI (BSI): wrong number or type of parameters");
 		return false;
 	}
-/* TODO */
-printf("TODO: program BSI SI_GetBasicSI\n");
+
+	serviceIndex_par = &(get_parameter(params, 1)->u.new_generic_integer);
+	networkId_par = &(get_parameter(params, 2)->u.new_generic_integer);
+	origNetworkId_par = &(get_parameter(params, 3)->u.new_generic_integer);
+	transportStreamId_par = &(get_parameter(params, 4)->u.new_generic_integer);
+	serviceId_par = &(get_parameter(params, 5)->u.new_generic_integer);
+
+	si = GenericInteger_getInteger(serviceIndex_par, caller_gid);
+	url = si_get_url(si);
+
+	network_id = si_get_network_id(url);
+	transport_id = si_get_transport_id(url);
+	service_id = si_get_service_id(url);
+
+	/* not sure what the difference between the Network ID and the Original Network ID is */
+	GenericInteger_setInteger(networkId_par, caller_gid, network_id);
+	GenericInteger_setInteger(origNetworkId_par, caller_gid, network_id);
+	GenericInteger_setInteger(transportStreamId_par, caller_gid, transport_id);
+	GenericInteger_setInteger(serviceId_par, caller_gid, service_id);
+
+	verbose("ResidentProgram: SI_GetBasicSI(%u, %u, %u, %u, %u)", si, network_id, network_id, transport_id, service_id);
+
 	return true;
 }
 

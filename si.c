@@ -22,12 +22,30 @@ si_get_index(OctetString *ref)
 		if(OctetString_cmp(ref, &si_channel[i]) == 0)
 			return i;
 
+/* TODO */
+/* convert rec://svc/{def,cur,lcn/X} to dvb://network.transport.service */
+/* even if we don't have a backend! */
+if(ref->size < 6 || strncmp(ref->data, "dvb://", 6) != 0)
+printf("TODO: si_get_index '%.*s' is not in 'dvb://' format\n", ref->size, ref->data);
+
 	/* add it to the list */
 	si_max_index ++;
 	si_channel = safe_realloc(si_channel, (si_max_index + 1) * sizeof(OctetString));
 	OctetString_dup(&si_channel[si_max_index], ref);
 
 	return si_max_index;
+}
+
+OctetString *
+si_get_url(int index)
+{
+	if(index > si_max_index)
+	{
+		error("SI_GetURL: invalid service index (%d); max is %d", index, si_max_index);
+		return NULL;
+	}
+
+	return &si_channel[index];
 }
 
 bool
@@ -44,11 +62,71 @@ si_tune_index(int index)
 	return true;
 }
 
+/*
+ * URL format is:
+ * dvb://original_network_id.[transport_id].service_id
+ * each id is a hex value without any preceeding 0x etc
+ */
+
+unsigned int
+si_get_network_id(OctetString *ref)
+{
+	unsigned int pos;
+	unsigned int id;
+
+	if(ref == NULL || ref->size < 6 || strncmp(ref->data, "dvb://", 6) != 0)
+		return 0;
+
+	/* read upto the first . or end of string */
+	id = 0;
+	pos = 6;
+	while(pos < ref->size && isxdigit(ref->data[pos]))
+	{
+		id <<= 4;
+		id += char2hex(ref->data[pos]);
+		pos ++;
+	}
+
+	return id;
+}
+
+unsigned int
+si_get_transport_id(OctetString *ref)
+{
+	unsigned int pos;
+	unsigned int id;
+
+	if(ref == NULL || ref->size < 6 || strncmp(ref->data, "dvb://", 6) != 0)
+		return 0;
+
+	/* find the first . or end of string */
+	pos = 6;
+	while(pos < ref->size && ref->data[pos] != '.')
+		pos ++;
+
+	/* skip the . */
+	pos ++;
+
+	/* read the value */
+	id = 0;
+	while(pos < ref->size && isxdigit(ref->data[pos]))
+	{
+		id <<= 4;
+		id += char2hex(ref->data[pos]);
+		pos ++;
+	}
+
+	return id;
+}
+
 unsigned int
 si_get_service_id(OctetString *ref)
 {
 	unsigned int len;
 	unsigned int id;
+
+	if(ref == NULL || ref->size < 6 || strncmp(ref->data, "dvb://", 6) != 0)
+		return 0;
 
 	len = ref->size;
 	while(len > 0 && isxdigit(ref->data[len - 1]))
