@@ -1022,6 +1022,12 @@ printf("TODO: program GBI GetBootInfo\n");
 bool
 prog_CheckContentRef(LIST_OF(Parameter) *params, OctetString *caller_gid)
 {
+	GenericContentReference *refToCheck_par;
+	GenericBoolean *refValid_par;
+	GenericContentReference *refChecked_par;
+	ContentReference *ref;
+	bool valid;
+
 	if(!check_parameters(params, 3, Parameter_new_generic_content_reference,	/* in: ref-to-check */
 					Parameter_new_generic_boolean,			/* out: ref-valid-var */
 					Parameter_new_generic_content_reference))	/* out: ref-checked-var */
@@ -1029,8 +1035,21 @@ prog_CheckContentRef(LIST_OF(Parameter) *params, OctetString *caller_gid)
 		error("ResidentProgram: CheckContentRef (CCR): wrong number or type of parameters");
 		return false;
 	}
-/* TODO */
-printf("TODO: program CCR CheckContentRef\n");
+
+	refToCheck_par = &(get_parameter(params, 1)->u.new_generic_content_reference);
+	refValid_par = &(get_parameter(params, 2)->u.new_generic_boolean);
+	refChecked_par = &(get_parameter(params, 3)->u.new_generic_content_reference);
+
+	ref = GenericContentReference_getContentReference(refToCheck_par, caller_gid);
+
+	valid = MHEGEngine_checkContentRef(ref);
+
+	/* output values */
+	GenericBoolean_setBoolean(refValid_par, caller_gid, valid);
+	GenericContentReference_setContentReference(refChecked_par, caller_gid, ref);
+
+	verbose("ResidentProgram: CheckContentRef(\"%.*s\", %s, \"%.*s\")", ref->size, ref->data, valid ? "true" : "false", ref->size, ref->data);
+
 	return true;
 }
 
