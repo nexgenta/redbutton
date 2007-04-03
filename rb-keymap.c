@@ -78,8 +78,14 @@ main(int argc, char *argv[])
 	XMapWindow(dpy, win);
 	/* make sure the Window is Viewable before we call XGrabKeyboard */
 	XSync(dpy, False);
-	if((rc = XGrabKeyboard(dpy, win, False, GrabModeAsync, GrabModeAsync, CurrentTime)) != 0)
-		fatal("XGrabKeyboard failed: %d", rc);
+	printf("Trying to grab keyboard");
+	fflush(stdout);
+	while((rc = XGrabKeyboard(dpy, win, False, GrabModeAsync, GrabModeAsync, CurrentTime)) != 0)
+	{
+		printf(".");
+		fflush(stdout);
+	}
+	printf("\n");
 
 	for(i=0; keyname[i]; i++)
 	{
