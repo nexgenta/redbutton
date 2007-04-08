@@ -1448,6 +1448,22 @@ MHEGEngine_retune(OctetString *service)
 	return (*(engine.backend.fns->retune))(&engine.backend, service);
 }
 
+const OctetString *
+MHEGEngine_getRecSvcDef(void)
+{
+static OctetString _TODO = {4,"TODO"};
+printf("TODO: MHEGEngine_getRecSvcDef\n");
+return (const OctetString *) &_TODO;
+}
+
+const OctetString *
+MHEGEngine_getRecSvcCur(void)
+{
+static OctetString _TODO = {4,"TODO"};
+printf("TODO: MHEGEngine_getRecSvcCur\n");
+return (const OctetString *) &_TODO;
+}
+
 /*
  * returns the absolute group ID, ie it always starts with "~//"
  * returns a ptr to static string that will be overwritten by the next call to this routine

@@ -12,21 +12,47 @@
 static int si_max_index = -1;
 static OctetString *si_channel = NULL;
 
+/*
+ * service can be:
+ * "dvb://<original_network_id>.[<transport_stream_id>].<service_id>"
+ * "rec://svc/def" - use the service we are downloading the carousel from
+ * "rec://svc/cur" - use the current service
+ * this will be the same as "def" unless SetData has been called on the StreamClass
+ * "rec://svc/lcn/X" - use logical channel number X (eg 1 for BBC1, 3 for ITV1, etc)
+ *
+ * we resolve whatever we are given to a dvb:// format URL and store that
+ */
+
 int
 si_get_index(OctetString *ref)
 {
 	int i;
 
+	/* resolve it to dvb:// format */
+	if(OctetString_strcmp(ref, "rec://svc/def") == 0)
+	{
+		/* promise we wont change it */
+		ref = (OctetString *) MHEGEngine_getRecSvcDef();
+	}
+	else if(OctetString_strcmp(ref, "rec://svc/cur") == 0)
+	{
+		/* promise we wont change it */
+		ref = (OctetString *) MHEGEngine_getRecSvcCur();
+	}
+	else if(OctetString_strncmp(ref, "rec://svc/lcn/", 14) == 0)
+	{
+/* TODO */
+printf("TODO: si_get_index: service='%.*s'\n", ref->size, ref->data);
+	}
+	else if(OctetString_strncmp(ref, "dvb:", 4) != 0)
+	{
+		error("si_get_index: unexpected service '%.*s'", ref->size, ref->data);
+	}
+
 	/* have we assigned it already */
 	for(i=0; i<=si_max_index; i++)
 		if(OctetString_cmp(ref, &si_channel[i]) == 0)
 			return i;
-
-/* TODO */
-/* convert rec://svc/{def,cur,lcn/X} to dvb://network.transport.service */
-/* even if we don't have a backend! */
-if(ref->size < 6 || strncmp(ref->data, "dvb://", 6) != 0)
-printf("TODO: si_get_index '%.*s' is not in 'dvb://' format\n", ref->size, ref->data);
 
 	/* add it to the list */
 	si_max_index ++;

@@ -246,6 +246,9 @@ MHEGStream *MHEGEngine_openStream(int, bool, int *, int *, bool, int *, int *);
 void MHEGEngine_closeStream(MHEGStream *);
 void MHEGEngine_retune(OctetString *);
 
+const OctetString *MHEGEngine_getRecSvcDef(void);
+const OctetString *MHEGEngine_getRecSvcCur(void);
+
 char *MHEGEngine_absoluteFilename(OctetString *);
 
 /* convert PNG to internal format */
