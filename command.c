@@ -34,6 +34,7 @@ bool cmd_file(struct listen_data *, FILE *, int, char **);
 bool cmd_help(struct listen_data *, FILE *, int, char **);
 bool cmd_quit(struct listen_data *, FILE *, int, char **);
 bool cmd_retune(struct listen_data *, FILE *, int, char **);
+bool cmd_service(struct listen_data *, FILE *, int, char **);
 bool cmd_vdemux(struct listen_data *, FILE *, int, char **);
 bool cmd_vstream(struct listen_data *, FILE *, int, char **);
 
@@ -56,6 +57,7 @@ static struct
 	{ "help", "",						cmd_help,	"List available commands" },
 	{ "quit", "",						cmd_quit,	"Close the connection" },
 	{ "retune", "<ServiceID>",				cmd_retune,	"Start downloading the carousel from ServiceID" },
+	{ "service", "",					cmd_service,	"Show the current service ID" },
 	{ "vdemux", "[<ServiceID>] <ComponentTag>",		cmd_vdemux,	"Demux the given video component tag" },
 	{ "vstream", "[<ServiceID>] <ComponentTag>",		cmd_vstream,	"Stream the given video component tag" },
 	{ NULL, NULL, NULL, NULL }
@@ -798,6 +800,27 @@ cmd_retune(struct listen_data *listen_data, FILE *client, int argc, char *argv[]
 
 	/* need to close the connection as this process now has stale listen_data->carousel */
 	return true;
+}
+
+/*
+ * service
+ * show the service ID we are downloading the carousel from
+ * will be in the form, "dvb://network_id..service_id"
+ */
+
+bool
+cmd_service(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
+{
+	struct carousel *car = listen_data->carousel;
+
+	SEND_RESPONSE(200, "OK");
+
+/* TODO */
+printf("TODO: cmd_service network_id\n");
+
+	fprintf(client, "dvb://..%x\n", car->service_id);
+
+	return false;
 }
 
 /*
