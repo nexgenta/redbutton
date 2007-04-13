@@ -23,6 +23,7 @@ typedef struct
 
 typedef struct MHEGBackend
 {
+	OctetString rec_svc_def;	/* service we are downloading the carousel from */
 	char *base_dir;			/* local Service Gateway root directory */
 	struct sockaddr_in addr;	/* remote backend IP and port */
 	FILE *be_sock;			/* connection to remote backend */
@@ -41,6 +42,8 @@ typedef struct MHEGBackend
 		void (*closeStream)(struct MHEGBackend *, MHEGStream *);
 		/* tune to the given service */
 		void (*retune)(struct MHEGBackend *, OctetString *);
+		/* return a dvb:// URL for the service we are currently downloading the carousel from */
+		const OctetString *(*getServiceURL)(struct MHEGBackend *);
 	} *fns;
 } MHEGBackend;
 

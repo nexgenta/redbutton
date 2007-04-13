@@ -1448,20 +1448,31 @@ MHEGEngine_retune(OctetString *service)
 	return (*(engine.backend.fns->retune))(&engine.backend, service);
 }
 
+/*
+ * return a read-only dvb:// format value for rec://svc/def
+ */
+
 const OctetString *
 MHEGEngine_getRecSvcDef(void)
 {
-static OctetString _TODO = {4,"TODO"};
-printf("TODO: MHEGEngine_getRecSvcDef\n");
-return (const OctetString *) &_TODO;
+	/* ask the backend */
+	return (*(engine.backend.fns->getServiceURL))(&engine.backend);
 }
+
+/*
+ * return a read-only dvb:// format value for rec://svc/cur
+ */
 
 const OctetString *
 MHEGEngine_getRecSvcCur(void)
 {
-static OctetString _TODO = {4,"TODO"};
-printf("TODO: MHEGEngine_getRecSvcCur\n");
-return (const OctetString *) &_TODO;
+/* TODO */
+// need to keep track of this ourselves
+// initially svc/cur = svc/def
+// only changes if SetData called on StreamClass
+// retune => reset to svc/cur = svc/def again?
+printf("TODO: MHEGEngine_getRecSvcCur: returning rec://svc/def instead\n");
+return (*(engine.backend.fns->getServiceURL))(&engine.backend);
 }
 
 /*

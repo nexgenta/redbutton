@@ -21,6 +21,11 @@ static unsigned int remote_response(FILE *);
 static MHEGStream *open_stream(MHEGBackend *, int, bool, int *, int *, bool, int *, int *);
 static void close_stream(MHEGBackend *, MHEGStream *);
 
+static void local_set_service_url(MHEGBackend *);
+static void remote_set_service_url(MHEGBackend *);
+
+static const OctetString *get_service_url(MHEGBackend *);
+
 static int parse_addr(char *, struct in_addr *, in_port_t *);
 static int get_host_addr(char *, struct in_addr *);
 
@@ -40,6 +45,7 @@ static struct MHEGBackendFns local_backend_fns =
 	open_stream,		/* openStream */
 	close_stream,		/* closeStream */
 	local_retune,		/* retune */
+	get_service_url,	/* getServiceURL */
 };
 
 /* remote backend funcs */
@@ -56,9 +62,11 @@ static struct MHEGBackendFns remote_backend_fns =
 	open_stream,		/* openStream */
 	close_stream,		/* closeStream */
 	remote_retune,		/* retune */
+	get_service_url,	/* getServiceURL */
 };
 
 /* public interface */
+
 void
 MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 {
@@ -72,6 +80,10 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 	/* no connection to the backend yet */
 	b->be_sock = NULL;
 
+	/* don't know rec://svc/def yet */
+	b->rec_svc_def.size = 0;
+	b->rec_svc_def.data = NULL;
+
 	if(remote)
 	{
 		/* backend is on a different host, srg_loc is the remote host[:port] */
@@ -80,6 +92,8 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 		if(parse_addr(srg_loc, &b->addr.sin_addr, &b->addr.sin_port) < 0)
 			fatal("Unable to resolve host %s", srg_loc);
 		verbose("Remote backend at %s:%u", inet_ntoa(b->addr.sin_addr), ntohs(b->addr.sin_port));
+		/* initialise rec://svc/def value */
+		remote_set_service_url(b);
 	}
 	else
 	{
@@ -87,7 +101,11 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 		b->fns = &local_backend_fns;
 		b->base_dir = safe_strdup(srg_loc);
 		verbose("Local backend; carousel file root '%s'", srg_loc);
+		/* initialise rec://svc/def value */
+		local_set_service_url(b);
 	}
+
+	verbose("Current service is %.*s", b->rec_svc_def.size, b->rec_svc_def.data);
 
 	return;
 }
@@ -101,6 +119,8 @@ MHEGBackend_fini(MHEGBackend *b)
 		fclose(b->be_sock);
 
 	safe_free(b->base_dir);
+
+	safe_free(b->rec_svc_def.data);
 
 	return;
 }
@@ -320,6 +340,88 @@ close_stream(MHEGBackend *t, MHEGStream *stream)
 }
 
 /*
+ * update rec_svc_def to the service directory we are reading the carousel from
+ * rec_svc_def will be in dvb:// format, but the network_id will be empty
+ * eg if we are reading path/to/services/4165, then rec_svc_def will be dvb://..1045
+ */
+
+static void
+local_set_service_url(MHEGBackend *t)
+{
+	char *slash;
+	int prefix_len;
+	int service_id;
+	char url[1024];
+	size_t len;
+
+	/* base_dir is: [path/to/services/]<service_id> */
+	slash = strrchr(t->base_dir, '/');
+	if(slash == NULL)
+	{
+		/* no preceeding path */
+		service_id = atoi(t->base_dir);
+	}
+	else
+	{
+		prefix_len = (slash - t->base_dir) + 1;
+		service_id = atoi(t->base_dir + prefix_len);
+	}
+
+	/* create a fake dvb:// format URL */
+	len = snprintf(url, sizeof(url), "dvb://..%x", service_id);
+
+	/* overwrite any existing value */
+	t->rec_svc_def.size = len;
+	t->rec_svc_def.data = safe_realloc(t->rec_svc_def.data, len);
+	memcpy(t->rec_svc_def.data, url, len);
+
+	return;
+}
+
+/*
+ * update rec_svc_def to the service we are downloading the carousel from
+ * rec_svc_def will be in dvb:// format
+ */
+
+static void
+remote_set_service_url(MHEGBackend *t)
+{
+	char cmd[32];
+	FILE *sock;
+	char url[1024];
+	size_t len;
+
+	/* send backend a "service" command, response is carousel service in dvb:// format */
+	snprintf(cmd, sizeof(cmd), "service\n");
+
+	if((sock = remote_command(t, true, cmd)) == NULL
+	|| remote_response(sock) != BACKEND_RESPONSE_OK
+	|| fgets(url, sizeof(url), sock) == NULL)
+	{
+		/* this should never happen, and I don't want a NULL rec_svc_def */
+		fatal("Unable to determine current service");
+	}
+
+	/* chop any trailing \n off the URL */
+	len = strlen(url);
+	while(len > 0 && url[len-1] == '\n')
+		len --;
+
+	/* overwrite any existing value */
+	t->rec_svc_def.size = len;
+	t->rec_svc_def.data = safe_realloc(t->rec_svc_def.data, len);
+	memcpy(t->rec_svc_def.data, url, len);
+
+	return;
+}
+
+static const OctetString *
+get_service_url(MHEGBackend *t)
+{
+	return (const OctetString *) &t->rec_svc_def;
+}
+
+/*
  * extract the IP addr and port number from a string in one of these forms:
  * host:port
  * ip-addr:port
@@ -484,6 +586,10 @@ local_retune(MHEGBackend *t, OctetString *service)
 	char *slash;
 	int prefix_len;
 
+	/* assert */
+	if(service->size < 6 || strncmp(service->data, "dvb://", 6) != 0)
+		fatal("local_retune: unable to tune to '%.*s'", service->size, service->data);
+
 	/* extract the service_id */
 	service_id = si_get_service_id(service);
 	snprintf(service_str, sizeof(service_str), "%u", service_id);
@@ -505,6 +611,9 @@ local_retune(MHEGBackend *t, OctetString *service)
 		t->base_dir = safe_realloc(t->base_dir, prefix_len + strlen(service_str) + 1);
 		strcpy(t->base_dir + prefix_len, service_str);
 	}
+
+	/* update rec://svc/def */
+	local_set_service_url(t);
 
 	verbose("Retune: new service gateway is '%s'", t->base_dir);
 
@@ -647,6 +756,10 @@ remote_retune(MHEGBackend *t, OctetString *service)
 	char cmd[128];
 	FILE *sock;
 
+	/* assert */
+	if(service->size < 6 || strncmp(service->data, "dvb://", 6) != 0)
+		fatal("remote_retune: unable to tune to '%.*s'", service->size, service->data);
+
 	snprintf(cmd, sizeof(cmd), "retune %u\n", si_get_service_id(service));
 
 	if((sock = remote_command(t, true, cmd)) == NULL
@@ -661,6 +774,9 @@ remote_retune(MHEGBackend *t, OctetString *service)
 		fclose(t->be_sock);
 		t->be_sock = NULL;
 	}
+
+	/* update rec://svc/def */
+	remote_set_service_url(t);
 
 	return;
 }
