@@ -4,11 +4,9 @@ posix_fadvise() when streaming data from the backend?
 aspect ratio
 
 
-VideoDecodeOffset
-
-
 if video size != VideoClass size, draw a smaller transparent hole
 or fill the frame edges with black
+also fill with black after SetVideoDecodeOffset
 
 
 use ffmpeg to permenantly scale-up bitmaps in MHEGBitmap_fromRGBA

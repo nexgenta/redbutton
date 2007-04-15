@@ -365,9 +365,10 @@ VideoClass_SetVideoDecodeOffset(VideoClass *t, SetVideoDecodeOffset *params, Oct
 	t->inst.VideoDecodeOffset.y_position = GenericInteger_getInteger(&params->new_y_offset, caller_gid);
 	pthread_mutex_unlock(&t->inst.bbox_lock);
 
-	/* if it is active, redraw it */
-	if(t->rootClass.inst.RunningStatus)
-		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+	/* screen will be updated next time we draw a video frame */
+/* TODO */
+/* should probably clear content Pixmap to black */
+/* x,y = t->inst.Position, w,h = t->inst.BoxSize */
 
 	return;
 }
