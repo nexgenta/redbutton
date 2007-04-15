@@ -360,8 +360,15 @@ VideoClass_SetVideoDecodeOffset(VideoClass *t, SetVideoDecodeOffset *params, Oct
 {
 	verbose("VideoClass: %s; SetVideoDecodeOffset", ExternalReference_name(&t->rootClass.inst.ref));
 
-/* TODO */
-printf("TODO: VideoClass_SetVideoDecodeOffset not yet implemented\n");
+	pthread_mutex_lock(&t->inst.bbox_lock);
+	t->inst.VideoDecodeOffset.x_position = GenericInteger_getInteger(&params->new_x_offset, caller_gid);
+	t->inst.VideoDecodeOffset.y_position = GenericInteger_getInteger(&params->new_y_offset, caller_gid);
+	pthread_mutex_unlock(&t->inst.bbox_lock);
+
+	/* if it is active, redraw it */
+	if(t->rootClass.inst.RunningStatus)
+		MHEGEngine_redrawArea(&t->inst.Position, &t->inst.BoxSize);
+
 	return;
 }
 
