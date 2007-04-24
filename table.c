@@ -42,11 +42,134 @@
 #include "dsmcc.h"
 #include "carousel.h"
 #include "biop.h"
+#include "cache.h"
 #include "utils.h"
+
+/* Programme Association Table PID and TID */
+#define PID_PAT		0x0000
+#define TID_PAT		0x00
+
+/* Programme Map Table TID */
+#define TID_PMT		0x02
+
+/* Service Description Table PID and TID */
+#define PID_SDT		0x0011
+#define TID_SDT		0x42
 
 /* DSMCC table ID's we want */
 #define TID_DSMCC_CONTROL	0x3b	/* DSI or DII */
 #define TID_DSMCC_DATA		0x3c	/* DDB */
+
+/*
+ * output buffer must be at least MAX_TABLE_LEN bytes
+ * returns false if it timesout
+ */
+
+bool
+read_pat(char *demux, unsigned int timeout, unsigned char *out)
+{
+	/* is it in the cache */
+	if(cache_load("pat", out))
+		return true;
+
+	/* read it from the DVB card */
+	if(!read_table(demux, PID_PAT, TID_PAT, timeout, out))
+	{
+		error("Unable to read PAT");
+		return false;
+	}
+
+	/* cache it */
+	cache_save("pat", out);
+
+	return true;
+}
+
+/*
+ * output buffer must be at least MAX_TABLE_LEN bytes
+ * returns false if it timesout
+ */
+
+bool
+read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *out)
+{
+	char cache_item[PATH_MAX];
+	unsigned char pat[MAX_TABLE_LEN];
+	uint16_t section_length;
+	uint16_t offset;
+	uint16_t map_pid = 0;
+	bool found;
+	bool rc;
+
+	/* is it in the cache */
+	snprintf(cache_item, sizeof(cache_item), "pmt-%u", service_id);
+	if(cache_load(cache_item, out))
+		return true;
+
+	/* get the PAT */
+	if(!read_pat(demux, timeout, pat))
+		return false;
+
+	section_length = 3 + (((pat[1] & 0x0f) << 8) + pat[2]);
+
+	/* find the PMT for this service_id */
+	found = false;
+	offset = 8;
+	/* -4 for the CRC at the end */
+	while((offset < (section_length - 4)) && !found)
+	{
+		if((pat[offset] << 8) + pat[offset+1] == service_id)
+		{
+			map_pid = ((pat[offset+2] & 0x1f) << 8) + pat[offset+3];
+			found = true;
+		}
+		else
+		{
+			offset += 4;
+		}
+	}
+
+	if(!found)
+		fatal("Unable to find PMT PID for service_id %u", service_id);
+
+	vverbose("PMT PID: %u", map_pid);
+
+	/* get the PMT */
+	rc = read_table(demux, map_pid, TID_PMT, timeout, out);
+
+	/* cache it */
+	if(rc)
+		cache_save(cache_item, out);
+	else
+		error("Unable to read PMT");
+
+	return rc;
+}
+
+/*
+ * output buffer must be at least MAX_TABLE_LEN bytes
+ * returns false if it timesout
+ */
+
+bool
+read_sdt(char *demux, unsigned int timeout, unsigned char *out)
+{
+	/* is it in the cache */
+	if(cache_load("sdt", out))
+		return true;
+
+	/* read it from the DVB card */
+	if(!read_table(demux, PID_SDT, TID_SDT, timeout, out))
+	{
+		error("Unable to read SDT");
+		return false;
+	}
+
+	/* cache it */
+	cache_save("sdt", out);
+
+	return true;
+}
 
 /*
  * output buffer must be at least MAX_TABLE_LEN bytes

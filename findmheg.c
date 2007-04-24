@@ -30,15 +30,7 @@
 #include "findmheg.h"
 #include "table.h"
 #include "assoc.h"
-#include "cache.h"
 #include "utils.h"
-
-/* Programme Association Table and Section */
-#define PID_PAT		0x0000
-#define TID_PAT		0x00
-
-/* Programme Map Section */
-#define TID_PMT		0x02
 
 /* stream_types we are interested in */
 #define STREAM_TYPE_VIDEO_MPEG2		0x02
@@ -83,8 +75,6 @@ struct data_broadcast_id_descriptor
 
 static struct avstreams *find_current_avstreams(struct carousel *, int, int);
 static struct avstreams *find_service_avstreams(struct carousel *, int, int, int);
-static bool read_pat(char *, unsigned int, unsigned char *);
-static bool read_pmt(char *, uint16_t, unsigned int, unsigned char *);
 
 bool
 is_audio_stream(uint8_t stream_type)
@@ -407,91 +397,5 @@ find_service_avstreams(struct carousel *car, int service_id, int audio_tag, int 
 	verbose("Video PID=%u type=0x%x", _streams.video_pid, _streams.video_type);
 
 	return &_streams;
-}
-
-/*
- * output buffer must be at least MAX_TABLE_LEN bytes
- * returns false if it timesout
- */
-
-static bool
-read_pat(char *demux, unsigned int timeout, unsigned char *out)
-{
-	/* is it in the cache */
-	if(cache_load("pat", out))
-		return true;
-
-	/* read it from the DVB card */
-	if(!read_table(demux, PID_PAT, TID_PAT, timeout, out))
-	{
-		error("Unable to read PAT");
-		return false;
-	}
-
-	/* cache it */
-	cache_save("pat", out);
-
-	return true;
-}
-
-/*
- * output buffer must be at least MAX_TABLE_LEN bytes
- * returns false if it timesout
- */
-
-static bool
-read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *out)
-{
-	char cache_item[PATH_MAX];
-	unsigned char pat[MAX_TABLE_LEN];
-	uint16_t section_length;
-	uint16_t offset;
-	uint16_t map_pid = 0;
-	bool found;
-	bool rc;
-
-	/* is it in the cache */
-	snprintf(cache_item, sizeof(cache_item), "pmt-%u", service_id);
-	if(cache_load(cache_item, out))
-		return true;
-
-	/* get the PAT */
-	if(!read_pat(demux, timeout, pat))
-		return false;
-
-	section_length = 3 + (((pat[1] & 0x0f) << 8) + pat[2]);
-
-	/* find the PMT for this service_id */
-	found = false;
-	offset = 8;
-	/* -4 for the CRC at the end */
-	while((offset < (section_length - 4)) && !found)
-	{
-		if((pat[offset] << 8) + pat[offset+1] == service_id)
-		{
-			map_pid = ((pat[offset+2] & 0x1f) << 8) + pat[offset+3];
-			found = true;
-		}
-		else
-		{
-			offset += 4;
-		}
-	}
-
-	if(!found)
-		fatal("Unable to find PMT PID for service_id %u", service_id);
-
-	vverbose("PMT PID: %u", map_pid);
-
-	/* get the PMT */
-	rc = read_table(demux, map_pid, TID_PMT, timeout, out);
-
-	/* cache it */
-	if(rc)
-		cache_save(cache_item, out);
-	else
-		error("Unable to read PMT");
-
-	return rc;
 }
 

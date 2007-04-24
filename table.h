@@ -31,6 +31,10 @@
 /* max size of a DVB table */
 #define MAX_TABLE_LEN   4096
 
+bool read_pat(char *, unsigned int, unsigned char *);
+bool read_pmt(char *, uint16_t, unsigned int, unsigned char *);
+bool read_sdt(char *, unsigned int, unsigned char *);
+
 bool read_table(char *, uint16_t, uint8_t, unsigned int, unsigned char *);
 
 bool read_dsmcc_tables(struct carousel *, unsigned char *);
