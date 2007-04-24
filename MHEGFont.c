@@ -107,35 +107,45 @@ MHEGFont_setName(MHEGFont *font, FontBody *body)
  * this cost $1000 to licence from Bit Stream
  * alternatively, you can download Nebula DigiTV iTuner from http://www.nebula-electronics.com/
  * install it on a Windows box and copy C:\Windows\Fonts\tt7268m_802.ttf to your Linux box
- * if you don't have Tiresias Screenfont, we use whatever Xft returns for 'sans' instead
+ * if you don't have Tiresias Screenfont, we try FreeSans instead
+ * if FreeSANS is not available either, we use whatever Xft returns for 'sans'
  */
 
 static char *_default_font_name = NULL;
 static char *_font_name_tiresias = "TiresiasScreenfont";
+static char *_font_name_freesans = "FreeSans";
 static char *_font_name_sans = "sans";
 
 void
 MHEGFont_defaultName(MHEGFont *font)
 {
 	Display *dpy = MHEGEngine_getDisplay()->dpy;
-	char *xlfdname = "-*-TiresiasScreenfont-medium-r-normal-*";
-	char **names;
+	char *xlfd_tiresias = "-*-TiresiasScreenfont-medium-r-normal-*";
+	char *xlfd_freesans = "-*-freesans-medium-r-normal-*";
+	char **names = NULL;
 	int count;
 
 	/* first time */
 	if(_default_font_name == NULL)
 	{
 		/* do we have Tiresias */
-		if((names = XListFonts(dpy, xlfdname, 1, &count)) != NULL)
+		if((names = XListFonts(dpy, xlfd_tiresias, 1, &count)) != NULL)
 		{
 			_default_font_name = _font_name_tiresias;
-			XFreeFontNames(names);
+		}
+		else if((names = XListFonts(dpy, xlfd_freesans, 1, &count)) != NULL)
+		{
+			_default_font_name = _font_name_freesans;
+			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", _font_name_tiresias, _font_name_freesans);
 		}
 		else
 		{
 			_default_font_name = _font_name_sans;
 			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", _font_name_tiresias, _font_name_sans);
 		}
+		/* clean up */
+		if(names != NULL)
+			XFreeFontNames(names);
 	}
 
 	font->name = _default_font_name;
