@@ -815,10 +815,7 @@ cmd_service(struct listen_data *listen_data, FILE *client, int argc, char *argv[
 
 	SEND_RESPONSE(200, "OK");
 
-/* TODO */
-printf("TODO: cmd_service network_id\n");
-
-	fprintf(client, "dvb://..%x\n", car->service_id);
+	fprintf(client, "dvb://%x..%x\n", car->network_id, car->service_id);
 
 	return false;
 }

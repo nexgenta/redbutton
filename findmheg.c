@@ -101,6 +101,7 @@ struct carousel *
 find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
 {
 	unsigned char pmt[MAX_TABLE_LEN];
+	unsigned char *sdt = pmt;
 	uint16_t section_length;
 	uint16_t offset;
 	uint8_t stream_type;
@@ -119,6 +120,7 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 	_car.service_id = service_id;
 
 	/* unknown */
+	_car.network_id = 0;
 	_car.carousel_id = 0;
 	_car.boot_pid = 0;
 	_car.audio_pid = 0;
@@ -135,6 +137,12 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 	_car.got_dsi = false;
 	_car.nmodules = 0;
 	_car.modules = NULL;
+
+	/* find the original_network_id from the SDT */
+	if(!read_sdt(_car.demux_device, timeout, sdt))
+		fatal("Unable to read SDT");
+	_car.network_id = (sdt[8] << 8) + sdt[9];
+	vverbose("original_network_id=%u", _car.network_id);
 
 	/* get the PMT */
 	if(!read_pmt(_car.demux_device, service_id, timeout, pmt))

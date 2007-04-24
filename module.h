@@ -60,8 +60,9 @@ struct carousel
 	char dvr_device[PATH_MAX];	/* dvr device path */
 	unsigned int timeout;		/* timeout for the DVB devices */
 	pid_t downloader;		/* ID of the process downloading the carousel */
-	uint16_t service_id;
-	uint32_t carousel_id;
+	uint16_t network_id;		/* Original Network ID */
+	uint16_t service_id;		/* Service ID we are downloading the carousel from */
+	uint32_t carousel_id;		/* Carousel ID we are downloading */
 	uint16_t boot_pid;		/* PID containing DSI */
 	uint16_t audio_pid;		/* PID of default audio stream for this service_id */
 	uint8_t audio_type;		/* type ID of default audio stream */
