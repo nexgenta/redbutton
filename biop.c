@@ -33,9 +33,10 @@
 
 /*
  * split the module into separate BIOP messages
+ * returns false if the format is invalid
  */
 
-void
+bool
 process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader *data, uint32_t size)
 {
 	uint32_t bytes_left;
@@ -64,11 +65,17 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 		|| data->biop_version.major != BIOP_VSN_MAJOR
 		|| data->biop_version.minor != BIOP_VSN_MINOR
 		|| data->message_type != BIOP_MSG_TYPE)
-			fatal("Invalid BIOP header");
+		{
+			error("Invalid BIOP header");
+			return false;
+		}
 		size = biop_uint32(data->byte_order, data->message_size);
 		vverbose("BIOP message_size=%u", size);
 		if(bytes_left < sizeof(struct BIOPMessageHeader) + size)
-			fatal("Not enough BIOP data");
+		{
+			error("Not enough BIOP data");
+			return false;
+		}
 		/* process MessageSubHeader */
 		subhdr = ((unsigned char *) data) + sizeof(struct BIOPMessageHeader);
 		vhexdump(subhdr, size);
@@ -132,14 +139,14 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 		}
 		else
 		{
-			fatal("Unknown BIOP object: '%.*s'", kind.size, kind.data);
+			error("Ignoring unknown BIOP object: '%.*s'", kind.size, kind.data);
 		}
 		/* move onto the next */
 		data = (struct BIOPMessageHeader *) (((unsigned char *) data) + sizeof(struct BIOPMessageHeader) + size);
 		bytes_left -= sizeof(struct BIOPMessageHeader) + size;
 	}
 
-	return;
+	return true;
 }
 
 /*

@@ -100,7 +100,7 @@ struct biop_iop_ior
 };
 
 /* functions */
-void process_biop(struct carousel *, struct module *, struct BIOPMessageHeader *, uint32_t);
+bool process_biop(struct carousel *, struct module *, struct BIOPMessageHeader *, uint32_t);
 void process_biop_dir(uint8_t, char *, struct carousel *, unsigned char *, uint32_t);
 uint32_t process_iop_ior(uint8_t, unsigned char *, struct biop_iop_ior *);
 uint16_t process_biop_service_gateway_info(uint16_t, struct assoc *, unsigned char *, uint16_t);

@@ -145,11 +145,20 @@ download_block(struct carousel *car, struct module *mod, uint16_t block, unsigne
 			uncompress_module(mod);
 			verbose("uncompressed size=%u", mod->size);
 		}
-		process_biop(car, mod, (struct BIOPMessageHeader *) mod->data, mod->size);
-		/* we can free the data now, keep got_block so we don't download it again */
-		safe_free(mod->data);
-		/* delete_module may safe_free it again */
-		mod->data = NULL;
+		if(process_biop(car, mod, (struct BIOPMessageHeader *) mod->data, mod->size))
+		{
+			/* we can free the data now, keep got_block so we don't download it again */
+			safe_free(mod->data);
+			/* delete_module may safe_free it again */
+			mod->data = NULL;
+		}
+		else
+		{
+			/* failed to process it, try downloading it again */
+			mod->blocks_left = mod->nblocks;
+			/* assumes false == 0 */
+			bzero(mod->got_block, mod->nblocks * sizeof(bool));
+		}
 	}
 
 	return;
