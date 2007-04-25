@@ -272,7 +272,7 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 					  p->have_audio, &p->audio_pid, &p->audio_type,
 					  p->have_video, &p->video_pid, &p->video_type)) == NULL)
 	{
-		error("Unable to open MPEG stream");
+		error("Unable to open MPEG stream (%d, %d, %d)", p->service_id, p->audio_tag, p->video_tag);
 		return;
 	}
 
