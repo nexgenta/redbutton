@@ -289,7 +289,8 @@ return false;
 		return false;
 	}
 
-	/* if no-one was using the frontend when we open it
+	/*
+	 * if no-one was using the frontend when we open it
 	 * FE_GET_FRONTEND may say we are tuned to the frequency we want
 	 * but when we try to read any data, it fails
 	 * so check if we have a lock
