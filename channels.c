@@ -40,6 +40,7 @@ static bool get_tune_params(fe_type_t, uint16_t, struct dvb_frontend_parameters 
 static bool get_dvbt_tune_params(uint16_t, struct dvb_frontend_parameters *);
 static bool get_dvbs_tune_params(uint16_t, struct dvb_frontend_parameters *);
 static bool get_dvbc_tune_params(uint16_t, struct dvb_frontend_parameters *);
+static bool get_atsc_tune_params(uint16_t, struct dvb_frontend_parameters *);
 
 static FILE *_channels = NULL;
 
@@ -195,6 +196,8 @@ get_tune_params(fe_type_t fe_type, uint16_t service_id, struct dvb_frontend_para
 		return get_dvbs_tune_params(service_id, out);
 	else if(fe_type == FE_QAM)
 		return get_dvbc_tune_params(service_id, out);
+	else if(fe_type == FE_ATSC)
+		return get_atsc_tune_params(service_id, out);
 	else
 		error("Unknown DVB device type (%d)", fe_type);
 
@@ -255,6 +258,13 @@ static bool
 get_dvbc_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
 {
 printf("TODO: tune DVB-C card to service_id %u\n", service_id);
+return false;
+}
+
+static bool
+get_atsc_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
+{
+printf("TODO: tune ATSC card to service_id %u\n", service_id);
 return false;
 }
 
