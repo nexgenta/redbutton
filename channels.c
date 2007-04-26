@@ -35,7 +35,11 @@
 #include "utils.h"
 
 /* internal functions */
-static struct dvb_frontend_parameters *get_tune_params(uint16_t);
+static bool get_tune_params(fe_type_t, uint16_t, struct dvb_frontend_parameters *);
+
+static bool get_dvbt_tune_params(uint16_t, struct dvb_frontend_parameters *);
+static bool get_dvbs_tune_params(uint16_t, struct dvb_frontend_parameters *);
+static bool get_dvbc_tune_params(uint16_t, struct dvb_frontend_parameters *);
 
 static FILE *_channels = NULL;
 
@@ -81,6 +85,7 @@ init_channels_conf(char *filename)
  * map strings to frontend enum values
  * based on tzap utility in linuxtv dvb-apps package
  */
+
 struct param
 {
 	char *name;
@@ -168,13 +173,36 @@ str2enum(char *str, const struct param *map, int map_size)
 /*
  * return the params needed to tune to the given service_id
  * the data is read from the channels.conf file
- * returns NULL if the service_id is not found
+ * returns false if the service_id is not found
  */
 
-static struct dvb_frontend_parameters _params;
+static bool
+get_tune_params(fe_type_t fe_type, uint16_t service_id, struct dvb_frontend_parameters *out)
+{
+	if(_channels == NULL)
+	{
+		verbose("No channels.conf file available");
+		return false;
+	}
 
-static struct dvb_frontend_parameters *
-get_tune_params(uint16_t service_id)
+	bzero(out, sizeof(struct dvb_frontend_parameters));
+
+	verbose("Searching channels.conf for service_id %u", service_id);
+
+	if(fe_type == FE_OFDM)
+		return get_dvbt_tune_params(service_id, out);
+	else if(fe_type == FE_QPSK)
+		return get_dvbs_tune_params(service_id, out);
+	else if(fe_type == FE_QAM)
+		return get_dvbc_tune_params(service_id, out);
+	else
+		error("Unknown DVB device type (%d)", fe_type);
+
+	return false;
+}
+
+static bool
+get_dvbt_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
 {
 	char line[1024];
 	unsigned int freq;
@@ -189,16 +217,6 @@ get_tune_params(uint16_t service_id)
 	unsigned int id;
 	int len;
 
-	if(_channels == NULL)
-	{
-		verbose("No channels.conf file available");
-		return NULL;
-	}
-
-	bzero(&_params, sizeof(_params));
-
-	verbose("Searching channels.conf for service_id %u", service_id);
-
 	rewind(_channels);
 	while(!feof(_channels))
 	{
@@ -211,19 +229,33 @@ get_tune_params(uint16_t service_id)
 		while(len >= 0 && line[len] == '\n')
 			line[len--] = '\0';
 		verbose("%s", line);
-		_params.frequency = freq;
-		_params.inversion = str2enum(inv, inversion_list, LIST_SIZE(inversion_list));
-		_params.u.ofdm.bandwidth = str2enum(bw, bw_list, LIST_SIZE(bw_list));
-		_params.u.ofdm.code_rate_HP = str2enum(hp, fec_list, LIST_SIZE(fec_list));
-		_params.u.ofdm.code_rate_LP = str2enum(lp, fec_list, LIST_SIZE(fec_list));
-		_params.u.ofdm.constellation = str2enum(qam, constellation_list, LIST_SIZE(constellation_list));
-		_params.u.ofdm.transmission_mode = str2enum(trans, transmissionmode_list, LIST_SIZE(transmissionmode_list));
-		_params.u.ofdm.guard_interval = str2enum(gi, guard_list, LIST_SIZE(guard_list));
-		_params.u.ofdm.hierarchy_information = str2enum(hier, hierarchy_list, LIST_SIZE(hierarchy_list));
-		return &_params;
+		out->frequency = freq;
+		out->inversion = str2enum(inv, inversion_list, LIST_SIZE(inversion_list));
+		out->u.ofdm.bandwidth = str2enum(bw, bw_list, LIST_SIZE(bw_list));
+		out->u.ofdm.code_rate_HP = str2enum(hp, fec_list, LIST_SIZE(fec_list));
+		out->u.ofdm.code_rate_LP = str2enum(lp, fec_list, LIST_SIZE(fec_list));
+		out->u.ofdm.constellation = str2enum(qam, constellation_list, LIST_SIZE(constellation_list));
+		out->u.ofdm.transmission_mode = str2enum(trans, transmissionmode_list, LIST_SIZE(transmissionmode_list));
+		out->u.ofdm.guard_interval = str2enum(gi, guard_list, LIST_SIZE(guard_list));
+		out->u.ofdm.hierarchy_information = str2enum(hier, hierarchy_list, LIST_SIZE(hierarchy_list));
+		return true;
 	}
 
-	return NULL;
+	return false;
+}
+
+static bool
+get_dvbs_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
+{
+printf("TODO: tune DVB-S card to service_id %u\n", service_id);
+return false;
+}
+
+static bool
+get_dvbc_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
+{
+printf("TODO: tune DVB-C card to service_id %u\n", service_id);
+return false;
 }
 
 /*
@@ -237,7 +269,7 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	bool got_info;
 	struct dvb_frontend_info fe_info;
 	struct dvb_frontend_parameters current_params;
-	struct dvb_frontend_parameters *needed_params;
+	struct dvb_frontend_parameters needed_params;
 	struct dvb_frontend_event event;
 	fe_status_t status;
 	bool lock;
@@ -271,19 +303,12 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	}
 	while(!got_info);
 
-	if(fe_info.type != FE_OFDM)
-	{
-/* TODO */
-printf("TODO: Only able to tune DVB-T devices at present\n");
-return false;
-	}
-
 	/* see what we are currently tuned to */
 	if(ioctl(fe_fd, FE_GET_FRONTEND, &current_params) < 0)
 		fatal("ioctl FE_GET_FRONTEND: %s", strerror(errno));
 
 	/* find the tuning params for the service */
-	if((needed_params = get_tune_params(service_id)) == NULL)
+	if(!get_tune_params(fe_info.type, service_id, &needed_params))
 	{
 		error("service_id %u not found in channels.conf file", service_id);
 		return false;
@@ -301,16 +326,16 @@ return false;
 		lock = status & FE_HAS_LOCK;
 
 	/* are we already tuned to the right frequency */
-	vverbose("Current frequency %u; needed %u; lock=%d", current_params.frequency, needed_params->frequency, lock);
+	vverbose("Current frequency %u; needed %u; lock=%d", current_params.frequency, needed_params.frequency, lock);
 	if(!lock
-	|| current_params.frequency != needed_params->frequency)
+	|| current_params.frequency != needed_params.frequency)
 	{
-		verbose("Retuning to frequency %u", needed_params->frequency);
+		verbose("Retuning to frequency %u", needed_params.frequency);
 		/* empty event queue */
 		while(ioctl(fe_fd, FE_GET_EVENT, &event) >= 0)
 			; /* do nothing */
 		/* tune in */
-		if(ioctl(fe_fd, FE_SET_FRONTEND, needed_params) < 0)
+		if(ioctl(fe_fd, FE_SET_FRONTEND, &needed_params) < 0)
 			fatal("Unable to retune: ioctl FE_SET_FRONTEND: %s", strerror(errno));
 		/* wait for lock */
 		vverbose("Waiting for tuner to lock on");
