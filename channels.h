@@ -26,7 +26,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-bool init_channels_conf(char *);
+char *zap_name(unsigned int);
+
+bool init_channels_conf(char *, char *);
 
 bool tune_service_id(unsigned int, unsigned int, uint16_t);
 

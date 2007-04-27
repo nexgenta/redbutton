@@ -20,7 +20,7 @@
  * if not specified with -f, rb-download will search for:
  * ~/.tzap/channels.conf
  * /etc/channels.conf
- * 
+ *
  * rb-download listens on the network for commands from a remote rb-browser
  * the default IP to listen on is 0.0.0.0 (ie all interfaces), the default TCP port is 10101
  * the -l option changes the default IP and port
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 	}
 
 	/* initialise channels.conf */
-	if(!init_channels_conf(channels_file))
+	if(!init_channels_conf(zap_name(adapter), channels_file))
 		error("Unable to open channels.conf file");
 
 	/* do we need to change the base directory */

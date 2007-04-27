@@ -42,16 +42,79 @@ static bool get_dvbs_tune_params(uint16_t, struct dvb_frontend_parameters *);
 static bool get_dvbc_tune_params(uint16_t, struct dvb_frontend_parameters *);
 static bool get_atsc_tune_params(uint16_t, struct dvb_frontend_parameters *);
 
+/*
+ * returns "tzap" if the given DVB adapter is DVB-T,
+ * "szap" if it is DVB-S
+ * "czap" if it is DVB-C
+ * or "azap" if it is ATSC
+ * (may have been better to call one of these to retune rather than doing it ourselves?)
+ */
+
+char *
+zap_name(unsigned int adapter)
+{
+	char fe_dev[PATH_MAX];
+	int fe_fd;
+	struct dvb_frontend_info fe_info;
+	bool got_info;
+
+	/* see what type of DVB device the adapter is */
+	snprintf(fe_dev, sizeof(fe_dev), FE_DEVICE, adapter);
+
+	if((fe_fd = open(fe_dev, O_RDONLY | O_NONBLOCK)) < 0)
+		fatal("open '%s': %s", fe_dev, strerror(errno));
+
+	vverbose("Getting frontend info");
+
+	do
+	{
+		/* maybe interrupted by a signal */
+		got_info = (ioctl(fe_fd, FE_GET_INFO, &fe_info) >= 0);
+		if(!got_info && errno != EINTR)
+			fatal("ioctl FE_GET_INFO: %s", strerror(errno));
+	}
+	while(!got_info);
+
+	close(fe_fd);
+
+	if(fe_info.type == FE_OFDM)
+	{
+		vverbose("Adapter %u is a '%s' DVB-T card", adapter, fe_info.name);
+		return "tzap";
+	}
+	else if(fe_info.type == FE_QPSK)
+	{
+		vverbose("Adapter %u is a '%s' DVB-S card", adapter, fe_info.name);
+		return "szap";
+	}
+	else if(fe_info.type == FE_QAM)
+	{
+		vverbose("Adapter %u is a '%s' DVB-C card", adapter, fe_info.name);
+		return "czap";
+	}
+	else if(fe_info.type == FE_ATSC)
+	{
+		vverbose("Adapter %u is a '%s' ATSC card", adapter, fe_info.name);
+		return "azap";
+	}
+	else
+	{
+		vverbose("Adapter %u (%s); unknown card type %d", adapter, fe_info.name, fe_info.type);
+		return "";
+	}
+}
+
 static FILE *_channels = NULL;
 
 /*
  * if filename is NULL, it searches for:
- * ~/.tzap/channels.conf
+ * ~/.<zap_name>/channels.conf
  * /etc/channels.conf
+ * zap_name should be tzap for DVB-T, szap for DVB-S, czap for DVB-C or azap for ATSC cards
  */
 
 bool
-init_channels_conf(char *filename)
+init_channels_conf(char *zap_name, char *filename)
 {
 	char *home;
 	char pathname[PATH_MAX];
@@ -63,7 +126,7 @@ init_channels_conf(char *filename)
 	{
 		if((home = getenv("HOME")) != NULL)
 		{
-			snprintf(pathname, sizeof(pathname), "%s/.tzap/channels.conf", home);
+			snprintf(pathname, sizeof(pathname), "%s/.%s/channels.conf", home, zap_name);
 			verbose("Trying to open %s", pathname);
 			_channels = fopen(pathname, "r");
 		}
