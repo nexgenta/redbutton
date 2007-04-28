@@ -353,7 +353,7 @@ get_dvbs_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out, c
 	while(!feof(_channels))
 	{
 		if(fgets(line, sizeof(line), _channels) == NULL
-		|| sscanf(line, "%*[^:]:%u:%1[^:]:%u:%u:%*[^:]:%*[^:]:%u", &freq, pol, sat_no, &sr, &id) != 5
+		|| sscanf(line, "%*[^:]:%u:%c:%u:%u:%*[^:]:%*[^:]:%u", &freq, pol, sat_no, &sr, &id) != 5
 		|| id != service_id)
 			continue;
 		/* chop off trailing \n */
