@@ -524,7 +524,8 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 				needed_params.frequency -= LOF2;
 				hi_lo = true;
 			}
-			do_diseqc(fe_fd, sat_no, polarity, hi_lo);
+			if(do_diseqc(fe_fd, sat_no, polarity, hi_lo) < 0)
+				error("DISEQC command failed for service_id %u", service_id);
 		}
 		/* tune in */
 		if(ioctl(fe_fd, FE_SET_FRONTEND, &needed_params) < 0)
