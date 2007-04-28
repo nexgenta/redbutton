@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <errno.h>
@@ -34,13 +35,28 @@
 
 #include "utils.h"
 
+/* magic DVB-S values from dvbtune */
+#define SLOF (11700*1000UL)
+#define LOF1 (9750*1000UL)
+#define LOF2 (10600*1000UL)
+
 /* internal functions */
-static bool get_tune_params(fe_type_t, uint16_t, struct dvb_frontend_parameters *);
+static bool get_tune_params(fe_type_t, uint16_t, struct dvb_frontend_parameters *, char *, unsigned int *);
 
 static bool get_dvbt_tune_params(uint16_t, struct dvb_frontend_parameters *);
-static bool get_dvbs_tune_params(uint16_t, struct dvb_frontend_parameters *);
+static bool get_dvbs_tune_params(uint16_t, struct dvb_frontend_parameters *, char *, unsigned int *);
 static bool get_dvbc_tune_params(uint16_t, struct dvb_frontend_parameters *);
 static bool get_atsc_tune_params(uint16_t, struct dvb_frontend_parameters *);
+
+/* DISEQC code from dvbtune, written by Dave Chapman */
+struct diseqc_cmd
+{
+	struct dvb_diseqc_master_cmd cmd;
+	uint32_t wait;
+};
+
+static int do_diseqc(int, int, char, bool);
+static int diseqc_send_msg(int fd, fe_sec_voltage_t, struct diseqc_cmd *, fe_sec_tone_mode_t, fe_sec_mini_cmd_t);
 
 /*
  * returns "tzap" if the given DVB adapter is DVB-T,
@@ -241,7 +257,7 @@ str2enum(char *str, const struct param *map, int map_size)
  */
 
 static bool
-get_tune_params(fe_type_t fe_type, uint16_t service_id, struct dvb_frontend_parameters *out)
+get_tune_params(fe_type_t fe_type, uint16_t service_id, struct dvb_frontend_parameters *out, char *pol, unsigned int *sat_no)
 {
 	if(_channels == NULL)
 	{
@@ -253,10 +269,12 @@ get_tune_params(fe_type_t fe_type, uint16_t service_id, struct dvb_frontend_para
 
 	verbose("Searching channels.conf for service_id %u", service_id);
 
+	rewind(_channels);
+
 	if(fe_type == FE_OFDM)
 		return get_dvbt_tune_params(service_id, out);
 	else if(fe_type == FE_QPSK)
-		return get_dvbs_tune_params(service_id, out);
+		return get_dvbs_tune_params(service_id, out, pol, sat_no);
 	else if(fe_type == FE_QAM)
 		return get_dvbc_tune_params(service_id, out);
 	else if(fe_type == FE_ATSC)
@@ -266,6 +284,13 @@ get_tune_params(fe_type_t fe_type, uint16_t service_id, struct dvb_frontend_para
 
 	return false;
 }
+
+/*
+ * DVB-T channels.conf format is:
+ * name:freq:inversion:bandwidth:code_rate_HP:code_rate_LP:constellation:transmission_mode:guard_interval:hierarchy:vpid:apid:service_id
+ * eg:
+ * BBC ONE:722166670:INVERSION_AUTO:BANDWIDTH_8_MHZ:FEC_3_4:FEC_3_4:QAM_16:TRANSMISSION_MODE_2K:GUARD_INTERVAL_1_32:HIERARCHY_NONE:600:601:4165
+ */
 
 static bool
 get_dvbt_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
@@ -283,7 +308,6 @@ get_dvbt_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
 	unsigned int id;
 	int len;
 
-	rewind(_channels);
 	while(!feof(_channels))
 	{
 		if(fgets(line, sizeof(line), _channels) == NULL
@@ -310,11 +334,41 @@ get_dvbt_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
 	return false;
 }
 
+/*
+ * DVB-S channels.conf format is:
+ * name:freq:polarity:sat_number:symbol_rate:vpid:apid:service_id
+ * eg:
+ * Cartoon Network:10949:v:0:27500:6601:6611:7457
+ */
+
 static bool
-get_dvbs_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
+get_dvbs_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out, char *pol, unsigned int *sat_no)
 {
-printf("TODO: tune DVB-S card to service_id %u\n", service_id);
-return false;
+	char line[1024];
+	unsigned int freq;
+	unsigned int sr;
+	unsigned int id;
+	int len;
+
+	while(!feof(_channels))
+	{
+		if(fgets(line, sizeof(line), _channels) == NULL
+		|| sscanf(line, "%*[^:]:%u:%1[^:]:%u:%u:%*[^:]:%*[^:]:%u", &freq, pol, sat_no, &sr, &id) != 5
+		|| id != service_id)
+			continue;
+		/* chop off trailing \n */
+		len = strlen(line) - 1;
+		while(len >= 0 && line[len] == '\n')
+			line[len--] = '\0';
+		verbose("%s", line);
+		out->frequency = freq * 1000;
+		out->inversion = INVERSION_AUTO;
+		out->u.qpsk.symbol_rate = sr;
+		out->u.qpsk.fec_inner = FEC_AUTO;
+		return true;
+	}
+
+	return false;
 }
 
 static bool
@@ -331,6 +385,53 @@ printf("TODO: tune ATSC card to service_id %u\n", service_id);
 return false;
 }
 
+/* DISEQC code from dvbtune, written by Dave Chapman */
+
+/*
+ * digital satellite equipment control,
+ * specification is available from http://www.eutelsat.com/
+ */
+
+static int
+do_diseqc(int secfd, int sat_no, char pol, bool hi_lo)
+{
+	bool polv = (toupper(pol) == 'V');
+	struct diseqc_cmd cmd =  { {{0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00}, 4}, 0 };
+
+	/*
+	 * param: high nibble: reset bits, low nibble set bits,
+	 * bits are: option, position, polarizaion, band
+	 */
+	cmd.cmd.msg[3] = 0xf0 | (((sat_no * 4) & 0x0f) | (hi_lo ? 1 : 0) | (polv ? 0 : 2));
+
+	return diseqc_send_msg( secfd,
+				polv ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
+				&cmd,
+				hi_lo ? SEC_TONE_ON : SEC_TONE_OFF,
+				(sat_no / 4) % 2 ? SEC_MINI_B : SEC_MINI_A);
+}
+
+static int
+diseqc_send_msg(int fd, fe_sec_voltage_t v, struct diseqc_cmd *cmd, fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b)
+{
+	if(ioctl(fd, FE_SET_TONE, SEC_TONE_OFF) < 0)
+		return -1;
+	if(ioctl(fd, FE_SET_VOLTAGE, v) < 0)
+		return -1;
+	usleep(15 * 1000);
+	if(ioctl(fd, FE_DISEQC_SEND_MASTER_CMD, &cmd->cmd) < 0)
+		return -1;
+	usleep(cmd->wait * 1000);
+	usleep(15 * 1000);
+	if(ioctl(fd, FE_DISEQC_SEND_BURST, b) < 0)
+		return -1;
+	usleep(15 * 1000);
+	if(ioctl(fd, FE_SET_TONE, t) < 0)
+		return -1;
+
+	return 0;
+}
+
 /*
  * retune to the frequency the given service_id is on
  */
@@ -343,6 +444,9 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	struct dvb_frontend_info fe_info;
 	struct dvb_frontend_parameters current_params;
 	struct dvb_frontend_parameters needed_params;
+	char polarity;
+	unsigned int sat_no;
+	bool hi_lo;
 	struct dvb_frontend_event event;
 	fe_status_t status;
 	bool lock;
@@ -381,7 +485,7 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 		fatal("ioctl FE_GET_FRONTEND: %s", strerror(errno));
 
 	/* find the tuning params for the service */
-	if(!get_tune_params(fe_info.type, service_id, &needed_params))
+	if(!get_tune_params(fe_info.type, service_id, &needed_params, &polarity, &sat_no))
 	{
 		error("service_id %u not found in channels.conf file", service_id);
 		return false;
@@ -407,6 +511,21 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 		/* empty event queue */
 		while(ioctl(fe_fd, FE_GET_EVENT, &event) >= 0)
 			; /* do nothing */
+		/* do DISEQC (whatever that is) for DVB-S */
+		if(fe_info.type == FE_QPSK)
+		{
+			if(needed_params.frequency < SLOF)
+			{
+				needed_params.frequency -= LOF1;
+				hi_lo = false;
+			}
+			else
+			{
+				needed_params.frequency -= LOF2;
+				hi_lo = true;
+			}
+			do_diseqc(fe_fd, sat_no, polarity, hi_lo);
+		}
 		/* tune in */
 		if(ioctl(fe_fd, FE_SET_FRONTEND, &needed_params) < 0)
 			fatal("Unable to retune: ioctl FE_SET_FRONTEND: %s", strerror(errno));
