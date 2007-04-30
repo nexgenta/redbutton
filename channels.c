@@ -56,7 +56,7 @@ struct diseqc_cmd
 };
 
 static int do_diseqc(int, int, char, bool);
-static int diseqc_send_msg(int fd, fe_sec_voltage_t, struct diseqc_cmd *, fe_sec_tone_mode_t, fe_sec_mini_cmd_t);
+static int diseqc_send_msg(int, fe_sec_voltage_t, struct diseqc_cmd *, fe_sec_tone_mode_t, fe_sec_mini_cmd_t);
 
 /*
  * returns "tzap" if the given DVB adapter is DVB-T,
