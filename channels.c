@@ -216,14 +216,14 @@ static const struct param hierarchy_list[] =
 	{ "HIERARCHY_NONE", HIERARCHY_NONE }
 };
 
-static const struct param constellation_list[] =
+static const struct param qam_list[] =
 {
 	{ "QPSK", QPSK },
-	{ "QAM_128", QAM_128 },
 	{ "QAM_16", QAM_16 },
-	{ "QAM_256", QAM_256 },
 	{ "QAM_32", QAM_32 },
-	{ "QAM_64", QAM_64 }
+	{ "QAM_64", QAM_64 },
+	{ "QAM_128", QAM_128 },
+	{ "QAM_256", QAM_256 }
 };
 
 static const struct param transmissionmode_list[] =
@@ -324,7 +324,7 @@ get_dvbt_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
 		out->u.ofdm.bandwidth = str2enum(bw, bw_list, LIST_SIZE(bw_list));
 		out->u.ofdm.code_rate_HP = str2enum(hp, fec_list, LIST_SIZE(fec_list));
 		out->u.ofdm.code_rate_LP = str2enum(lp, fec_list, LIST_SIZE(fec_list));
-		out->u.ofdm.constellation = str2enum(qam, constellation_list, LIST_SIZE(constellation_list));
+		out->u.ofdm.constellation = str2enum(qam, qam_list, LIST_SIZE(qam_list));
 		out->u.ofdm.transmission_mode = str2enum(trans, transmissionmode_list, LIST_SIZE(transmissionmode_list));
 		out->u.ofdm.guard_interval = str2enum(gi, guard_list, LIST_SIZE(guard_list));
 		out->u.ofdm.hierarchy_information = str2enum(hier, hierarchy_list, LIST_SIZE(hierarchy_list));
@@ -371,11 +371,45 @@ get_dvbs_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out, c
 	return false;
 }
 
+/*
+ * DVB-C channels.conf format is:
+ * name:freq:inversion:symbol_rate:fec:modulation:vpid:apid:service_id
+ * eg:
+ * Eurosport:394000000:INVERSION_OFF:6900000:FEC_NONE:QAM_64:410:420
+ */
+
 static bool
 get_dvbc_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
 {
-printf("TODO: tune DVB-C card to service_id %u\n", service_id);
-return false;
+	char line[1024];
+	unsigned int freq;
+	char inv[32];
+	unsigned int sr;
+	char fec[32];
+	char mod[32];
+	unsigned int id;
+	int len;
+
+	while(!feof(_channels))
+	{
+		if(fgets(line, sizeof(line), _channels) == NULL
+		|| sscanf(line, "%*[^:]:%u:%32[^:]:%u:%32[^:]:%32[^:]:%*[^:]:%*[^:]:%u", &freq, inv, &sr, fec, mod, &id) != 6
+		|| id != service_id)
+			continue;
+		/* chop off trailing \n */
+		len = strlen(line) - 1;
+		while(len >= 0 && line[len] == '\n')
+			line[len--] = '\0';
+		verbose("%s", line);
+		out->frequency = freq;
+		out->inversion = str2enum(inv, inversion_list, LIST_SIZE(inversion_list));
+		out->u.qam.symbol_rate = sr;
+		out->u.qam.fec_inner = str2enum(fec, fec_list, LIST_SIZE(fec_list));
+		out->u.qam.modulation = str2enum(mod, qam_list, LIST_SIZE(qam_list));
+		return true;
+	}
+
+	return false;
 }
 
 static bool
