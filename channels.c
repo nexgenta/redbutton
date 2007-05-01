@@ -223,7 +223,9 @@ static const struct param qam_list[] =
 	{ "QAM_32", QAM_32 },
 	{ "QAM_64", QAM_64 },
 	{ "QAM_128", QAM_128 },
-	{ "QAM_256", QAM_256 }
+	{ "QAM_256", QAM_256 },
+	{ "8VSB", VSB_8 },
+	{ "16VSB", VSB_16 }
 };
 
 static const struct param transmissionmode_list[] =
