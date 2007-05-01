@@ -363,7 +363,7 @@ get_dvbs_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out, c
 		verbose("%s", line);
 		out->frequency = freq * 1000;
 		out->inversion = INVERSION_AUTO;
-		out->u.qpsk.symbol_rate = sr;
+		out->u.qpsk.symbol_rate = sr * 1000;
 		out->u.qpsk.fec_inner = FEC_AUTO;
 		return true;
 	}
