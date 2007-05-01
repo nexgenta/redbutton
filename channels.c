@@ -375,7 +375,7 @@ get_dvbs_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out, c
  * DVB-C channels.conf format is:
  * name:freq:inversion:symbol_rate:fec:modulation:vpid:apid:service_id
  * eg:
- * Eurosport:394000000:INVERSION_OFF:6900000:FEC_NONE:QAM_64:410:420
+ * Eurosport:394000000:INVERSION_OFF:6900000:FEC_NONE:QAM_64:410:420:16000
  */
 
 static bool
