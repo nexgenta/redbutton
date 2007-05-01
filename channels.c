@@ -412,11 +412,40 @@ get_dvbc_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
 	return false;
 }
 
+/*
+ * ATSC channels.conf format is:
+ * name:frequency:modulation:vpid:apid:service_id
+ * eg:
+ * Jazz-TV:647000000:QAM_256:49:52:3
+ */
+
 static bool
 get_atsc_tune_params(uint16_t service_id, struct dvb_frontend_parameters *out)
 {
-printf("TODO: tune ATSC card to service_id %u\n", service_id);
-return false;
+	char line[1024];
+	unsigned int freq;
+	char mod[32];
+	unsigned int id;
+	int len;
+
+	while(!feof(_channels))
+	{
+		if(fgets(line, sizeof(line), _channels) == NULL
+		|| sscanf(line, "%*[^:]:%u:%32[^:]:%*[^:]:%*[^:]:%u", &freq, mod, &id) != 3
+		|| id != service_id)
+			continue;
+		/* chop off trailing \n */
+		len = strlen(line) - 1;
+		while(len >= 0 && line[len] == '\n')
+			line[len--] = '\0';
+		verbose("%s", line);
+		out->frequency = freq;
+		/* out->inversion is not set by azap */
+		out->u.vsb.modulation = str2enum(mod, qam_list, LIST_SIZE(qam_list));
+		return true;
+	}
+
+	return false;
 }
 
 /* DISEQC code from dvbtune, written by Dave Chapman */
