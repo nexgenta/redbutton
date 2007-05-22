@@ -1476,6 +1476,18 @@ return (*(engine.backend.fns->getServiceURL))(&engine.backend);
 }
 
 /*
+ * return true if the engine is able to receive the given service
+ * service should be in the form "dvb://<network_id>..<service_id>", eg "dvb://233a..4C80"
+ */
+
+bool
+MHEGEngine_isServiceAvailable(OctetString *service)
+{
+	/* ask the backend */
+	return (*(engine.backend.fns->isServiceAvailable))(&engine.backend, service);
+}
+
+/*
  * returns the absolute group ID, ie it always starts with "~//"
  * returns a ptr to static string that will be overwritten by the next call to this routine
  * section 8.3.2 of the UK MHEG Profile says the filename prefixes are:

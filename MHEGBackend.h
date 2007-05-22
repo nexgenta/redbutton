@@ -44,6 +44,8 @@ typedef struct MHEGBackend
 		void (*retune)(struct MHEGBackend *, OctetString *);
 		/* return a dvb:// URL for the service we are currently downloading the carousel from */
 		const OctetString *(*getServiceURL)(struct MHEGBackend *);
+		/* return true if the engine is able to receive the given service (dvb:// URL format) */
+		bool (*isServiceAvailable)(struct MHEGBackend *, OctetString *);
 	} *fns;
 } MHEGBackend;
 

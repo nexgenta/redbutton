@@ -9,6 +9,8 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "MHEGEngine.h"
 #include "si.h"
@@ -36,16 +38,18 @@ bool local_checkContentRef(MHEGBackend *, ContentReference *);
 bool local_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *local_openFile(MHEGBackend *, OctetString *);
 void local_retune(MHEGBackend *, OctetString *);
+bool local_isServiceAvailable(MHEGBackend *, OctetString *);
 
 static struct MHEGBackendFns local_backend_fns =
 {
-	local_checkContentRef,	/* checkContentRef */
-	local_loadFile,		/* loadFile */
-	local_openFile,		/* openFile */
-	open_stream,		/* openStream */
-	close_stream,		/* closeStream */
-	local_retune,		/* retune */
-	get_service_url,	/* getServiceURL */
+	local_checkContentRef,		/* checkContentRef */
+	local_loadFile,			/* loadFile */
+	local_openFile,			/* openFile */
+	open_stream,			/* openStream */
+	close_stream,			/* closeStream */
+	local_retune,			/* retune */
+	get_service_url,		/* getServiceURL */
+	local_isServiceAvailable,	/* isServiceAvailable */
 };
 
 /* remote backend funcs */
@@ -53,16 +57,18 @@ bool remote_checkContentRef(MHEGBackend *, ContentReference *);
 bool remote_loadFile(MHEGBackend *, OctetString *, OctetString *);
 FILE *remote_openFile(MHEGBackend *, OctetString *);
 void remote_retune(MHEGBackend *, OctetString *);
+bool remote_isServiceAvailable(MHEGBackend *, OctetString *);
 
 static struct MHEGBackendFns remote_backend_fns =
 {
-	remote_checkContentRef,	/* checkContentRef */
-	remote_loadFile,	/* loadFile */
-	remote_openFile,	/* openFile */
-	open_stream,		/* openStream */
-	close_stream,		/* closeStream */
-	remote_retune,		/* retune */
-	get_service_url,	/* getServiceURL */
+	remote_checkContentRef,		/* checkContentRef */
+	remote_loadFile,		/* loadFile */
+	remote_openFile,		/* openFile */
+	open_stream,			/* openStream */
+	close_stream,			/* closeStream */
+	remote_retune,			/* retune */
+	get_service_url,		/* getServiceURL */
+	remote_isServiceAvailable,	/* isServiceAvailable */
 };
 
 /* public interface */
@@ -621,6 +627,52 @@ local_retune(MHEGBackend *t, OctetString *service)
 }
 
 /*
+ * return true if we are able to receive the given service
+ * service should be in the form "dvb://<network_id>..<service_id>", eg "dvb://233a..4C80"
+ */
+
+bool
+local_isServiceAvailable(MHEGBackend *t, OctetString *service)
+{
+	unsigned int service_id;
+	char service_str[64];
+	char *slash;
+	int prefix_len;
+	char service_dir[PATH_MAX];
+	struct stat stats;
+	bool exists;
+
+	/* assert */
+	if(service->size < 6 || strncmp(service->data, "dvb://", 6) != 0)
+		fatal("local_isServiceAvailable: invalid service '%.*s'", service->size, service->data);
+
+	/* extract the service_id */
+	service_id = si_get_service_id(service);
+	snprintf(service_str, sizeof(service_str), "%u", service_id);
+
+	/*
+	 * base_dir is: [path/to/services/]<service_id>
+	 * so we just need to replace the last filename component with the new service_id
+	 */
+	slash = strrchr(t->base_dir, '/');
+	if(slash == NULL)
+	{
+		/* no preceeding path */
+		snprintf(service_dir, sizeof(service_dir), "%s", service_str);
+	}
+	else
+	{
+		prefix_len = (slash - t->base_dir) + 1;
+		snprintf(service_dir, sizeof(service_dir), "%.*s%s", prefix_len, t->base_dir, service_str);
+	}
+
+	/* see if the directory for the service exists */
+	exists = (stat(service_dir, &stats) == 0);
+
+	return exists;
+}
+
+/*
  * remote routines
  */
 
@@ -781,3 +833,29 @@ remote_retune(MHEGBackend *t, OctetString *service)
 	return;
 }
 
+/*
+ * return true if we are able to receive the given service
+ * service should be in the form "dvb://<network_id>..<service_id>", eg "dvb://233a..4C80"
+ */
+
+bool
+remote_isServiceAvailable(MHEGBackend *t, OctetString *service)
+{
+	char cmd[128];
+	FILE *sock;
+	bool available = true;
+
+	/* assert */
+	if(service->size < 6 || strncmp(service->data, "dvb://", 6) != 0)
+		fatal("remote_isServiceAvailable: invalid service '%.*s'", service->size, service->data);
+
+	snprintf(cmd, sizeof(cmd), "available %u\n", si_get_service_id(service));
+
+	if((sock = remote_command(t, true, cmd)) == NULL
+	|| remote_response(sock) != BACKEND_RESPONSE_OK)
+	{
+		available = false;
+	}
+
+	return available;
+}

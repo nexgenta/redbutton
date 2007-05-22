@@ -21,6 +21,8 @@ static OctetString *si_channel = NULL;
  * "rec://svc/lcn/X" - use logical channel number X (eg 1 for BBC1, 3 for ITV1, etc)
  *
  * we resolve whatever we are given to a dvb:// format URL and store that
+ *
+ * returns -1 if the backend says the given service is not available
  */
 
 int
@@ -53,6 +55,10 @@ printf("TODO: si_get_index: service='%.*s'\n", ref->size, ref->data);
 	for(i=0; i<=si_max_index; i++)
 		if(OctetString_cmp(ref, &si_channel[i]) == 0)
 			return i;
+
+	/* does the backend say it is available */
+	if(!MHEGEngine_isServiceAvailable(ref))
+		return -1;
 
 	/* add it to the list */
 	si_max_index ++;
