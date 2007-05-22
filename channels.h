@@ -32,5 +32,7 @@ bool init_channels_conf(char *, char *);
 
 bool tune_service_id(unsigned int, unsigned int, uint16_t);
 
+bool service_available(uint16_t);
+
 #endif	/* __CHANNELS_H__ */
 

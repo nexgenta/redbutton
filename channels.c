@@ -610,4 +610,30 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 	return true;
 }
 
+/*
+ * returns true if service_id is listed in the channels file
+ */
+
+bool
+service_available(uint16_t service_id)
+{
+	char line[1024];
+	char *p;
+	unsigned long id;
+
+	rewind(_channels);
+
+	while(!feof(_channels))
+	{
+		/* service_id is the last field for all channels.conf file formats */
+		if(fgets(line, sizeof(line), _channels) == NULL
+		|| (p = rindex(line, ':')) == NULL)
+			continue;
+		id = strtoul(p + 1, NULL, 0);
+		if(id == service_id)
+			return true;
+	}
+
+	return false;
+}
 

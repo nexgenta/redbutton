@@ -18,6 +18,7 @@
 #include "assoc.h"
 #include "fs.h"
 #include "stream.h"
+#include "channels.h"
 #include "utils.h"
 
 /* max number of args that can be passed to a command (arbitrary) */
@@ -27,6 +28,7 @@
 bool cmd_assoc(struct listen_data *, FILE *, int, char **);
 bool cmd_ademux(struct listen_data *, FILE *, int, char **);
 bool cmd_astream(struct listen_data *, FILE *, int, char **);
+bool cmd_available(struct listen_data *, FILE *, int, char **);
 bool cmd_avdemux(struct listen_data *, FILE *, int, char **);
 bool cmd_avstream(struct listen_data *, FILE *, int, char **);
 bool cmd_check(struct listen_data *, FILE *, int, char **);
@@ -49,6 +51,7 @@ static struct
 	{ "assoc", "",						cmd_assoc,	"List component tag to PID mappings" },
 	{ "ademux", "[<ServiceID>] <ComponentTag>",		cmd_ademux,	"Demux the given audio component tag" },
 	{ "astream", "[<ServiceID>] <ComponentTag>",		cmd_astream,	"Stream the given audio component tag" },
+	{ "available", "<ServiceID>",				cmd_available,	"Return OK if the ServiceID is available" },
 	{ "avdemux", "[<ServiceID>] <AudioTag> <VideoTag>",	cmd_avdemux,	"Demux the given audio and video component tags" },
 	{ "avstream", "[<ServiceID>] <AudioTag> <VideoTag>",	cmd_avstream,	"Stream the given audio and video component tags" },
 	{ "check", "<ContentReference>",			cmd_check,	"Check if the given file exists on the carousel" },
@@ -667,6 +670,28 @@ cmd_avstream(struct listen_data *listen_data, FILE *client, int argc, char *argv
 
 	/* close the connection */
 	return true;
+}
+
+/*
+ * available <ServiceID>
+ * returns 200 OK if ServiceID is listed in the channels.conf file
+ */
+
+bool
+cmd_available(struct listen_data *listen_data, FILE *client, int argc, char *argv[])
+{
+	unsigned int service_id;
+
+	CHECK_USAGE(2, "available <ServiceID>");
+
+	service_id = strtoul(argv[1], NULL, 0);
+
+	if(service_available(service_id))
+		SEND_RESPONSE(200, "OK");
+	else
+		SEND_RESPONSE(404, "Not Found");
+
+	return false;
 }
 
 /*
