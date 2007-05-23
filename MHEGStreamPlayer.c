@@ -518,6 +518,7 @@ video_thread(void *arg)
 	unsigned int vid_height;
 	VideoFrame *vf;
 	double buffered;
+	double last_buffered;
 	double last_pts;
 	int64_t last_time, this_time, now;
 	int usecs;
@@ -534,6 +535,7 @@ video_thread(void *arg)
 		fatal("video_thread: VideoClass is NULL");
 
 	/* wait until we have some frames buffered up */
+	last_buffered = -1.0;
 	do
 	{
 		pthread_mutex_lock(&p->videoq_lock);
@@ -542,7 +544,9 @@ video_thread(void *arg)
 		else
 			buffered = 0.0;
 		pthread_mutex_unlock(&p->videoq_lock);
-		verbose("MHEGStreamPlayer: buffered %f seconds of video", buffered);
+		if(buffered != last_buffered)
+			verbose("MHEGStreamPlayer: buffered %f seconds of video", buffered);
+		last_buffered = buffered;
 		/* let the decoder have a go */
 		if(buffered < INIT_VIDEO_BUFFER_WAIT)
 			pthread_yield();
