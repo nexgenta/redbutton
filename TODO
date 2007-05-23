@@ -1,3 +1,11 @@
+got this once when changing channels:
+X Error of failed request:  BadAccess (attempt to access private resource denied)
+  Major opcode of failed request:  146 (MIT-SHM)
+  Minor opcode of failed request:  1 (X_ShmAttach)
+  Serial number of failed request:  4292
+  Current serial number in output stream:  4385
+
+
 posix_fadvise() when streaming data from the backend?
 
 

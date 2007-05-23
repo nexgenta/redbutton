@@ -1600,6 +1600,9 @@ MHEGEngine_freeBitmap(MHEGBitmap *bitmap)
 	return;
 }
 
+/* stop verbose messages from different threads overlapping */
+pthread_mutex_t stdout_lock = PTHREAD_MUTEX_INITIALIZER;
+
 void
 verbose(char *message, ...)
 {
@@ -1607,10 +1610,12 @@ verbose(char *message, ...)
 
 	if(engine.verbose)
 	{
+		pthread_mutex_lock(&stdout_lock);
 		va_start(ap, message);
 		vprintf(message, ap);
 		printf("\n");
 		va_end(ap);
+		pthread_mutex_unlock(&stdout_lock);
 	}
 
 	return;
