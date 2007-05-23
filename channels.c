@@ -532,6 +532,8 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 			error("Unable to open '%s' read/write; you will not be able to retune", fe_dev);
 			if((fe_fd = open(fe_dev, O_RDONLY | O_NONBLOCK)) < 0)
 				fatal("open '%s': %s", fe_dev, strerror(errno));
+			/* don't try to tune in */
+			first_time = false;
 		}
 	}
 
