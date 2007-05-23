@@ -369,7 +369,9 @@ prog_GetCurrentDate(LIST_OF(Parameter) *params, OctetString *caller_gid)
 	GenericInteger *time_par;
 	unsigned int mheg_date;
 	unsigned int mheg_time;
-	time_t now;
+	unsigned int unix_time;
+	struct timeval now;
+	struct timezone zone;
 
 	if(!check_parameters(params, 2, Parameter_new_generic_integer,	/* out: date */
 					Parameter_new_generic_integer))	/* out: time */
@@ -381,14 +383,17 @@ prog_GetCurrentDate(LIST_OF(Parameter) *params, OctetString *caller_gid)
 	date_par = &(get_parameter(params, 1)->u.new_generic_integer);
 	time_par = &(get_parameter(params, 2)->u.new_generic_integer);
 
+	/* need to return local time, so take timezone into account */
+	gettimeofday(&now, &zone);
+	unix_time = now.tv_sec - (zone.tz_minuteswest * 60);
+
 	/* number of days since 00:00:00 1/1/1970 */
-	now = time(NULL);
-	mheg_date = now / (60 * 60 * 24);
+	mheg_date = unix_time / (60 * 60 * 24);
 	/* number of days since 00:00:00 17/11/1858 */
 	mheg_date += MHEG_EPOCH_OFFSET;
 
 	/* number of seconds since 00:00:00 */
-	mheg_time = now % (60 * 60 * 24);
+	mheg_time = unix_time % (60 * 60 * 24);
 
 	GenericInteger_setInteger(date_par, caller_gid, mheg_date);
 	GenericInteger_setInteger(time_par, caller_gid, mheg_time);
@@ -446,8 +451,12 @@ prog_FormatDate(LIST_OF(Parameter) *params, OctetString *caller_gid)
 
 	/* convert to UNIX time */
 	unix_time = ((mheg_date - MHEG_EPOCH_OFFSET) * (24 * 60 * 60)) + mheg_time;
-	/* let libc do all the hard work of working out the year etc */
-	tm = localtime(&unix_time);
+	/*
+	 * let libc do all the hard work of working out the year etc
+	 * we are passed a date/time as returned by GetCurrentDate, ie local time
+	 * as GCD has already taken care of the timezone, use gmtime() not localtime() here
+	 */
+	tm = gmtime(&unix_time);
 
 	/* write it out */
 	dateString.size = 0;
