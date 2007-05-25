@@ -242,8 +242,14 @@ ElementaryAction_execute(ElementaryAction *e, OctetString *caller_gid)
 		if(((ref = GenericObjectReference_getObjectReference(&e->u.deselect, caller_gid)) != NULL)
 		&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 		{
-/* TODO */
-printf("TODO: Deselect: target: %s\n", ExternalReference_name(&obj->inst.ref));
+			if(obj->inst.rtti == RTTI_HotspotClass)
+				HotspotClass_Deselect((HotspotClass *) obj);
+			else if(obj->inst.rtti == RTTI_PushButtonClass)
+				PushButtonClass_Deselect((PushButtonClass *) obj);
+			else if(obj->inst.rtti == RTTI_SwitchButtonClass)
+				SwitchButtonClass_Deselect((SwitchButtonClass *) obj);
+			else
+				error("Deselect: unexpected target: %s", ExternalReference_name(&obj->inst.ref));
 		}
 		break;
 
@@ -525,8 +531,12 @@ printf("TODO: Deselect: target: %s\n", ExternalReference_name(&obj->inst.ref));
 		if(((ref = GenericObjectReference_getObjectReference(&e->u.get_label.target, caller_gid)) != NULL)
 		&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 		{
-/* TODO */
-printf("TODO: GetLabel: target: %s\n", ExternalReference_name(&obj->inst.ref));
+			if(obj->inst.rtti == RTTI_PushButtonClass)
+				PushButtonClass_GetLabel((PushButtonClass *) obj, &e->u.get_label, caller_gid);
+			else if(obj->inst.rtti == RTTI_SwitchButtonClass)
+				SwitchButtonClass_GetLabel((SwitchButtonClass *) obj, &e->u.get_label, caller_gid);
+			else
+				error("GetLabel: unexpected target: %s", ExternalReference_name(&obj->inst.ref));
 		}
 		break;
 
@@ -666,8 +676,10 @@ printf("TODO: GetLabel: target: %s\n", ExternalReference_name(&obj->inst.ref));
 		if(((ref = GenericObjectReference_getObjectReference(&e->u.get_selection_status.target, caller_gid)) != NULL)
 		&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 		{
-/* TODO */
-printf("TODO: GetSelectionStatus: target: %s\n", ExternalReference_name(&obj->inst.ref));
+			if(obj->inst.rtti == RTTI_SwitchButtonClass)
+				SwitchButtonClass_GetSelectionStatus((SwitchButtonClass *) obj, &e->u.get_selection_status, caller_gid);
+			else
+				error("GetSelectionStatus: unexpected target: %s", ExternalReference_name(&obj->inst.ref));
 		}
 		break;
 
@@ -1023,8 +1035,14 @@ printf("TODO: GetSelectionStatus: target: %s\n", ExternalReference_name(&obj->in
 		if(((ref = GenericObjectReference_getObjectReference(&e->u.select, caller_gid)) != NULL)
 		&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 		{
-/* TODO */
-printf("TODO: Select: target: %s\n", ExternalReference_name(&obj->inst.ref));
+			if(obj->inst.rtti == RTTI_HotspotClass)
+				HotspotClass_Select((HotspotClass *) obj);
+			else if(obj->inst.rtti == RTTI_PushButtonClass)
+				PushButtonClass_Select((PushButtonClass *) obj);
+			else if(obj->inst.rtti == RTTI_SwitchButtonClass)
+				SwitchButtonClass_Select((SwitchButtonClass *) obj);
+			else
+				error("Select: unexpected target: %s", ExternalReference_name(&obj->inst.ref));
 		}
 		break;
 
@@ -1289,8 +1307,12 @@ printf("TODO: Select: target: %s\n", ExternalReference_name(&obj->inst.ref));
 		if(((ref = GenericObjectReference_getObjectReference(&e->u.set_label.target, caller_gid)) != NULL)
 		&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 		{
-/* TODO */
-printf("TODO: SetLabel: target: %s\n", ExternalReference_name(&obj->inst.ref));
+			if(obj->inst.rtti == RTTI_PushButtonClass)
+				PushButtonClass_SetLabel((PushButtonClass *) obj, &e->u.set_label, caller_gid);
+			else if(obj->inst.rtti == RTTI_SwitchButtonClass)
+				SwitchButtonClass_SetLabel((SwitchButtonClass *) obj, &e->u.set_label, caller_gid);
+			else
+				error("SetLabel: unexpected target: %s", ExternalReference_name(&obj->inst.ref));
 		}
 		break;
 
@@ -1592,8 +1614,10 @@ printf("TODO: SetLabel: target: %s\n", ExternalReference_name(&obj->inst.ref));
 		if(((ref = GenericObjectReference_getObjectReference(&e->u.toggle, caller_gid)) != NULL)
 		&& ((obj = MHEGEngine_findObjectReference(ref, caller_gid)) != NULL))
 		{
-/* TODO */
-printf("TODO: Toggle: target: %s\n", ExternalReference_name(&obj->inst.ref));
+			if(obj->inst.rtti == RTTI_SwitchButtonClass)
+				SwitchButtonClass_Toggle((SwitchButtonClass *) obj);
+			else
+				error("Toggle: unexpected target: %s", ExternalReference_name(&obj->inst.ref));
 		}
 		break;
 

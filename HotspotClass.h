@@ -12,5 +12,8 @@ void HotspotClass_Activation(HotspotClass *);
 void HotspotClass_Deactivation(HotspotClass *);
 void HotspotClass_Destruction(HotspotClass *);
 
+void HotspotClass_Select(HotspotClass *);
+void HotspotClass_Deselect(HotspotClass *);
+
 #endif	/* __HOTSPOTCLASS_H__ */
 

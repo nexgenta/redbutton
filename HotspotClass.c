@@ -38,3 +38,19 @@ HotspotClass_Destruction(HotspotClass *t)
 	return;
 }
 
+void
+HotspotClass_Select(HotspotClass *t)
+{
+	error("HotspotClass: %s; not supported", ExternalReference_name(&t->rootClass.inst.ref));
+
+	return;
+}
+
+void
+HotspotClass_Deselect(HotspotClass *t)
+{
+	error("HotspotClass: %s; not supported", ExternalReference_name(&t->rootClass.inst.ref));
+
+	return;
+}
+
