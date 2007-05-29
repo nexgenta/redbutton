@@ -86,6 +86,12 @@ SceneClass_Activation(SceneClass *s)
 		RootClass_Preparation(&s->rootClass);
 	}
 
+	if(s->have_aspect_ratio)
+	{
+/* TODO */
+printf("TODO: SceneClass: %s; aspect_ratio=%d:%d\n", ExternalReference_name(&s->rootClass.inst.ref), s->aspect_ratio.width, s->aspect_ratio.height);
+	}
+
 	/* do Activation of the GroupClass */
 	if(s->have_on_start_up)
 		ActionClass_execute(&s->on_start_up, &s->rootClass.inst.ref.group_identifier);
