@@ -139,6 +139,8 @@ IntegerVariableClass_Add(IntegerVariableClass *v, Add *params, OctetString *call
 
 	val = GenericInteger_getInteger(&params->value, caller_gid);
 
+	verbose("Add: %d + %d", v->inst.Value.u.integer, val);
+
 	v->inst.Value.u.integer += val;
 
 	return;
@@ -156,6 +158,8 @@ IntegerVariableClass_Subtract(IntegerVariableClass *v, Subtract *params, OctetSt
 		fatal("IntegerVariableClass_Subtract unexpected type: %d", v->inst.Value.choice);
 
 	val = GenericInteger_getInteger(&params->value, caller_gid);
+
+	verbose("Subtract: %d - %d", v->inst.Value.u.integer, val);
 
 	v->inst.Value.u.integer -= val;
 
@@ -175,6 +179,8 @@ IntegerVariableClass_Multiply(IntegerVariableClass *v, Multiply *params, OctetSt
 
 	val = GenericInteger_getInteger(&params->value, caller_gid);
 
+	verbose("Multiply: %d * %d", v->inst.Value.u.integer, val);
+
 	v->inst.Value.u.integer *= val;
 
 	return;
@@ -193,6 +199,8 @@ IntegerVariableClass_Divide(IntegerVariableClass *v, Divide *params, OctetString
 
 	val = GenericInteger_getInteger(&params->value, caller_gid);
 
+	verbose("Divide: %d / %d", v->inst.Value.u.integer, val);
+
 	v->inst.Value.u.integer /= val;
 
 	return;
@@ -210,6 +218,8 @@ IntegerVariableClass_Modulo(IntegerVariableClass *v, Modulo *params, OctetString
 		fatal("IntegerVariableClass_Modulo unexpected type: %d", v->inst.Value.choice);
 
 	val = GenericInteger_getInteger(&params->value, caller_gid);
+
+	verbose("Modulo: %d %% %d", v->inst.Value.u.integer, val);
 
 	v->inst.Value.u.integer %= val;
 

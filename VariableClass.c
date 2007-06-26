@@ -4,6 +4,7 @@
 
 #include "MHEGEngine.h"
 #include "ISO13522-MHEG-5.h"
+#include "VariableClass.h"
 #include "RootClass.h"
 #include "GenericBoolean.h"
 #include "BooleanVariableClass.h"
@@ -163,6 +164,8 @@ VariableClass_SetVariable(VariableClass *v, NewVariableValue *new_value, OctetSt
 		break;
 	}
 
+	verbose("SetVariable: %s", VariableClass_stringValue(v));
+
 	return;
 }
 
@@ -249,7 +252,7 @@ VariableClass_stringValue(VariableClass *v)
 	case OriginalValue_octetstring:
 		oct = &v->inst.Value.u.octetstring;
 		_value = safe_realloc(_value, oct->size + 128);
-		snprintf(_value, oct->size + 128, "OctetString %u %.*s", oct->size, oct->size, oct->data);
+		snprintf(_value, oct->size + 128, "OctetString '%.*s'", oct->size, oct->data);
 		return _value;
 
 	case OriginalValue_object_reference:
@@ -260,7 +263,7 @@ VariableClass_stringValue(VariableClass *v)
 	case OriginalValue_content_reference:
 		oct = &v->inst.Value.u.content_reference;
 		_value = safe_realloc(_value, oct->size + 128);
-		snprintf(_value, oct->size + 128, "ContentReference %u %.*s", oct->size, oct->size, oct->data);
+		snprintf(_value, oct->size + 128, "ContentReference '%.*s'", oct->size, oct->data);
 		return _value;
 
 	default:
