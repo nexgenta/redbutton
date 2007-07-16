@@ -367,10 +367,10 @@ MHEGDisplay_refresh(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box)
 	unsigned int w, h;
 
 	/* scale if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
 
 	/*
 	 * if video is being displayed, the current frame will already be in d->contents
@@ -426,10 +426,10 @@ MHEGDisplay_setClipRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *b
 	XRectangle clip;
 
 	/* scale if fullscreen */
-	clip.x = (pos->x_position * d->xres) / MHEG_XRES;
-	clip.y = (pos->y_position * d->yres) / MHEG_YRES;
-	clip.width = (box->x_length * d->xres) / MHEG_XRES;
-	clip.height = (box->y_length * d->yres) / MHEG_YRES;
+	clip.x = MHEGDisplay_scaleX(d, pos->x_position);
+	clip.y = MHEGDisplay_scaleY(d, pos->y_position);
+	clip.width = MHEGDisplay_scaleX(d, box->x_length);
+	clip.height = MHEGDisplay_scaleY(d, box->y_length);
 
 	XRenderSetPictureClipRectangles(d->dpy, d->next_overlay_pic, 0, 0, &clip, 1);
 
@@ -478,11 +478,11 @@ MHEGDisplay_drawHoriLine(MHEGDisplay *d, XYPosition *pos, unsigned int len, int 
 	display_colour(&rcol, col);
 
 	/* scale if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	w = (len * d->xres) / MHEG_XRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	w = MHEGDisplay_scaleX(d, len);
 	/* aspect ratio */
-	h = (width * d->yres) / MHEG_YRES;
+	h = MHEGDisplay_scaleY(d, width);
 
 /* TODO */
 if(style != LineStyle_solid)
@@ -515,11 +515,11 @@ MHEGDisplay_drawVertLine(MHEGDisplay *d, XYPosition *pos, unsigned int len, int 
 	display_colour(&rcol, col);
 
 	/* scale if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	h = (len * d->yres) / MHEG_YRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	h = MHEGDisplay_scaleY(d, len);
 	/* aspect ratio */
-	w = (width * d->xres) / MHEG_XRES;
+	w = MHEGDisplay_scaleX(d, width);
 
 /* TODO */
 if(style != LineStyle_solid)
@@ -550,10 +550,10 @@ MHEGDisplay_fillRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBoxSize *box,
 	display_colour(&rcol, col);
 
 	/* scale if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
 
 	XRenderFillRectangle(d->dpy, PictOpOver, d->next_overlay_pic, &rcol, x, y, w, h);
 
@@ -574,10 +574,10 @@ MHEGDisplay_fillTransparentRectangle(MHEGDisplay *d, XYPosition *pos, OriginalBo
 	unsigned int w, h;
 
 	/* scale if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
 
 	XRenderFillRectangle(d->dpy, PictOpSrc, d->next_overlay_pic, &rcol, x, y, w, h);
 
@@ -603,12 +603,12 @@ MHEGDisplay_drawBitmap(MHEGDisplay *d, XYPosition *src, OriginalBoxSize *box, MH
 	 * scale up if fullscreen
 	 * the bitmap itself is scaled when it is created in MHEGDisplay_newBitmap()
 	 */
-	src_x = (src->x_position * d->xres) / MHEG_XRES;
-	src_y = (src->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
-	dst_x = (dst->x_position * d->xres) / MHEG_XRES;
-	dst_y = (dst->y_position * d->yres) / MHEG_YRES;
+	src_x = MHEGDisplay_scaleX(d, src->x_position);
+	src_y = MHEGDisplay_scaleY(d, src->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
+	dst_x = MHEGDisplay_scaleX(d, dst->x_position);
+	dst_y = MHEGDisplay_scaleY(d, dst->y_position);
 
 	XRenderComposite(d->dpy, PictOpOver, bitmap->image_pic, None, d->next_overlay_pic,
 			 src_x, src_y, src_x, src_y, dst_x, dst_y, w, h);
@@ -631,12 +631,12 @@ MHEGDisplay_drawCanvas(MHEGDisplay *d, XYPosition *src, OriginalBoxSize *box, MH
 	 * scale up if fullscreen
 	 * the canvas image itself is scaled when it is created
 	 */
-	src_x = (src->x_position * d->xres) / MHEG_XRES;
-	src_y = (src->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
-	dst_x = (dst->x_position * d->xres) / MHEG_XRES;
-	dst_y = (dst->y_position * d->yres) / MHEG_YRES;
+	src_x = MHEGDisplay_scaleX(d, src->x_position);
+	src_y = MHEGDisplay_scaleY(d, src->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
+	dst_x = MHEGDisplay_scaleX(d, dst->x_position);
+	dst_y = MHEGDisplay_scaleY(d, dst->y_position);
 
 	XRenderComposite(d->dpy, PictOpOver, canvas->contents_pic, None, d->next_overlay_pic,
 			 src_x, src_y, src_x, src_y, dst_x, dst_y, w, h);
@@ -679,9 +679,9 @@ MHEGDisplay_drawTextElement(MHEGDisplay *d, XYPosition *pos, MHEGFont *font, MHE
 	display_colour(&rcol, &text->col);
 
 	/* scale the x origin if fullscreen */
-	orig_x = (pos->x_position * d->xres) / MHEG_XRES;
+	orig_x = MHEGDisplay_scaleX(d, pos->x_position);
 	/* y coord does not change */
-	y = ((pos->y_position + text->y) * d->yres) / MHEG_YRES;
+	y = MHEGDisplay_scaleY(d, pos->y_position + text->y);
 
 	/* set the text foreground colour */
 	XRenderFillRectangle(d->dpy, PictOpSrc, d->textfg_pic, &rcol, 0, 0, 1, 1);
@@ -735,7 +735,7 @@ MHEGDisplay_drawTextElement(MHEGDisplay *d, XYPosition *pos, MHEGFont *font, MHE
 		/* render it */
 		XftUnlockFace(font->font);
 		/* round up/down the X coord */
-		scrn_x = (x * d->xres) / MHEG_XRES;
+		scrn_x = MHEGDisplay_scaleX(d, x);
 		scrn_x = (scrn_x + (face->units_per_EM / 2)) / face->units_per_EM;
 		XftGlyphRender(d->dpy, PictOpOver, d->textfg_pic, font->font, d->next_overlay_pic,
 			       0, 0, orig_x + scrn_x, y,
@@ -1021,6 +1021,7 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 	/* if we are using fullscreen mode, scale the image */
 	if(d->fullscreen)
 	{
+printf("TODO: MHEGBitmap_fromRGBA: take aspect ratio into account\n");
 		/* set up the matrix to scale it */
 		XTransform xform;
 		/* X */

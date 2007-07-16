@@ -630,11 +630,8 @@ video_thread(void *arg)
 			}
 			pthread_mutex_unlock(&p->video->inst.scaled_lock);
 			/* scale up if fullscreen */
-			if(d->fullscreen)
-			{
-				out_width = (out_width * d->xres) / MHEG_XRES;
-				out_height = (out_height * d->yres) / MHEG_YRES;
-			}
+			out_width = MHEGDisplay_scaleX(d, out_width);
+			out_height = MHEGDisplay_scaleY(d, out_height);
 			MHEGVideoOutput_prepareFrame(&vo, vf, out_width, out_height);
 			/* remember the PTS for this frame */
 			last_pts = vf->pts;
@@ -669,15 +666,12 @@ video_thread(void *arg)
 			off_y = p->video->inst.VideoDecodeOffset.y_position;
 			pthread_mutex_unlock(&p->video->inst.bbox_lock);
 			/* scale if fullscreen */
-			if(d->fullscreen)
-			{
-				out_x = (out_x * d->xres) / MHEG_XRES;
-				out_y = (out_y * d->yres) / MHEG_YRES;
-				vid_width = (vid_width * d->xres) / MHEG_XRES;
-				vid_height = (vid_height * d->yres) / MHEG_YRES;
-				off_x = (off_x * d->xres) / MHEG_XRES;
-				off_y = (off_y * d->yres) / MHEG_YRES;
-			}
+			out_x = MHEGDisplay_scaleX(d, out_x);
+			out_y = MHEGDisplay_scaleY(d, out_y);
+			vid_width = MHEGDisplay_scaleX(d, vid_width);
+			vid_height = MHEGDisplay_scaleY(d, vid_height);
+			off_x = MHEGDisplay_scaleX(d, off_x);
+			off_y = MHEGDisplay_scaleY(d, off_y);
 			/* if the frame is smaller or larger than the VideoClass, centre it */
 			out_x += (vid_width - out_width) / 2;
 			out_y += (vid_height - out_height) / 2;

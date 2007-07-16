@@ -21,8 +21,8 @@ new_MHEGCanvas(unsigned int width, unsigned int height)
 	MHEGDisplay *d = MHEGEngine_getDisplay();
 
 	/* scale width/height if fullscreen */
-	c->width = (width * d->xres) / MHEG_XRES;
-	c->height = (height * d->yres) / MHEG_YRES;
+	c->width = MHEGDisplay_scaleX(d, width);
+	c->height = MHEGDisplay_scaleY(d, height);
 
 	/* no border set yet */
 	c->border = 0;
@@ -83,7 +83,7 @@ MHEGCanvas_setBorder(MHEGCanvas *c, int width, int style, MHEGColour *colour)
 		error("MHEGCanvas_setBorder: LineStyle %d not supported (using a solid line)", style);
 
 	/* scale width if fullscreen */
-	c->border = (width * d->xres) / MHEG_XRES;
+	c->border = MHEGDisplay_scaleX(d, width);
 
 	/* draw the border */
 	gcvals.foreground = pixel_value(c->pic_format, colour);
@@ -160,11 +160,11 @@ MHEGCanvas_drawArc(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, int sta
 		error("MHEGCanvas_drawArc: LineStyle %d not supported (using a solid line)", style);
 
 	/* scale up if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
-	width = (width * d->xres) / MHEG_XRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
+	width = MHEGDisplay_scaleX(d, width);
 
 	/* set up the GC values */
 	gcvals.foreground = pixel_value(c->pic_format, colour);
@@ -200,11 +200,11 @@ MHEGCanvas_drawSector(MHEGCanvas *c,
 		error("MHEGCanvas_drawSector: LineStyle %d not supported (using a solid line)", style);
 
 	/* scale up if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
-	width = (width * d->xres) / MHEG_XRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
+	width = MHEGDisplay_scaleX(d, width);
 
 	/* fill it */
 	gcvals.foreground = pixel_value(c->pic_format, fill_col);
@@ -265,11 +265,11 @@ MHEGCanvas_drawLine(MHEGCanvas *c, XYPosition *p1, XYPosition *p2, int width, in
 		error("MHEGCanvas_drawLine: LineStyle %d not supported (using a solid line)", style);
 
 	/* scale up if fullscreen */
-	x1 = (p1->x_position * d->xres) / MHEG_XRES;
-	y1 = (p1->y_position * d->yres) / MHEG_YRES;
-	x2 = (p2->x_position * d->xres) / MHEG_XRES;
-	y2 = (p2->y_position * d->yres) / MHEG_YRES;
-	width = (width * d->xres) / MHEG_XRES;
+	x1 = MHEGDisplay_scaleX(d, p1->x_position);
+	y1 = MHEGDisplay_scaleY(d, p1->y_position);
+	x2 = MHEGDisplay_scaleX(d, p2->x_position);
+	y2 = MHEGDisplay_scaleY(d, p2->y_position);
+	width = MHEGDisplay_scaleX(d, width);
 
 	/* set up the GC values */
 	gcvals.foreground = pixel_value(c->pic_format, colour);
@@ -298,11 +298,11 @@ MHEGCanvas_drawOval(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, int wi
 		error("MHEGCanvas_drawOval: LineStyle %d not supported (using a solid line)", style);
 
 	/* scale up if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
-	width = (width * d->xres) / MHEG_XRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
+	width = MHEGDisplay_scaleX(d, width);
 
 	/* fill it */
 	gcvals.foreground = pixel_value(c->pic_format, fill_col);
@@ -344,7 +344,7 @@ MHEGCanvas_drawPolygon(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, i
 		error("MHEGCanvas_drawPolygon: LineStyle %d not supported (using a solid line)", style);
 
 	/* scale up if fullscreen */
-	width = (width * d->xres) / MHEG_XRES;
+	width = MHEGDisplay_scaleX(d, width);
 
 	/* convert the XYPosition list into an array of XPoint's */
 	nxpts = 0;
@@ -361,8 +361,8 @@ MHEGCanvas_drawPolygon(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, i
 	for(i=0; i<nxpts; i++)
 	{
 		/* scale up if fullscreen */
-		xpts[i].x = (pos->item.x_position * d->xres) / MHEG_XRES;
-		xpts[i].y = (pos->item.y_position * d->yres) / MHEG_YRES;
+		xpts[i].x = MHEGDisplay_scaleX(d, pos->item.x_position);
+		xpts[i].y = MHEGDisplay_scaleY(d, pos->item.y_position);
 		pos = pos->next;
 	}
 
@@ -376,8 +376,8 @@ MHEGCanvas_drawPolygon(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, i
 	if(width > 0)
 	{
 		/* close the polygon */
-		xpts[nxpts].x = (xy_list->item.x_position * d->xres) / MHEG_XRES;
-		xpts[nxpts].y = (xy_list->item.y_position * d->yres) / MHEG_YRES;
+		xpts[nxpts].x = MHEGDisplay_scaleX(d, xy_list->item.x_position);
+		xpts[nxpts].y = MHEGDisplay_scaleY(d, xy_list->item.y_position);
 		/* set the line width and colour */
 		gcvals.foreground = pixel_value(c->pic_format, line_col);
 		gcvals.line_width = width;
@@ -414,7 +414,7 @@ MHEGCanvas_drawPolyline(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, 
 		error("MHEGCanvas_drawPolyline: LineStyle %d not supported (using a solid line)", style);
 
 	/* scale up if fullscreen */
-	width = (width * d->xres) / MHEG_XRES;
+	width = MHEGDisplay_scaleX(d, width);
 
 	/* convert the XYPosition list into an array of XPoint's */
 	nxpts = 0;
@@ -430,8 +430,8 @@ MHEGCanvas_drawPolyline(MHEGCanvas *c, LIST_OF(XYPosition) *xy_list, int width, 
 	for(i=0; i<nxpts; i++)
 	{
 		/* scale up if fullscreen */
-		xpts[i].x = (pos->item.x_position * d->xres) / MHEG_XRES;
-		xpts[i].y = (pos->item.y_position * d->yres) / MHEG_YRES;
+		xpts[i].x = MHEGDisplay_scaleX(d, pos->item.x_position);
+		xpts[i].y = MHEGDisplay_scaleY(d, pos->item.y_position);
 		pos = pos->next;
 	}
 
@@ -466,11 +466,11 @@ MHEGCanvas_drawRectangle(MHEGCanvas *c, XYPosition *pos, OriginalBoxSize *box, i
 		error("MHEGCanvas_drawRectangle: LineStyle %d not supported (using a solid line)", style);
 
 	/* scale up if fullscreen */
-	x = (pos->x_position * d->xres) / MHEG_XRES;
-	y = (pos->y_position * d->yres) / MHEG_YRES;
-	w = (box->x_length * d->xres) / MHEG_XRES;
-	h = (box->y_length * d->yres) / MHEG_YRES;
-	width = (width * d->xres) / MHEG_XRES;
+	x = MHEGDisplay_scaleX(d, pos->x_position);
+	y = MHEGDisplay_scaleY(d, pos->y_position);
+	w = MHEGDisplay_scaleX(d, box->x_length);
+	h = MHEGDisplay_scaleY(d, box->y_length);
+	width = MHEGDisplay_scaleX(d, width);
 
 	/* fill it */
 	gcvals.foreground = pixel_value(c->pic_format, fill_col);

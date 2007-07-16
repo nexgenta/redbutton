@@ -89,5 +89,9 @@ MHEGBitmap *MHEGBitmap_fromRGBA(MHEGDisplay *, unsigned char *, unsigned int, un
 /* utils */
 bool intersects(XYPosition *, OriginalBoxSize *, XYPosition *, OriginalBoxSize *, XYPosition *, OriginalBoxSize *);
 
+/* convert X/Y coords from MHEG resolution (0->720, 0->576) to output resolution */
+#define MHEGDisplay_scaleX(DPY, X)	(((X) * (DPY)->xres) / MHEG_XRES)
+#define MHEGDisplay_scaleY(DPY, Y)	(((Y) * (DPY)->yres) / MHEG_YRES)
+
 #endif	/* __MHEGDISPLAY_H__ */
 
