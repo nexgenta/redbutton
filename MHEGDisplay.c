@@ -852,6 +852,7 @@ MHEGDisplay_newMPEGBitmap(MHEGDisplay *d, OctetString *mpeg)
 	AVCodec *codec;
 	AVFrame *yuv_frame;
 	AVFrame *rgb_frame;
+	unsigned char *padded;
 	unsigned char *data;
 	unsigned int size;
 	int used;
@@ -880,8 +881,13 @@ MHEGDisplay_newMPEGBitmap(MHEGDisplay *d, OctetString *mpeg)
 	if((rgb_frame = avcodec_alloc_frame()) == NULL)
 		fatal("Out of memory");
 
+	/* ffmpeg may read passed the end of the buffer, so pad it out */
+	padded = safe_malloc(mpeg->size + FF_INPUT_BUFFER_PADDING_SIZE);
+	memcpy(padded, mpeg->data, mpeg->size);
+	memset(padded + mpeg->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+
 	/* decode the YUV frame */
-	data = mpeg->data;
+	data = padded;
 	size = mpeg->size;
 	do
 	{
@@ -914,6 +920,7 @@ MHEGDisplay_newMPEGBitmap(MHEGDisplay *d, OctetString *mpeg)
 	}
 
 	/* clean up */
+	safe_free(padded);
 	safe_free(rgba);
 	av_free(yuv_frame);
 	av_free(rgb_frame);
