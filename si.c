@@ -71,9 +71,9 @@ printf("TODO: si_get_index: service='%.*s'\n", ref->size, ref->data);
 OctetString *
 si_get_url(int index)
 {
-	if(index > si_max_index)
+	if(index < 0 || index > si_max_index)
 	{
-		error("SI_GetURL: invalid service index (%d); max is %d", index, si_max_index);
+		error("SI_GetURL: invalid service index (%d); range is 0-%d", index, si_max_index);
 		return NULL;
 	}
 
@@ -83,9 +83,9 @@ si_get_url(int index)
 bool
 si_tune_index(int index)
 {
-	if(index > si_max_index)
+	if(index < 0 || index > si_max_index)
 	{
-		error("SI_TuneIndex: invalid service index (%d); max is %d", index, si_max_index);
+		error("SI_TuneIndex: invalid service index (%d); range is 0-%d", index, si_max_index);
 		return false;
 	}
 
