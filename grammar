@@ -55,7 +55,7 @@ GroupItem			::= ResidentProgramClass |
 
 ApplicationClass		::= "{:Application" Group
 					[OnSpawnCloseDown] [OnRestart]
-					[ DefaultAttributes] "}" .
+					[DefaultAttributes] "}" .
 OnSpawnCloseDown		::= ":OnSpawnCloseDown" ActionClass .
 OnRestart			::= ":OnRestart" ActionClass .
 DefaultAttributes		::= DefaultAttribute+       .
@@ -138,7 +138,7 @@ EventTypeEnum	::= "IsAvailable" | "ContentAvailable"
 			| "StreamEvent" | "StreamPlaying"
 			| "StreamStopped" | "CounterTrigger"
 			| "HighlightOn" | "HighlightOff"
-			| "CursorEnter" | "Cursorleave"
+			| "CursorEnter" | "CursorLeave"
 			| "IsSelected" | "IsDeselected"
 			| "TestEvent" | "FirstItemPresented"
 			| "LastItemPresented" | "HeadItems"
@@ -192,12 +192,12 @@ CursorShapeClass	::= "{:CursorShape" Ingredient "}" .
 // B.4.14 Variable Class
 
 Variable		::= Ingredient OriginalValue .
-OriginalValue		:: =":OrigValue" OriginalValueBody .
+OriginalValue		::= ":OrigValue" OriginalValueBody .
 OriginalValueBody	::= BOOLEAN | INTEGER | OctetString
 				| ObjectReferenceValue
 				| ContentReferenceValue .
 ObjectReferenceValue	::= ":ObjectRef" ObjectReference .
-ContentReferenceValue	::= "ContentRef" ContentReference .
+ContentReferenceValue	::= ":ContentRef" ContentReference .
 
 
 // B.4.15 BooleanVariable Class
@@ -289,12 +289,12 @@ LineArtBody		::= Visible [BorderedBoundingBox]
 				[OriginalLineWidth]
 				[OriginalLineStyle]
 				[OriginalRefLineColour]
-				[OriginalRefFiIIColour] .
+				[OriginalRefFillColour] .
 BorderedBoundingBox	::= ":BBBox" BOOLEAN .
 OriginalLineWidth	::= ":OrigLineWidth" INTEGER .
 OriginalLineStyle	::= ":OrigLineStyle" INTEGER .
-OriginalRefLineColour	::= ":OrigRefLineCoIour" Colour .
-OriginalRefFilIColour	::= ":OrigRefFillColour"  Colour .
+OriginalRefLineColour	::= ":OrigRefLineColour" Colour .
+OriginalRefFillColour	::= ":OrigRefFillColour"  Colour .
 
 
 // B.4.27 Rectangle Class
@@ -813,7 +813,7 @@ NewLabel		::= GenericOctetString .
 NewLineStyle		::= GenericInteger .
 NewLineWidth		::= GenericInteger .
 NewOverwriteMode	::= GenericBoolean .
-NewPaIetteRef		::= GenericObjectReference .
+NewPaletteRef		::= GenericObjectReference .
 NewPortion		::= GenericInteger .
 NewReferencedContent	::= ":NewRefContent" "(" GenericContentReference
 				[NewContentSize]
@@ -827,7 +827,7 @@ NewVariableValue	::= NewGenericInteger | NewGenericBoolean
 				| NewGenericContentReference .
 NewVolume		::= GenericInteger .
 NewXPosition		::= GenericInteger .
-NewY Position		::= GenericInteger .
+NewYPosition		::= GenericInteger .
 Numerator		::= GenericInteger .
 OpenSucceeded		::= ObjectReference .
 Operator		::= GenericInteger .
