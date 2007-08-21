@@ -1,4 +1,5 @@
 // MHEG5 Textual Format
+// includes UK MHEG Profile additions
 
 // B.4.1 Root Class
 
@@ -283,7 +284,7 @@ OriginalTransparency	::= ":OrigTransparency" INTEGER .
 
 // B.4.26 LineArt Class
 
-LineArtCIass		::= "{:LineArt" LineArtBody "}" .
+LineArtClass		::= "{:LineArt" LineArtBody "}" .
 LineArtBody		::= Visible [BorderedBoundingBox]
 				[OriginalLineWidth]
 				[OriginalLineStyle]
@@ -333,7 +334,7 @@ TextWrapping		::= ":TextWrapping" BOOLEAN .
 StreamClass	::= "{:Stream" Presentable [Multiplex]
 			[Storage] [Looping] "}" .
 Multiplex	::= ":Multiplex" "(" StreamComponent+ ")" .
-StreamComponent	::= AudioClass | VideoClass | RTGraphicsCIass  .
+StreamComponent	::= AudioClass | VideoClass | RTGraphicsClass  .
 Storage		::= ":Storage" StorageEnum .
 StorageEnum	::= "memory" | "stream" .
 Looping		::= ":Looping" INTEGER .
