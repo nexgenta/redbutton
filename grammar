@@ -380,7 +380,7 @@ OrientationEnum	::= "left" | "right" | "up" | "down" .
 MaxValue	::= ":MaxValue" INTEGER .
 MinValue	::= ":MinValue" INTEGER .
 InitialValue	::= ":InitialValue" INTEGER .
-InitialPortion	::= "InitialPortion" INTEGER .
+InitialPortion	::= ":InitialPortion" INTEGER .
 StepSize	::= ":StepSize" INTEGER .
 SliderStyle	::= ":SliderStyle" SliderStyleEnum .
 SliderStyleEnum	::= "normal" | "thermometer" | "proportional" .
@@ -912,7 +912,7 @@ GenericInteger		::= INTEGER | IndirectReference .
 
 GenericBoolean		::= BOOLEAN | IndirectReference .
 
-GenericOctetString	::= OctetString   I IndirectReference .
+GenericOctetString	::= OctetString | IndirectReference .
 
 OctetString		::= STRING | QPRINTABLE | BASE64 .
 
