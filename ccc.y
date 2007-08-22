@@ -4,10 +4,13 @@
 
 #define YYSTYPE char *
 
+/* input line we are currently parsing */
+int yylineno = 1;
+
 void
 yyerror(const char *str)
 {
-	fprintf(stderr, "yyerror: %s\n", str);
+	fprintf(stderr, "Error: %s at line %d\n", str, yylineno);
 }
 
 int

@@ -1,6 +1,7 @@
 %{
 #include <string.h>
 #include "y.tab.h"
+extern int yylineno;
 %}
 %%
 \/\/[^\n\r\f]*		return COMMENT;
@@ -12,7 +13,7 @@
 "]"			return RBRACKET;
 "+"			return ONEORMORE;
 "."			return ENDCLAUSE;
-[\n\r\f]		/* ignore end of line */
+[\n\r\f]		yylineno ++;
 [ \t]+			/* ignore whitespace */
 .			return INVALID;
 %%
