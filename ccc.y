@@ -67,16 +67,15 @@ fatal(char *str)
 void
 add_item(enum item_type type, char *name)
 {
-	struct item *new_item;
+	struct item *new_item = malloc(sizeof(struct item));
 
-	if(name == NULL)
+	/* did our malloc or lex's strdup fail */
+	if(new_item == NULL || name == NULL)
 		fatal("Out of memory");
 
 	if(state.items == NULL)
 	{
-		if((state.items = malloc(sizeof(struct item))) == NULL)
-			fatal("Out of memory");
-		new_item = state.items;
+		state.items = new_item;
 	}
 	else
 	{
@@ -84,9 +83,7 @@ add_item(enum item_type type, char *name)
 		struct item *i = state.items;
 		while(i->next)
 			i = i->next;
-		if((i->next = malloc(sizeof(struct item))) == NULL)
-			fatal("Out of memory");
-		new_item = i->next;
+		i->next = new_item;
 	}
 
 	new_item->next = NULL;
