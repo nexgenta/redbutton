@@ -54,8 +54,14 @@ clause:
 
 definition:
 	and_items
+	{
+		printf("AND-");
+	}
 	|
 	or_items
+	{
+		printf("OR-");
+	}
 	;
 
 and_items:
