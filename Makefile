@@ -27,7 +27,7 @@ install:	mhegc
 	install -m 755 mhegc ${DESTDIR}/bin
 
 clean:
-	rm -f mhegc *.o core
+	rm -f mhegc ccc *.o core
 
 tar:
 	make clean
