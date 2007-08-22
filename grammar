@@ -578,7 +578,7 @@ DrawArc	::= ":DrawArc" "(" Target X Y EllipseWidth
 			EllipseHeight StartAngle ArcAngle ")" .
 DrawLine	::= ":DrawLine" "(" Target X1 Y1 X2 Y2 ")" .
 DrawOval	::= ":DrawOval" "(" Target X Y EllipseWidth
-			EllipseHeight")" .
+			EllipseHeight ")" .
 DrawPolygon	::= ":DrawPolygon" "(" Target PointList ")" .
 DrawPolyline	::= ":DrawPolyline" "(" Target PointList ")" .
 DrawRectangle	::= ":DrawRectangle" "(" Target X1 Y1 X2 Y2
