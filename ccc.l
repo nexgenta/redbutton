@@ -1,6 +1,6 @@
 %{
 #include <string.h>
-#include "y.tab.h"
+#include "ccc.tab.h"
 extern int yylineno;
 %}
 %%

@@ -1,8 +1,10 @@
 CC=gcc
 CFLAGS=-Wall -O2
 
-LEX=lex
-YACC=yacc
+LEX=flex
+YACC=bison
+#LEX=lex
+#YACC=yacc
 
 DESTDIR=/usr/local
 
@@ -13,9 +15,9 @@ OBJS=	mhegc.o	\
 TARDIR=`basename ${PWD}`
 
 ccc:	ccc.y ccc.l
-	${LEX} -i ccc.l
-	${YACC} -d ccc.y
-	${CC} ${CFLAGS} -o ccc lex.yy.c y.tab.c
+	${LEX} -i -t ccc.l > lex.ccc.c
+	${YACC} -b ccc -d ccc.y
+	${CC} ${CFLAGS} -o ccc lex.ccc.c ccc.tab.c
 
 mhegc:	${OBJS}
 	${CC} ${CFLAGS} -o mhegc ${OBJS} ${LIBS}
@@ -27,7 +29,7 @@ install:	mhegc
 	install -m 755 mhegc ${DESTDIR}/bin
 
 clean:
-	rm -f mhegc ccc *.o core
+	rm -f mhegc ccc lex.ccc.c ccc.tab.[ch] *.o core
 
 tar:
 	make clean
