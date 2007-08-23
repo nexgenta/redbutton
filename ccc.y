@@ -50,6 +50,18 @@ struct
 	struct buf oneormores;	/* grammar section for Identifier+ rules */
 } state;
 
+void add_item(enum item_type, char *);
+
+void output_def(char *);
+void output_item(struct item *, bool);
+
+void print_tokens(struct token *);
+char *add_token(struct token **, char *);
+char *unquote(char *);
+
+void buf_init(struct buf *);
+void buf_append(struct buf *, char *);
+
 /* input line we are currently parsing */
 int yylineno = 1;
 
@@ -68,16 +80,83 @@ yywrap(void)
 	return 1;
 }
 
+%}
+
+%token COMMENT
+%token LITERAL
+%token IDENTIFIER
+%token DEFINEDAS
+%token ALTERNATIVE
+%token LBRACKET
+%token RBRACKET
+%token ONEORMORE
+%token ENDCLAUSE
+%token INVALID
+
+%%
+clauses:
+	/* empty */
+	|
+	clauses clause
+	;
+
+clause:
+	COMMENT
+	|
+	IDENTIFIER DEFINEDAS definition ENDCLAUSE
+	{
+		output_def($1);
+	}
+	;
+
+definition:
+	and_items
+	{
+		state.and_items = true;
+	}
+	|
+	or_items
+	{
+		state.and_items = false;
+	}
+	;
+
+and_items:
+	item
+	|
+	and_items item
+	;
+
+or_items:
+	item ALTERNATIVE item
+	|
+	or_items ALTERNATIVE item
+	;
+
+item:
+	LITERAL
+	{
+		add_item(IT_LITERAL, $1);
+	}
+	|
+	IDENTIFIER
+	{
+		add_item(IT_IDENTIFIER, $1);
+	}
+	|
+	LBRACKET IDENTIFIER RBRACKET
+	{
+		add_item(IT_OPTIONAL, $2);
+	}
+	|
+	IDENTIFIER ONEORMORE
+	{
+		add_item(IT_ONEORMORE, $1);
+	}
+	;
+%%
+
 /* here we go ... */
-void output_item(struct item *, bool);
-
-void print_tokens(struct token *);
-char *add_token(struct token **, char *);
-char *unquote(char *);
-
-void buf_init(struct buf *);
-void buf_append(struct buf *, char *);
-
 int
 main(void)
 {
@@ -394,78 +473,3 @@ buf_append(struct buf *b, char *app_str)
 	return;
 }
 
-%}
-
-%token COMMENT
-%token LITERAL
-%token IDENTIFIER
-%token DEFINEDAS
-%token ALTERNATIVE
-%token LBRACKET
-%token RBRACKET
-%token ONEORMORE
-%token ENDCLAUSE
-%token INVALID
-
-%%
-clauses:
-	/* empty */
-	|
-	clauses clause
-	;
-
-clause:
-	COMMENT
-	|
-	IDENTIFIER DEFINEDAS definition ENDCLAUSE
-	{
-		output_def($1);
-	}
-	;
-
-definition:
-	and_items
-	{
-		state.and_items = true;
-	}
-	|
-	or_items
-	{
-		state.and_items = false;
-	}
-	;
-
-and_items:
-	item
-	|
-	and_items item
-	;
-
-or_items:
-	item ALTERNATIVE item
-	|
-	or_items ALTERNATIVE item
-	;
-
-item:
-	LITERAL
-	{
-		add_item(IT_LITERAL, $1);
-	}
-	|
-	IDENTIFIER
-	{
-		add_item(IT_IDENTIFIER, $1);
-	}
-	|
-	LBRACKET IDENTIFIER RBRACKET
-	{
-		add_item(IT_OPTIONAL, $2);
-	}
-	|
-	IDENTIFIER ONEORMORE
-	{
-		add_item(IT_ONEORMORE, $1);
-	}
-	;
-%%
