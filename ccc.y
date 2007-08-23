@@ -29,7 +29,7 @@ struct token
 	char *name;
 };
 
-/* build up the separate parts of the ouput file in these buffers */
+/* build up the separate parts of the output file in these buffers */
 struct buf
 {
 	char *str;		/* the buffer */
@@ -67,7 +67,7 @@ yywrap(void)
 
 /* here we go ... */
 void print_tokens(struct token *);
-void add_token(struct token **, char *);
+char *add_token(struct token **, char *);
 char *unquote(char *);
 
 void buf_init(struct buf *);
@@ -134,25 +134,54 @@ output_def(char *name)
 {
 	struct item *item;
 	struct item *next;
+	char *tok_name;
 
 	buf_append(&state.grammar, name);
-	buf_append(&state.grammar, ":\n");
+	buf_append(&state.grammar, ":\n\t");
 
 	for(item=state.items; item; item=item->next)
 	{
 		switch(item->type)
 		{
 		case IT_LITERAL:
-			add_token(&state.tokens, item->name);
+			tok_name = add_token(&state.tokens, item->name);
+			buf_append(&state.grammar, tok_name);
+			buf_append(&state.grammar, item->next ? " " : "\n\t");
 			break;
 
 		case IT_IDENTIFIER:
+			buf_append(&state.grammar, item->name);
+			/* do we need all the items, or just one of them */
+			if(state.and_items)
+				buf_append(&state.grammar, item->next ? " " : "\n\t");
+			else
+				buf_append(&state.grammar, item->next ? "\n\t|\n\t" : "\n\t");
 			break;
 
 		case IT_OPTIONAL:
+buf_append(&state.grammar, "[FIXME:");
+buf_append(&state.grammar, item->name);
+buf_append(&state.grammar, "] ");
 			break;
 
 		case IT_ONEORMORE:
+			/* add "IdentifierOneOrMore" to the grammar */
+			buf_append(&state.grammar, item->name);
+			buf_append(&state.grammar, "OneOrMore");
+			/* do we need all the items, or just one of them */
+			if(state.and_items)
+				buf_append(&state.grammar, item->next ? " " : "\n\t");
+			else
+				buf_append(&state.grammar, item->next ? "\n\t|\n\t" : "\n\t");
+			/* now create the IdentifierOneOrMore rule */
+			buf_append(&state.oneormores, item->name);
+			buf_append(&state.oneormores, "OneOrMore:\n\t");
+			buf_append(&state.oneormores, item->name);
+			buf_append(&state.oneormores, "\n\t|\n\t");
+			buf_append(&state.oneormores, item->name);
+			buf_append(&state.oneormores, "OneOrMore ");
+			buf_append(&state.oneormores, item->name);
+			buf_append(&state.oneormores, "\n\t;\n\n");
 			break;
 
 		default:
@@ -161,7 +190,7 @@ output_def(char *name)
 		}
 	}
 
-	buf_append(&state.grammar, "\t;\n\n");
+	buf_append(&state.grammar, ";\n\n");
 
 	/* free the items */
 	item = state.items;
@@ -189,7 +218,7 @@ print_tokens(struct token *t)
 	return;
 }
 
-void
+char *
 add_token(struct token **head, char *quoted)
 {
 	struct token *t = malloc(sizeof(struct token));
@@ -209,7 +238,7 @@ add_token(struct token **head, char *quoted)
 		{
 			free(t->name);
 			free(t);
-			return;
+			return list->name;
 		}
 		list = list->next;
 	}
@@ -227,7 +256,7 @@ add_token(struct token **head, char *quoted)
 		list->next = t;
 	}
 
-	return;
+	return t->name;
 }
 
 char *
