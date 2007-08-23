@@ -146,33 +146,22 @@ output_def(char *name)
 		case IT_LITERAL:
 			tok_name = add_token(&state.tokens, item->name);
 			buf_append(&state.grammar, tok_name);
-			buf_append(&state.grammar, item->next ? " " : "\n\t");
 			break;
 
 		case IT_IDENTIFIER:
 			buf_append(&state.grammar, item->name);
-			/* do we need all the items, or just one of them */
-			if(state.and_items)
-				buf_append(&state.grammar, item->next ? " " : "\n\t");
-			else
-				buf_append(&state.grammar, item->next ? "\n\t|\n\t" : "\n\t");
 			break;
 
 		case IT_OPTIONAL:
 buf_append(&state.grammar, "[FIXME:");
 buf_append(&state.grammar, item->name);
-buf_append(&state.grammar, "] ");
+buf_append(&state.grammar, "]");
 			break;
 
 		case IT_ONEORMORE:
 			/* add "IdentifierOneOrMore" to the grammar */
 			buf_append(&state.grammar, item->name);
 			buf_append(&state.grammar, "OneOrMore");
-			/* do we need all the items, or just one of them */
-			if(state.and_items)
-				buf_append(&state.grammar, item->next ? " " : "\n\t");
-			else
-				buf_append(&state.grammar, item->next ? "\n\t|\n\t" : "\n\t");
 			/* now create the IdentifierOneOrMore rule */
 			buf_append(&state.oneormores, item->name);
 			buf_append(&state.oneormores, "OneOrMore:\n\t");
@@ -188,6 +177,11 @@ buf_append(&state.grammar, "] ");
 			fatal("Unexpected item type");
 			break;
 		}
+		/* do we need all the items, or just one of them */
+		if(state.and_items)
+			buf_append(&state.grammar, item->next ? " " : "\n\t");
+		else
+			buf_append(&state.grammar, item->next ? "\n\t|\n\t" : "\n\t");
 	}
 
 	buf_append(&state.grammar, ";\n\n");
