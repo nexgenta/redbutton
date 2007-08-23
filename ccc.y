@@ -42,8 +42,9 @@ struct
 {
 	struct item *items;	/* NULL => start a new identifier */
 	bool and_items;		/* true => identifier must contain all items */
-	struct token *tokens;	/* "%token" section of the output file */
-	struct buf grammar;	/* grammar section of the output file */
+	struct buf lexer;	/* lex output file */
+	struct token *tokens;	/* "%token" section of the yacc output file */
+	struct buf grammar;	/* grammar section of the yacc output file */
 	struct buf oneormores;	/* grammar section for Identifier+ rules */
 } state;
 
@@ -77,12 +78,17 @@ int
 main(void)
 {
 	state.items = NULL;
+	buf_init(&state.lexer);
 	state.tokens = NULL;
 	buf_init(&state.grammar);
 	buf_init(&state.oneormores);
 
 	yyparse();
 
+	printf("-- lex --\n");
+	printf("%s", state.lexer.str);
+
+	printf("-- yacc --\n");
 	print_tokens(state.tokens);
 	printf("%%%%\n");
 	printf("%s", state.grammar.str);
@@ -249,6 +255,12 @@ add_token(struct token **head, char *quoted)
 			list = list->next;
 		list->next = t;
 	}
+
+	/* add it to the lex output file */
+	buf_append(&state.lexer, quoted);
+	buf_append(&state.lexer, "\treturn ");
+	buf_append(&state.lexer, t->name);
+	buf_append(&state.lexer, ";\n");
 
 	return t->name;
 }
