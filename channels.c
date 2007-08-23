@@ -39,6 +39,7 @@
 #define SLOF (11700*1000UL)
 #define LOF1 (9750*1000UL)
 #define LOF2 (10600*1000UL)
+#define ONE_kHz 1000UL
 
 /* internal functions */
 static bool get_tune_params(fe_type_t, uint16_t, struct dvb_frontend_parameters *, char *, unsigned int *);
@@ -575,8 +576,10 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 
 	/* are we already tuned to the right frequency */
 	vverbose("Current frequency %u; needed %u; first_time=%d", current_params.frequency, needed_params.frequency, first_time);
+
+	/* frequency resolution is up to 1 kHz */
 	if(first_time
-	|| current_params.frequency != needed_params.frequency)
+	|| abs(current_params.frequency - needed_params.frequency) >= ONE_kHz)
 	{
 		first_time = false;
 		verbose("Retuning to frequency %u", needed_params.frequency);
