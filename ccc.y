@@ -165,16 +165,18 @@ buf_append(&state.grammar, "]");
 			break;
 
 		case IT_ONEORMORE:
-			/* add "IdentifierOneOrMore" to the grammar */
-			buf_append(&state.grammar, item->name);
+			/* add "OneOrMoreIdentifier" to the grammar */
 			buf_append(&state.grammar, "OneOrMore");
-			/* now create the IdentifierOneOrMore rule */
+			buf_append(&state.grammar, item->name);
+			/* now create the OneOrMoreIdentifier rule */
+			buf_append(&state.oneormores, "OneOrMore");
 			buf_append(&state.oneormores, item->name);
-			buf_append(&state.oneormores, "OneOrMore:\n\t");
+			buf_append(&state.oneormores, ":\n\t");
 			buf_append(&state.oneormores, item->name);
 			buf_append(&state.oneormores, "\n\t|\n\t");
+			buf_append(&state.oneormores, "OneOrMore");
 			buf_append(&state.oneormores, item->name);
-			buf_append(&state.oneormores, "OneOrMore ");
+			buf_append(&state.oneormores, " ");
 			buf_append(&state.oneormores, item->name);
 			buf_append(&state.oneormores, "\n\t;\n\n");
 			break;
