@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define YYSTYPE char *
 
@@ -20,6 +21,7 @@ struct item
 	struct item *next;
 	char *name;
 	enum item_type type;
+	bool include;		/* should we output this optional item or not */
 };
 
 /* the literal strings we need to make into %token's */
@@ -67,6 +69,8 @@ yywrap(void)
 }
 
 /* here we go ... */
+void output_item(struct item *, bool);
+
 void print_tokens(struct token *);
 char *add_token(struct token **, char *);
 char *unquote(char *);
@@ -131,6 +135,7 @@ add_item(enum item_type type, char *name)
 	new_item->next = NULL;
 	new_item->name = name;		/* lex strdup's it for us */
 	new_item->type = type;
+	new_item->include = true;
 
 	return;
 }
@@ -140,57 +145,13 @@ output_def(char *name)
 {
 	struct item *item;
 	struct item *next;
-	char *tok_name;
 
 	buf_append(&state.grammar, name);
 	buf_append(&state.grammar, ":\n\t");
 
+	/* output each item that makes up this identifier */
 	for(item=state.items; item; item=item->next)
-	{
-		switch(item->type)
-		{
-		case IT_LITERAL:
-			tok_name = add_token(&state.tokens, item->name);
-			buf_append(&state.grammar, tok_name);
-			break;
-
-		case IT_IDENTIFIER:
-			buf_append(&state.grammar, item->name);
-			break;
-
-		case IT_OPTIONAL:
-buf_append(&state.grammar, "[FIXME:");
-buf_append(&state.grammar, item->name);
-buf_append(&state.grammar, "]");
-			break;
-
-		case IT_ONEORMORE:
-			/* add "OneOrMoreIdentifier" to the grammar */
-			buf_append(&state.grammar, "OneOrMore");
-			buf_append(&state.grammar, item->name);
-			/* now create the OneOrMoreIdentifier rule */
-			buf_append(&state.oneormores, "OneOrMore");
-			buf_append(&state.oneormores, item->name);
-			buf_append(&state.oneormores, ":\n\t");
-			buf_append(&state.oneormores, item->name);
-			buf_append(&state.oneormores, "\n\t|\n\t");
-			buf_append(&state.oneormores, "OneOrMore");
-			buf_append(&state.oneormores, item->name);
-			buf_append(&state.oneormores, " ");
-			buf_append(&state.oneormores, item->name);
-			buf_append(&state.oneormores, "\n\t;\n\n");
-			break;
-
-		default:
-			fatal("Unexpected item type");
-			break;
-		}
-		/* do we need all the items, or just one of them */
-		if(state.and_items)
-			buf_append(&state.grammar, item->next ? " " : "\n\t");
-		else
-			buf_append(&state.grammar, item->next ? "\n\t|\n\t" : "\n\t");
-	}
+		output_item(item, true);
 
 	buf_append(&state.grammar, ";\n\n");
 
@@ -204,6 +165,84 @@ buf_append(&state.grammar, "]");
 		item = next;
 	}
 	state.items = NULL;
+
+	return;
+}
+
+void
+output_item(struct item *item, bool recurse)
+{
+	char *tok_name;
+	struct item *rest;
+
+	switch(item->type)
+	{
+	case IT_LITERAL:
+		tok_name = add_token(&state.tokens, item->name);
+		buf_append(&state.grammar, tok_name);
+		break;
+
+	case IT_IDENTIFIER:
+		buf_append(&state.grammar, item->name);
+		break;
+
+	case IT_OPTIONAL:
+		if(recurse)
+		{
+			/*
+			 * we are an optional item,
+			 * so first output the remaining items
+			 * this creates a rule which does not including us
+			 */
+			item->include = false;
+			for(rest=item->next; rest; rest=rest->next)
+				output_item(rest, true);
+			/* or it with a rule which does contain us */
+			if(item->next == NULL)
+				buf_append(&state.grammar, "\n\t");
+			buf_append(&state.grammar, "|\n\t");
+			/*
+			 * now output the items before us and output ourself,
+			 * this constructs a rule including us
+			 */
+			item->include = true;
+			for(rest=state.items; rest!=item; rest=rest->next)
+				output_item(rest, false);
+			buf_append(&state.grammar, item->name);
+		}
+		else if(item->include)
+		{
+			buf_append(&state.grammar, item->name);
+		}
+		break;
+
+	case IT_ONEORMORE:
+		/* add "OneOrMoreIdentifier" to the grammar */
+		buf_append(&state.grammar, "OneOrMore");
+		buf_append(&state.grammar, item->name);
+		/* now create the OneOrMoreIdentifier rule */
+		buf_append(&state.oneormores, "OneOrMore");
+		buf_append(&state.oneormores, item->name);
+		buf_append(&state.oneormores, ":\n\t");
+		buf_append(&state.oneormores, item->name);
+		buf_append(&state.oneormores, "\n\t|\n\t");
+		buf_append(&state.oneormores, "OneOrMore");
+		buf_append(&state.oneormores, item->name);
+		buf_append(&state.oneormores, " ");
+		buf_append(&state.oneormores, item->name);
+		buf_append(&state.oneormores, "\n\t;\n\n");
+		break;
+
+	default:
+		fatal("Unexpected item type");
+		break;
+	}
+
+	/* do we need all the items, or just one of them */
+	if(state.and_items)
+		buf_append(&state.grammar, item->next ? (item->include ? " " : "") : "\n\t");
+	else
+		buf_append(&state.grammar, item->next ? "\n\t|\n\t" : "\n\t");
 
 	return;
 }
@@ -370,6 +409,7 @@ buf_append(struct buf *b, char *app_str)
 
 %%
 clauses:
+	/* empty */
 	|
 	clauses clause
 	;
