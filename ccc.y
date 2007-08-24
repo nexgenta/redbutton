@@ -189,7 +189,9 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if(optind == argc)
+	if(optind != argc)
+		usage(prog_name);
+
 	state.items = NULL;
 	buf_init(&state.lexer);
 	state.tokens = NULL;
