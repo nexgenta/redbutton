@@ -6,6 +6,8 @@
 #define YYERROR_VERBOSE
 #define YYDEBUG 1
 
+int yylex(void);
+
 int yylineno = 1;
 
 void

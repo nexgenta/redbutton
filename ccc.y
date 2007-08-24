@@ -52,6 +52,7 @@ struct
 } state;
 
 int yyparse(void);
+int yylex(void);
 
 void usage(char *);
 void fatal(char *);
