@@ -25,10 +25,10 @@ struct item
 	bool include;		/* should we output this optional item or not */
 };
 
-/* the literal strings we need to make into %token's */
-struct token
+/* a list of strings */
+struct str_list
 {
-	struct token *next;
+	struct str_list *next;
 	char *name;
 };
 
@@ -43,12 +43,12 @@ struct buf
 /* global state */
 struct
 {
-	struct item *items;	/* NULL => start a new identifier */
-	bool and_items;		/* true => identifier must contain all items */
-	struct buf lexer;	/* lex output file */
-	struct token *tokens;	/* "%token" section of the yacc output file */
-	struct buf grammar;	/* grammar section of the yacc output file */
-	struct buf oneormores;	/* grammar section for Identifier+ rules */
+	struct item *items;		/* NULL => start a new identifier */
+	bool and_items;			/* true => identifier must contain all items */
+	struct buf lexer;		/* lex output file */
+	struct str_list *tokens;	/* "%token" section of the yacc output file */
+	struct buf grammar;		/* grammar section of the yacc output file */
+	struct str_list *oneormores;	/* grammar section for Identifier+ rules */
 } state;
 
 int yyparse(void);
@@ -62,9 +62,12 @@ void add_item(enum item_type, char *);
 void output_def(char *);
 void output_item(struct item *, bool);
 
-void print_tokens(struct token *);
-char *add_token(struct token **, char *);
+void print_tokens(struct str_list *);
+char *add_token(struct str_list **, char *);
 char *unquote(char *);
+
+void print_oneormores(struct str_list *);
+void add_oneormore(struct str_list **, char *);
 
 void buf_init(struct buf *);
 void buf_append(struct buf *, char *);
@@ -191,7 +194,7 @@ main(int argc, char *argv[])
 	buf_init(&state.lexer);
 	state.tokens = NULL;
 	buf_init(&state.grammar);
-	buf_init(&state.oneormores);
+	state.oneormores = NULL;
 
 	yyparse();
 
@@ -206,7 +209,7 @@ main(int argc, char *argv[])
 		print_tokens(state.tokens);
 		printf("%%%%\n");
 		printf("%s", state.grammar.str);
-		printf("%s", state.oneormores.str);
+		print_oneormores(state.oneormores);
 		printf("%%%%\n");
 	}
 
@@ -339,17 +342,8 @@ output_item(struct item *item, bool recurse)
 		/* add "OneOrMoreIdentifier" to the grammar */
 		buf_append(&state.grammar, "OneOrMore");
 		buf_append(&state.grammar, item->name);
-		/* now create the OneOrMoreIdentifier rule */
-		buf_append(&state.oneormores, "OneOrMore");
-		buf_append(&state.oneormores, item->name);
-		buf_append(&state.oneormores, ":\n\t");
-		buf_append(&state.oneormores, item->name);
-		buf_append(&state.oneormores, "\n\t|\n\t");
-		buf_append(&state.oneormores, "OneOrMore");
-		buf_append(&state.oneormores, item->name);
-		buf_append(&state.oneormores, " ");
-		buf_append(&state.oneormores, item->name);
-		buf_append(&state.oneormores, "\n\t;\n\n");
+		/* add the OneOrMoreIdentifier to our list */
+		add_oneormore(&state.oneormores, item->name);
 		break;
 
 	default:
@@ -367,7 +361,7 @@ output_item(struct item *item, bool recurse)
 }
 
 void
-print_tokens(struct token *t)
+print_tokens(struct str_list *t)
 {
 	while(t)
 	{
@@ -379,10 +373,10 @@ print_tokens(struct token *t)
 }
 
 char *
-add_token(struct token **head, char *quoted)
+add_token(struct str_list **head, char *quoted)
 {
-	struct token *t = malloc(sizeof(struct token));
-	struct token *list;
+	struct str_list *t = malloc(sizeof(struct str_list));
+	struct str_list *list;
 
 	if(t == NULL)
 		fatal("Out of memory");
@@ -478,6 +472,47 @@ unquote(char *q)
 		fatal("Invalid literal string");
 
 	return output;
+}
+
+void
+print_oneormores(struct str_list *list)
+{
+	while(list)
+	{
+		/* output the OneOrMoreIdentifier rule */
+		printf("OneOrMore%s:\n", list->name);
+		printf("\t%s\n", list->name);
+		printf("\t|\n");
+		printf("\tOneOrMore%s %s\n", list->name, list->name);
+		printf("\t;\n\n");
+		list = list->next;
+	}
+
+	return;
+}
+
+void
+add_oneormore(struct str_list **head, char *name)
+{
+	struct str_list *list;
+
+	/* check we haven't got it already */
+	for(list=*head; list; list=list->next)
+	{
+		if(strcmp(list->name, name) == 0)
+			return;
+	}
+
+	/* take a copy of the string */
+	if((list = malloc(sizeof(struct str_list))) == NULL
+	|| (list->name = strdup(name)) == NULL)
+		fatal("Out of memory");
+
+	/* add it to the head of the list */
+	list->next = *head;
+	*head = list;
+
+	return;
 }
 
 #define INIT_BUF_SIZE	1024
