@@ -92,7 +92,7 @@ SceneClass		::= "{:Scene" Group InputEventRegister
 				SceneCoordinateSystem [AspectRatio]
 				[MovingCursor] [NextScenes] "}" .
 InputEventRegister	::= ":InputEventReg" INTEGER .
-SceneCoordinateSvstem	::= ":SceneCS" XScene YScene .
+SceneCoordinateSystem	::= ":SceneCS" XScene YScene .
 XScene			::= INTEGER .
 YScene			::= INTEGER .
 AspectRatio		::= ":AspectRatio" Width Height .
@@ -604,7 +604,7 @@ GetFillColour	::= ":GetFillColour" "(" Target FillColourVar
 GetFirstItem	::= ":GetFirstItem" "(" Target FirstItemVar
 			")" .
 GetHighlightStatus	::= ":GetHighlightStatus" "(" Target
-				HightlightStatusVar ")" .
+				HighlightStatusVar ")" .
 GetInteractionStatus	::= ":GetInteractionStatus" "(" Target
 				InteractionStatusVar ")" .
 GetItemStatus	::= ":GetItemStatus" "(" Target
