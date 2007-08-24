@@ -1,4 +1,5 @@
 %{
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -49,6 +50,9 @@ struct
 	struct buf grammar;	/* grammar section of the yacc output file */
 	struct buf oneormores;	/* grammar section for Identifier+ rules */
 } state;
+
+void usage(char *);
+void fatal(char *);
 
 void add_item(enum item_type, char *);
 
@@ -158,8 +162,28 @@ item:
 
 /* here we go ... */
 int
-main(void)
+main(int argc, char *argv[])
 {
+	char *prog_name = argv[0];
+	/* by default output the grammar */
+	bool show_lexer = false;
+	int arg;
+
+	while((arg = getopt(argc, argv, "l")) != EOF)
+	{
+		switch(arg)
+		{
+		case 'l':
+			show_lexer = true;
+			break;
+
+		default:
+			usage(prog_name);
+			break;
+		}
+	}
+
+	if(optind == argc)
 	state.items = NULL;
 	buf_init(&state.lexer);
 	state.tokens = NULL;
@@ -168,17 +192,30 @@ main(void)
 
 	yyparse();
 
-	printf("-- lex --\n");
-	printf("%s", state.lexer.str);
-
-	printf("-- yacc --\n");
-	print_tokens(state.tokens);
-	printf("%%%%\n");
-	printf("%s", state.grammar.str);
-	printf("%s", state.oneormores.str);
-	printf("%%%%\n");
+	if(show_lexer)
+	{
+		/* output lexer */
+		printf("%s", state.lexer.str);
+	}
+	else
+	{
+		/* output grammar */
+		print_tokens(state.tokens);
+		printf("%%%%\n");
+		printf("%s", state.grammar.str);
+		printf("%s", state.oneormores.str);
+		printf("%%%%\n");
+	}
 
 	return EXIT_SUCCESS;
+}
+
+void
+usage(char *prog_name)
+{
+	fprintf(stderr, "Syntax: %s [-l]\n", prog_name);
+
+	exit(EXIT_FAILURE);
 }
 
 void
