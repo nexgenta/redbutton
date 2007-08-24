@@ -19,6 +19,7 @@ mhegc:	${OBJS}
 	${CC} ${CFLAGS} -o mhegc ${OBJS} ${LIBS}
 
 mhegc.o:	mhegc.c parser.tab.h
+	${CC} ${CFLAGS} -c mhegc.c
 
 parser.tab.h:	parser.tab.c
 
@@ -27,7 +28,7 @@ ccc:	ccc.y ccc.l
 	${YACC} -b ccc -d ccc.y
 	${CC} ${CFLAGS} -o ccc lex.ccc.c ccc.tab.c
 
-parser.l:	parser.l.header grammar ccc
+parser.l:	parser.l.header parser.l.footer grammar ccc
 	cat parser.l.header > parser.l
 	cat grammar | ./ccc -l >> parser.l
 	cat parser.l.footer >> parser.l
