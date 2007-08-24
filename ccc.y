@@ -51,6 +51,8 @@ struct
 	struct buf oneormores;	/* grammar section for Identifier+ rules */
 } state;
 
+int yyparse(void);
+
 void usage(char *);
 void fatal(char *);
 

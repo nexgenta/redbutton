@@ -1,6 +1,8 @@
 // MHEG5 Textual Format
 // includes UK MHEG Profile additions
 
+InterchangedObject	::= ApplicationClass | SceneClass .
+
 // B.4.1 Root Class
 
 Root			::= ObjectIdentifier .
