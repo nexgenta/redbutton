@@ -9,7 +9,8 @@ YACC=bison
 DESTDIR=/usr/local
 
 OBJS=	mhegc.o	\
-	parser.o	\
+	lex.parser.o	\
+	parser.tab.o	\
 	utils.o
 
 TARDIR=`basename ${PWD}`
@@ -18,9 +19,8 @@ mhegc:	${OBJS}
 	${CC} ${CFLAGS} -o mhegc ${OBJS} ${LIBS}
 
 mhegc.o:	mhegc.c parser.tab.h
-	${CC} ${CFLAGS} -c mhegc.c
 
-parser.tab.h:	parser.o
+parser.tab.h:	parser.tab.c
 
 ccc:	ccc.y ccc.l
 	${LEX} -i -t ccc.l > lex.ccc.c
@@ -37,10 +37,11 @@ parser.y:	parser.y.header parser.y.footer grammar ccc
 	cat grammar | ./ccc >> parser.y
 	cat parser.y.footer >> parser.y
 
-parser.o:	parser.l parser.y
+lex.parser.c:	parser.l
 	${LEX} -i -t parser.l > lex.parser.c
+
+parser.tab.c:	parser.y
 	${YACC} -b parser -d parser.y
-	${CC} ${CFLAGS} -c -o parser.o lex.parser.c parser.tab.c
 
 .c.o:
 	${CC} ${CFLAGS} -c $<
