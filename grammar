@@ -245,7 +245,7 @@ TargetElement	::= INTEGER .
 TokenGroupClass		::= "{:TokenGroup" TokenGroupBody "}" .
 TokenGroupBody		::= Presentable TokenManager [TokenGroupItems]
 				[NoTokenActionSlots] .
-TokenGroupItems		::= "{:TokenGroupItems" "(" TokenGroupItem+ ")" .
+TokenGroupItems		::= ":TokenGroupItems" "(" TokenGroupItem+ ")" .
 TokenGroupItem		::= "(" AVisible [ActionSlots] ")" .
 AVisible		::= ObjectReference .
 ActionSlots		::= ":ActionSlots" "(" ActionSlot+ ")" .
