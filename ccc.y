@@ -1,9 +1,11 @@
 %{
+#define _GNU_SOURCE	/* for vasprintf */
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <ctype.h>
 
 #define YYSTYPE char *
@@ -70,7 +72,7 @@ void print_oneormores(struct str_list *);
 void add_oneormore(struct str_list **, char *);
 
 void buf_init(struct buf *);
-void buf_append(struct buf *, char *);
+void buf_append(struct buf *, char *, ...);
 
 /* input line we are currently parsing */
 int yylineno = 1;
@@ -270,8 +272,7 @@ output_def(char *name)
 	struct item *item;
 	struct item *next;
 
-	buf_append(&state.grammar, name);
-	buf_append(&state.grammar, ":\n\t");
+	buf_append(&state.grammar, "%s:\n\t", name);
 
 	/* output each item that makes up this identifier */
 	for(item=state.items; item; item=item->next)
@@ -342,8 +343,7 @@ output_item(struct item *item, bool recurse)
 
 	case IT_ONEORMORE:
 		/* add "OneOrMoreIdentifier" to the grammar */
-		buf_append(&state.grammar, "OneOrMore");
-		buf_append(&state.grammar, item->name);
+		buf_append(&state.grammar, "OneOrMore%s", item->name);
 		/* add the OneOrMoreIdentifier to our list */
 		add_oneormore(&state.oneormores, item->name);
 		break;
@@ -413,10 +413,7 @@ add_token(struct str_list **head, char *quoted)
 	}
 
 	/* add it to the lex output file */
-	buf_append(&state.lexer, quoted);
-	buf_append(&state.lexer, "\treturn ");
-	buf_append(&state.lexer, t->name);
-	buf_append(&state.lexer, ";\n");
+	buf_append(&state.lexer, "%s\treturn %s;\n", quoted, t->name);
 
 	return t->name;
 }
@@ -531,9 +528,16 @@ buf_init(struct buf *b)
 }
 
 void
-buf_append(struct buf *b, char *app_str)
+buf_append(struct buf *b, char *fmt, ...)
 {
-	size_t app_len = strlen(app_str);
+	va_list ap;
+	char *app_str;
+	size_t app_len;
+
+	va_start(ap, fmt);
+	if((app_len = vasprintf(&app_str, fmt, ap)) < 0)
+		fatal("Out of memory or illegal format string");
+	va_end(ap);
 
 	/* +1 for the \0 terminator */
 	while(b->nalloced < b->len + app_len + 1)
@@ -546,6 +550,8 @@ buf_append(struct buf *b, char *app_str)
 	memcpy(b->str + b->len, app_str, app_len);
 	b->len += app_len;
 	b->str[b->len] = '\0';
+
+	free(app_str);
 
 	return;
 }
