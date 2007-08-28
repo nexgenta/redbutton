@@ -395,7 +395,8 @@ buf_append(&state.parser, "\n// TODO: eat %s\n", item->name);
 		case ASN1TYPE_SET:
 			/* assert */
 			if(!state.and_items)
-				fatal("SET type, but and_items not set");
+				fatal("SET but and_items not set");
+			buf_append(&state.parser, "\ttoken_t next;\n\n");
 			item = state.items;
 			while(item && item->type == IT_LITERAL)
 			{
@@ -403,13 +404,34 @@ buf_append(&state.parser, "// TODO: eat %s\n\n", item->name);
 				item = item->next;
 			}
 			buf_append(&state.parser, "\t/* SET */\n");
-buf_append(&state.parser, "// TODO: SET\n");
+			buf_append(&state.parser, "\twhile(true)\n\t{\n");
+			buf_append(&state.parser, "\t\tnext = next_token();\n");
+			while(item && item->type != IT_LITERAL)
+			{
+				if(item->type != IT_IDENTIFIER && item->type != IT_OPTIONAL)
+					fatal("SET but not Identifier or Optional");
+				buf_append(&state.parser, "\t\t/* %s */\n", item->name);
+				buf_append(&state.parser, "\t\tif(is_%s(next))\n\t\t{\n", item->name);
+				buf_append(&state.parser, "\t\t\tparse_%s(state);\n", item->name);
+				buf_append(&state.parser, "\t\t\tcontinue;\n\t\t}\n");
+				item = item->next;
+			}
+			/* didn't match any items, must be the end of the SET */
+			buf_append(&state.parser, "\t\telse\n\t\t{\n");
+			buf_append(&state.parser, "\t\t\tbreak;\n\t\t}\n");
+			buf_append(&state.parser, "\t}\n");
+			/* eat any trailing literals */
+			while(item && item->type == IT_LITERAL)
+			{
+buf_append(&state.parser, "\n// TODO: eat %s\n", item->name);
+				item = item->next;
+			}
 			break;
 
 		case ASN1TYPE_SEQUENCE:
 			/* assert */
 			if(!state.and_items)
-				fatal("SEQUENCE type, but and_items not set");
+				fatal("SEQUENCE but and_items not set");
 			buf_append(&state.parser, "\t/* SEQUENCE */\n");
 			buf_append(&state.parser, "\ttoken_t next;\n");
 			item = state.items;
