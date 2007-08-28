@@ -23,10 +23,10 @@ mhegc.o:	mhegc.c parser.tab.h
 
 parser.tab.h:	parser.tab.c
 
-ccc:	ccc.y ccc.l
+ccc:	ccc.y ccc.l asn1type.o
 	${LEX} -i -t ccc.l > lex.ccc.c
 	${YACC} -b ccc -d ccc.y
-	${CC} ${CFLAGS} -o ccc lex.ccc.c ccc.tab.c
+	${CC} ${CFLAGS} -o ccc lex.ccc.c ccc.tab.c asn1type.o
 
 parser.l:	parser.l.header parser.l.footer grammar ccc
 	cat parser.l.header > parser.l

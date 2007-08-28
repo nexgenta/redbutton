@@ -8,6 +8,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include "asn1type.h"
+
 #define YYSTYPE char *
 
 /* build up a list of items that define the current identifier */
@@ -51,6 +53,7 @@ struct
 	struct str_list *tokens;	/* "%token" section of the yacc output file */
 	struct buf grammar;		/* grammar section of the yacc output file */
 	struct str_list *oneormores;	/* grammar section for Identifier+ rules */
+	struct buf parser;		/* C code for the parser */
 } state;
 
 int yyparse(void);
@@ -173,16 +176,20 @@ int
 main(int argc, char *argv[])
 {
 	char *prog_name = argv[0];
-	/* by default output the grammar */
 	bool show_lexer = false;
+	bool show_parser = false;
 	int arg;
 
-	while((arg = getopt(argc, argv, "l")) != EOF)
+	while((arg = getopt(argc, argv, "lp")) != EOF)
 	{
 		switch(arg)
 		{
 		case 'l':
 			show_lexer = true;
+			break;
+
+		case 'p':
+			show_parser = true;
 			break;
 
 		default:
@@ -199,6 +206,7 @@ main(int argc, char *argv[])
 	state.tokens = NULL;
 	buf_init(&state.grammar);
 	state.oneormores = NULL;
+	buf_init(&state.parser);
 
 	yyparse();
 
@@ -206,6 +214,11 @@ main(int argc, char *argv[])
 	{
 		/* output lexer */
 		printf("%s", state.lexer.str);
+	}
+	else if(show_parser)
+	{
+		/* output C code */
+		printf("%s", state.parser.str);
 	}
 	else
 	{
@@ -223,7 +236,7 @@ main(int argc, char *argv[])
 void
 usage(char *prog_name)
 {
-	fprintf(stderr, "Syntax: %s [-l]\n", prog_name);
+	fprintf(stderr, "Syntax: %s [-l] [-p]\n", prog_name);
 
 	exit(EXIT_FAILURE);
 }
@@ -271,6 +284,7 @@ output_def(char *name)
 {
 	struct item *item;
 	struct item *next;
+	unsigned int nitems;
 
 	buf_append(&state.grammar, "%s:\n\t", name);
 
@@ -279,6 +293,155 @@ output_def(char *name)
 		output_item(item, true);
 
 	buf_append(&state.grammar, ";\n\n");
+
+	/* C code for the parser */
+	buf_append(&state.parser, "void parse_%s(struct state *state)\n{\n", name);
+	/* count how many items make it up */
+	nitems = 0;
+	/* skip literals at the start */
+	item = state.items;
+	while(item && item->type == IT_LITERAL)
+		item = item->next;
+	/* don't count literals at the end */
+	while(item && item->type != IT_LITERAL)
+	{
+		nitems ++;
+		item = item->next;
+	}
+	if(nitems == 1)
+	{
+		item = state.items;
+		while(item && item->type == IT_LITERAL)
+		{
+buf_append(&state.parser, "// TODO: eat %s\n\n", item->name);
+			item = item->next;
+		}
+		buf_append(&state.parser, "\ttoken_t next = next_token();\n\n");
+		if(item->type == IT_IDENTIFIER)
+		{
+			buf_append(&state.parser, "\t/* %s */\n", item->name);
+			buf_append(&state.parser, "\tif(is_%s(next))\n", item->name);
+			buf_append(&state.parser, "\t\tparse_%s(state);\n", item->name);
+			buf_append(&state.parser, "\telse\n");
+			buf_append(&state.parser, "\t\tparse_error(\"Expecting %s\");\n", item->name);
+		}
+		else if(item->type == IT_OPTIONAL)
+		{
+			buf_append(&state.parser, "\t/* [%s] */\n", item->name);
+			buf_append(&state.parser, "\tif(is_%s(next))\n", item->name);
+			buf_append(&state.parser, "\t\tparse_%s(state);\n", item->name);
+		}
+		else if(item->type == IT_ONEORMORE)
+		{
+			buf_append(&state.parser, "\t/* %s+ */\n", item->name);
+			buf_append(&state.parser, "\twhile(is_%s(next))\n", item->name);
+			buf_append(&state.parser, "\t{\n");
+			buf_append(&state.parser, "\t\tparse_%s(state);\n", item->name);
+			buf_append(&state.parser, "\t\tnext = next_token();\n");
+			buf_append(&state.parser, "\t}\n");
+			buf_append(&state.parser, "\n\tunget_token(next);\n");
+		}
+		else
+		{
+			fatal("nitems==1 but not Identifier/[Identifier]/Identifier+");
+		}
+		item = item->next;
+		while(item)
+		{
+buf_append(&state.parser, "\n// TODO: eat %s\n", item->name);
+			item = item->next;
+		}
+	}
+	else
+	{
+		switch(asn1type(name))
+		{
+		case ASN1TYPE_CHOICE:
+		case ASN1TYPE_ENUMERATED:
+			/* assert */
+			if(state.and_items)
+				fatal("CHOICE or ENUMERATED type, but and_items set");
+			buf_append(&state.parser, "\ttoken_t next = next_token();\n\n");
+			buf_append(&state.parser, "\t/* CHOICE or ENUMERATED */\n");
+			item = state.items;
+			for(item=state.items; item; item=item->next)
+			{
+				/* is it the first */
+				if(item == state.items)
+					buf_append(&state.parser, "\t");
+				else
+					buf_append(&state.parser, "\telse ");
+				if(item->type == IT_IDENTIFIER)
+				{
+					buf_append(&state.parser, "if(is_%s(next))\n", item->name);
+					buf_append(&state.parser, "\t\tparse_%s(state);\n", item->name);
+				}
+				else if(item->type == IT_LITERAL)
+				{
+					char *tok_name = unquote(item->name);
+					buf_append(&state.parser, "if(is_%s(next))\n", tok_name);
+					buf_append(&state.parser, "\t\tparse_%s(state);\n", tok_name);
+					free(tok_name);
+				}
+				else
+				{
+					fatal("CHOICE/ENUMERATED but not Identifier or Literal");
+				}
+			}
+			buf_append(&state.parser, "\telse\n");
+			buf_append(&state.parser, "\t\tparse_error(\"Unexpected token\");\n");
+			break;
+
+		case ASN1TYPE_SET:
+			/* assert */
+			if(!state.and_items)
+				fatal("SET type, but and_items not set");
+			item = state.items;
+			while(item && item->type == IT_LITERAL)
+			{
+buf_append(&state.parser, "// TODO: eat %s\n\n", item->name);
+				item = item->next;
+			}
+			buf_append(&state.parser, "\t/* SET */\n");
+buf_append(&state.parser, "// TODO: SET\n");
+			break;
+
+		case ASN1TYPE_SEQUENCE:
+			/* assert */
+			if(!state.and_items)
+				fatal("SEQUENCE type, but and_items not set");
+			buf_append(&state.parser, "\t/* SEQUENCE */\n");
+			buf_append(&state.parser, "\ttoken_t next;\n");
+			item = state.items;
+			for(item=state.items; item; item=item->next)
+			{
+				if(item->type != IT_IDENTIFIER && item->type != IT_LITERAL && item->type != IT_OPTIONAL)
+					fatal("SEQUENCE but not Identifier, Literal or Optional");
+				buf_append(&state.parser, "\n\t/* %s */\n", item->name);
+				if(item->type == IT_LITERAL)
+				{
+buf_append(&state.parser, "// TODO: eat %s\n", item->name);
+				}
+				else
+				{
+					buf_append(&state.parser, "\tnext = next_token();\n");
+					buf_append(&state.parser, "\tif(is_%s(next))\n", item->name);
+					buf_append(&state.parser, "\t\tparse_%s(state);\n", item->name);
+					if(item->type != IT_OPTIONAL)
+					{
+						buf_append(&state.parser, "\telse\n");
+						buf_append(&state.parser, "\t\tparse_error(\"Expecting %s\");\n", item->name);
+					}
+				}
+			}
+			break;
+
+		default:
+			fatal("Illegal ASN1TYPE");
+			break;
+		}
+	}
+	buf_append(&state.parser, "}\n\n", name);
 
 	/* free the items */
 	item = state.items;
@@ -555,4 +718,5 @@ buf_append(struct buf *b, char *fmt, ...)
 
 	return;
 }
+
 
