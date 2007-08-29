@@ -55,6 +55,8 @@ struct
 	struct str_list *oneormores;	/* grammar section for Identifier+ rules */
 	struct buf parse_fns;		/* parse_Xxx() C functions for the parser */
 	struct buf is_fns;		/* is_Xxx() C functions for the parser */
+	struct buf parse_hdr;		/* parse_Xxx() prototypes for the parser */
+	struct buf is_hdr;		/* is_Xxx() C prototypes for the parser */
 } state;
 
 int yyparse(void);
@@ -179,9 +181,10 @@ main(int argc, char *argv[])
 	char *prog_name = argv[0];
 	bool show_lexer = false;
 	bool show_parser = false;
+	bool show_header = false;
 	int arg;
 
-	while((arg = getopt(argc, argv, "lp")) != EOF)
+	while((arg = getopt(argc, argv, "lph")) != EOF)
 	{
 		switch(arg)
 		{
@@ -191,6 +194,10 @@ main(int argc, char *argv[])
 
 		case 'p':
 			show_parser = true;
+			break;
+
+		case 'h':
+			show_header = true;
 			break;
 
 		default:
@@ -209,6 +216,8 @@ main(int argc, char *argv[])
 	state.oneormores = NULL;
 	buf_init(&state.parse_fns);
 	buf_init(&state.is_fns);
+	buf_init(&state.parse_hdr);
+	buf_init(&state.is_hdr);
 
 	yyparse();
 
@@ -222,6 +231,12 @@ main(int argc, char *argv[])
 		/* output C code */
 		printf("%s", state.parse_fns.str);
 		printf("%s", state.is_fns.str);
+	}
+	else if(show_header)
+	{
+		/* output C header file */
+		printf("%s", state.parse_hdr.str);
+		printf("%s", state.is_hdr.str);
 	}
 	else
 	{
@@ -239,7 +254,7 @@ main(int argc, char *argv[])
 void
 usage(char *prog_name)
 {
-	fprintf(stderr, "Syntax: %s [-l] [-p]\n", prog_name);
+	fprintf(stderr, "Syntax: %s [-l|-p|-h]\n", prog_name);
 
 	exit(EXIT_FAILURE);
 }
@@ -298,6 +313,7 @@ output_def(char *name)
 	buf_append(&state.grammar, ";\n\n");
 
 	/* C code for the parse_Xxx functions */
+	buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", name);
 	buf_append(&state.parse_fns, "void parse_%s(struct state *state)\n{\n", name);
 	/* count how many items make it up */
 	nitems = 0;
@@ -469,6 +485,7 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n", item->name);
 	buf_append(&state.parse_fns, "}\n\n");
 
 	/* C code for the is_Xxx functions */
+	buf_append(&state.is_hdr, "bool is_%s(token_t);\n", name);
 	buf_append(&state.is_fns, "bool is_%s(token_t tok)\n{\n", name);
 	nitems = 0;
 	for(item=state.items; item; item=item->next)
