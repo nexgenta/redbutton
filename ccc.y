@@ -297,7 +297,7 @@ output_def(char *name)
 
 	buf_append(&state.grammar, ";\n\n");
 
-	/* C code for the parser */
+	/* C code for the parse_Xxx functions */
 	buf_append(&state.parse_fns, "void parse_%s(struct state *state)\n{\n", name);
 	/* count how many items make it up */
 	nitems = 0;
@@ -466,7 +466,76 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n", item->name);
 			break;
 		}
 	}
-	buf_append(&state.parse_fns, "}\n\n", name);
+	buf_append(&state.parse_fns, "}\n\n");
+
+	/* C code for the is_Xxx functions */
+	buf_append(&state.is_fns, "bool is_%s(token_t tok)\n{\n", name);
+	nitems = 0;
+	for(item=state.items; item; item=item->next)
+		nitems ++;
+	if(nitems == 1
+	|| state.items->type == IT_LITERAL)
+	{
+		/* check if the first item matches the token */
+		item = state.items;
+		if(item->type == IT_LITERAL)
+		{
+			char *tok_name = unquote(item->name);
+			buf_append(&state.is_fns, "\treturn (tok == %s);\n", tok_name);
+			free(tok_name);
+		}
+		else
+		{
+			buf_append(&state.is_fns, "\treturn is_%s(tok);\n", item->name);
+		}
+	}
+	else
+	{
+		switch(asn1type(name))
+		{
+		case ASN1TYPE_CHOICE:
+		case ASN1TYPE_ENUMERATED:
+		case ASN1TYPE_SET:
+			/* check if any of the items match the token */
+			buf_append(&state.is_fns, "\treturn ");
+			for(item=state.items; item; item=item->next)
+			{
+				if(item->type != IT_IDENTIFIER && item->type != IT_OPTIONAL)
+					fatal("is_fns: expecting Identifier or [Identifier]");
+				buf_append(&state.is_fns, "is_%s(tok)", item->name);
+				/* is it the last one */
+				if(item->next)
+					buf_append(&state.is_fns, "\n\t    || ");
+				else
+					buf_append(&state.is_fns, ";\n");
+			}
+			break;
+
+		case ASN1TYPE_SEQUENCE:
+			/* check if the first item matches the token */
+			item = state.items;
+			if(item->type == IT_LITERAL)
+			{
+				char *tok_name = unquote(item->name);
+				buf_append(&state.is_fns, "\treturn (tok == %s);\n", tok_name);
+				free(tok_name);
+			}
+			else if(item->type == IT_IDENTIFIER)
+			{
+				buf_append(&state.is_fns, "\treturn is_%s(tok);\n", item->name);
+			}
+			else
+			{
+				fatal("SEQUENCE but first item not Literal or Identifier");
+			}
+			break;
+
+		default:
+			fatal("Illegal ASN1TYPE");
+			break;
+		}
+	}
+	buf_append(&state.is_fns, "}\n\n");
 
 	/* free the items */
 	item = state.items;
