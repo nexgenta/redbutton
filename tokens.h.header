@@ -1,0 +1,7 @@
+#define INVALID	1
+#define INTEGER	2
+#define BOOLEAN	3
+#define STRING	4
+#define QPRINTABLE	5
+#define BASE64	6
+#define Null	7

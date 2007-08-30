@@ -23,16 +23,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "parser.tab.h"
-
-int yyparse(void);
-extern int yydebug;
+#include "parser.h"
 
 int
 main(int argc, char *argv[])
 {
-	yydebug=1;
-	yyparse();
+	struct state state;
+
+	parse_InterchangedObject(&state);
 
 	return EXIT_SUCCESS;
 }

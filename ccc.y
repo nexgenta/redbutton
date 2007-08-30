@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <limits.h>
+#include <errno.h>
 
 #include "asn1type.h"
 
@@ -51,13 +53,14 @@ struct
 	bool and_items;			/* true => identifier must contain all items */
 	struct buf lexer;		/* lex output file */
 	struct str_list *tokens;	/* "%token" section of the yacc output file */
-	struct buf grammar;		/* grammar section of the yacc output file */
-	struct str_list *oneormores;	/* grammar section for Identifier+ rules */
 	struct buf parse_fns;		/* parse_Xxx() C functions for the parser */
 	struct buf is_fns;		/* is_Xxx() C functions for the parser */
 	struct buf parse_hdr;		/* parse_Xxx() prototypes for the parser */
 	struct buf is_hdr;		/* is_Xxx() C prototypes for the parser */
 } state;
+
+/* header for files we generate */
+#define STANDARD_HEADER	"/*\n * This file was automatically generated. Do not Edit!\n */\n\n"
 
 int yyparse(void);
 int yylex(void);
@@ -68,17 +71,16 @@ void fatal(char *);
 void add_item(enum item_type, char *);
 
 void output_def(char *);
-void output_item(struct item *, bool);
 
 void print_tokens(struct str_list *);
 char *add_token(struct str_list **, char *);
 char *unquote(char *);
 
-void print_oneormores(struct str_list *);
-void add_oneormore(struct str_list **, char *);
-
 void buf_init(struct buf *);
 void buf_append(struct buf *, char *, ...);
+
+FILE *safe_fopen(char *, char *);
+void file_append(FILE *, char *);
 
 /* input line we are currently parsing */
 int yylineno = 1;
@@ -179,26 +181,33 @@ int
 main(int argc, char *argv[])
 {
 	char *prog_name = argv[0];
-	bool show_lexer = false;
-	bool show_parser = false;
-	bool show_header = false;
+	char *lexer_name = NULL;
+	char *parser_name = NULL;
+	char *header_name = NULL;
+	char *tokens_name = NULL;
 	int arg;
 	struct str_list *t;
+	char header[PATH_MAX];
+	char footer[PATH_MAX];
 
-	while((arg = getopt(argc, argv, "lph")) != EOF)
+	while((arg = getopt(argc, argv, "l:p:h:t:")) != EOF)
 	{
 		switch(arg)
 		{
 		case 'l':
-			show_lexer = true;
+			lexer_name = optarg;
 			break;
 
 		case 'p':
-			show_parser = true;
+			parser_name = optarg;
 			break;
 
 		case 'h':
-			show_header = true;
+			header_name = optarg;
+			break;
+
+		case 't':
+			tokens_name = optarg;
 			break;
 
 		default:
@@ -213,8 +222,6 @@ main(int argc, char *argv[])
 	state.items = NULL;
 	buf_init(&state.lexer);
 	state.tokens = NULL;
-	buf_init(&state.grammar);
-	state.oneormores = NULL;
 	buf_init(&state.parse_fns);
 	buf_init(&state.is_fns);
 	buf_init(&state.parse_hdr);
@@ -222,34 +229,89 @@ main(int argc, char *argv[])
 
 	yyparse();
 
-	if(show_lexer)
+
+	/*
+	 * add parse_Xxx functions for the tokens
+	 * #define is_Xxx functions for the tokens
+	 */
+	for(t=state.tokens; t; t=t->next)
 	{
-		/* output lexer */
-		printf("%s", state.lexer.str);
+		buf_append(&state.parse_fns, "void parse_%s(struct state *state)\n{\n", t->name);
+buf_append(&state.parse_fns, "// TODO\n");
+		buf_append(&state.parse_fns, "}\n\n", t->name);
+		/* parse_Xxx prototype */
+		buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", t->name);
+		/* #define is_Xxx function */
+		buf_append(&state.is_hdr, "#define is_%s(TOK)\t(TOK == %s)\n", t->name, t->name);
 	}
-	else if(show_parser)
+
+	/* output lexer */
+	if(lexer_name != NULL)
 	{
-		/* output C code */
-		printf("%s", state.parse_fns.str);
-		printf("%s", state.is_fns.str);
+		FILE *lexer_file = safe_fopen(lexer_name, "w");
+		fprintf(lexer_file, STANDARD_HEADER);
+		/* output the header if there is one */
+		snprintf(header, sizeof(header), "%s.header", lexer_name);
+		file_append(lexer_file, header);
+		/* output our stuff */
+		fprintf(lexer_file, "%s", state.lexer.str);
+		/* output the footer if there is one */
+		snprintf(footer, sizeof(footer), "%s.footer", lexer_name);
+		file_append(lexer_file, footer);
+		fclose(lexer_file);
 	}
-	else if(show_header)
+
+	/* output parser C code */
+	if(parser_name != NULL)
 	{
-		/* output C header file */
-		printf("%s", state.parse_hdr.str);
-		printf("%s", state.is_hdr.str);
-		/* add is_Xxx functions for the tokens */
+		FILE *parser_file = safe_fopen(parser_name, "w");
+		fprintf(parser_file, STANDARD_HEADER);
+		/* output the header if there is one */
+		snprintf(header, sizeof(header), "%s.header", parser_name);
+		file_append(parser_file, header);
+		/* output our stuff */
+		fprintf(parser_file, "%s", state.parse_fns.str);
+		fprintf(parser_file, "%s", state.is_fns.str);
+		/* output the footer if there is one */
+		snprintf(footer, sizeof(footer), "%s.footer", parser_name);
+		file_append(parser_file, footer);
+		fclose(parser_file);
+	}
+
+	/* output parser header file */
+	if(header_name != NULL)
+	{
+		FILE *header_file = safe_fopen(header_name, "w");
+		fprintf(header_file, STANDARD_HEADER);
+		/* output the header if there is one */
+		snprintf(header, sizeof(header), "%s.header", header_name);
+		file_append(header_file, header);
+		/* output our stuff */
+		fprintf(header_file, "%s", state.parse_hdr.str);
+		fprintf(header_file, "%s", state.is_hdr.str);
+		/* output the footer if there is one */
+		snprintf(footer, sizeof(footer), "%s.footer", header_name);
+		file_append(header_file, footer);
+		fclose(header_file);
+	}
+
+	/* output a header file defining the tokens for the lexer */
+	if(tokens_name != NULL)
+	{
+		unsigned int tok_val;
+		FILE *tokens_file = safe_fopen(tokens_name, "w");
+		fprintf(tokens_file, STANDARD_HEADER);
+		/* output the header if there is one */
+		snprintf(header, sizeof(header), "%s.header", tokens_name);
+		file_append(tokens_file, header);
+		/* output our stuff */
+		tok_val = 256;
 		for(t=state.tokens; t; t=t->next)
-			printf("#define is_%s(TOK)\t(TOK == %s)\n", t->name, t->name);
-	}
-	else
-	{
-		/* output grammar */
-		print_tokens(state.tokens);
-		printf("%%%%\n");
-		printf("%s", state.grammar.str);
-		print_oneormores(state.oneormores);
-		printf("%%%%\n");
+			fprintf(tokens_file, "#define %s\t%u\n", t->name, tok_val++);
+		/* output the footer if there is one */
+		snprintf(footer, sizeof(footer), "%s.footer", tokens_name);
+		file_append(tokens_file, footer);
+		fclose(tokens_file);
 	}
 
 	return EXIT_SUCCESS;
@@ -258,7 +320,7 @@ main(int argc, char *argv[])
 void
 usage(char *prog_name)
 {
-	fprintf(stderr, "Syntax: %s [-l|-p|-h]\n", prog_name);
+	fprintf(stderr, "Syntax: %s [-l <lexer-file>] [-p <parser-c-file>] [-h <parser-h-file>] [-t <tokens-file>]\n", prog_name);
 
 	exit(EXIT_FAILURE);
 }
@@ -298,6 +360,10 @@ add_item(enum item_type type, char *name)
 	new_item->type = type;
 	new_item->include = true;
 
+	/* if it is a literal, make a token for it */
+	if(new_item->type == IT_LITERAL)
+		add_token(&state.tokens, new_item->name);
+
 	return;
 }
 
@@ -307,14 +373,6 @@ output_def(char *name)
 	struct item *item;
 	struct item *next;
 	unsigned int nitems;
-
-	buf_append(&state.grammar, "%s:\n\t", name);
-
-	/* output each item that makes up this identifier */
-	for(item=state.items; item; item=item->next)
-		output_item(item, true);
-
-	buf_append(&state.grammar, ";\n\n");
 
 	/* C code for the parse_Xxx functions */
 	buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", name);
@@ -573,74 +631,6 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n", item->name);
 }
 
 void
-output_item(struct item *item, bool recurse)
-{
-	char *tok_name;
-	struct item *rest;
-
-	switch(item->type)
-	{
-	case IT_LITERAL:
-		tok_name = add_token(&state.tokens, item->name);
-		buf_append(&state.grammar, tok_name);
-		break;
-
-	case IT_IDENTIFIER:
-		buf_append(&state.grammar, item->name);
-		break;
-
-	case IT_OPTIONAL:
-		if(recurse)
-		{
-			/*
-			 * we are an optional item,
-			 * so first output the remaining items
-			 * this creates a rule which does not including us
-			 */
-			item->include = false;
-			for(rest=item->next; rest; rest=rest->next)
-				output_item(rest, true);
-			/* or it with a rule which does contain us */
-			if(item->next == NULL)
-				buf_append(&state.grammar, "\n\t");
-			buf_append(&state.grammar, "|\n\t");
-			/*
-			 * now output the items before us and output ourself,
-			 * this constructs a rule including us
-			 */
-			item->include = true;
-			for(rest=state.items; rest!=item; rest=rest->next)
-				output_item(rest, false);
-			buf_append(&state.grammar, item->name);
-		}
-		else if(item->include)
-		{
-			buf_append(&state.grammar, item->name);
-		}
-		break;
-
-	case IT_ONEORMORE:
-		/* add "OneOrMoreIdentifier" to the grammar */
-		buf_append(&state.grammar, "OneOrMore%s", item->name);
-		/* add the OneOrMoreIdentifier to our list */
-		add_oneormore(&state.oneormores, item->name);
-		break;
-
-	default:
-		fatal("Unexpected item type");
-		break;
-	}
-
-	/* do we need all the items, or just one of them */
-	if(state.and_items)
-		buf_append(&state.grammar, item->next ? (item->include ? " " : "") : "\n\t");
-	else
-		buf_append(&state.grammar, item->next ? "\n\t|\n\t" : "\n\t");
-
-	return;
-}
-
-void
 print_tokens(struct str_list *t)
 {
 	while(t)
@@ -751,47 +741,6 @@ unquote(char *q)
 	return output;
 }
 
-void
-print_oneormores(struct str_list *list)
-{
-	while(list)
-	{
-		/* output the OneOrMoreIdentifier rule */
-		printf("OneOrMore%s:\n", list->name);
-		printf("\t%s\n", list->name);
-		printf("\t|\n");
-		printf("\tOneOrMore%s %s\n", list->name, list->name);
-		printf("\t;\n\n");
-		list = list->next;
-	}
-
-	return;
-}
-
-void
-add_oneormore(struct str_list **head, char *name)
-{
-	struct str_list *list;
-
-	/* check we haven't got it already */
-	for(list=*head; list; list=list->next)
-	{
-		if(strcmp(list->name, name) == 0)
-			return;
-	}
-
-	/* take a copy of the string */
-	if((list = malloc(sizeof(struct str_list))) == NULL
-	|| (list->name = strdup(name)) == NULL)
-		fatal("Out of memory");
-
-	/* add it to the head of the list */
-	list->next = *head;
-	*head = list;
-
-	return;
-}
-
 #define INIT_BUF_SIZE	1024
 
 void
@@ -834,4 +783,47 @@ buf_append(struct buf *b, char *fmt, ...)
 	return;
 }
 
+FILE *
+safe_fopen(char *path, char *mode)
+{
+	FILE *f;
+
+	if((f = fopen(path, mode)) == NULL)
+	{
+		fprintf(stderr, "Unable to open %s: %s\n", path, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	return f;
+}
+
+void
+file_append(FILE *out, char *path)
+{
+	FILE *append = fopen(path, "r");
+	char buf[BUFSIZ];
+	size_t nread;
+
+	/* don't care if the file does not exist */
+	if(append == NULL)
+	{
+		if(errno == ENOENT)
+			return;
+		fprintf(stderr, "Unable to read %s: %s\n", path, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	/* we are using stdio, so copy in BUFSIZ blocks */
+	while(!feof(append))
+	{
+		nread = fread(buf, 1, sizeof(buf), append);
+		if(fwrite(buf, 1, nread, out) != nread)
+		{
+			fprintf(stderr, "Unable to append %s: %s", path, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	return;
+}
 

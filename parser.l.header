@@ -1,15 +1,14 @@
 %{
-#include <string.h>
-#define YYSTYPE char *
-#include "parser.tab.h"
+#include "parser.h"
+#include "tokens.h"
 extern int yylineno;
 %}
 %%
-([-0-9][0-9]*)|(0x[0-9a-f]+)	yylval = strdup(yytext); return INTEGER;
-true|false			yylval = strdup(yytext); return BOOLEAN;
-\"((\\\")|[^"])*\"		yylval = strdup(yytext); return STRING;
-'[^']*'				yylval = strdup(yytext); return QPRINTABLE;
-`[^`]*`				yylval = strdup(yytext); return BASE64;
+([-0-9][0-9]*)|(0x[0-9a-f]+)	return INTEGER;
+true|false			return BOOLEAN;
+\"((\\\")|[^"])*\"		return STRING;
+'[^']*'				return QPRINTABLE;
+`[^`]*`				return BASE64;
 null				return Null;
 [\n\r\f]			yylineno ++;
 [ \t]+				/* ignore whitespace */

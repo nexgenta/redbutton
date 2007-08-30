@@ -1,2 +1,21 @@
 .				return INVALID;
 %%
+
+/* don't use #define in case they are macros too */
+token_t
+next_token(void)
+{
+	return yylex();
+}
+
+void
+unget_token(token_t tok)
+{
+	unput(tok);
+}
+
+void
+parse_error(char *err)
+{
+	yyerror(err);
+}

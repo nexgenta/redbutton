@@ -10,39 +10,24 @@ DESTDIR=/usr/local
 
 OBJS=	mhegc.o	\
 	lex.parser.o	\
-	parser.tab.o	\
+	parser.o	\
 	utils.o
 
 TARDIR=`basename ${PWD}`
 
-mhegc:	${OBJS}
+mhegc:	parser.h ${OBJS}
 	${CC} ${CFLAGS} -o mhegc ${OBJS} ${LIBS}
-
-mhegc.o:	mhegc.c parser.tab.h
-	${CC} ${CFLAGS} -c mhegc.c
-
-parser.tab.h:	parser.tab.c
 
 ccc:	ccc.y ccc.l asn1type.o
 	${LEX} -i -t ccc.l > lex.ccc.c
 	${YACC} -b ccc -d ccc.y
 	${CC} ${CFLAGS} -o ccc lex.ccc.c ccc.tab.c asn1type.o
 
-parser.l:	parser.l.header parser.l.footer grammar ccc
-	cat parser.l.header > parser.l
-	cat grammar | ./ccc -l >> parser.l
-	cat parser.l.footer >> parser.l
-
-parser.y:	parser.y.header parser.y.footer grammar ccc
-	cat parser.y.header > parser.y
-	cat grammar | ./ccc >> parser.y
-	cat parser.y.footer >> parser.y
-
-lex.parser.c:	parser.l
+lex.parser.o parser.o parser.h:	parser.l.* parser.c.* parser.h.* tokens.h.* grammar ccc
+	cat grammar | ./ccc -l parser.l -p parser.c -h parser.h -t tokens.h
 	${LEX} -i -t parser.l > lex.parser.c
-
-parser.tab.c:	parser.y
-	${YACC} -b parser -d parser.y
+	${CC} ${CFLAGS} -c lex.parser.c
+	${CC} ${CFLAGS} -c parser.c
 
 .c.o:
 	${CC} ${CFLAGS} -c $<
@@ -51,7 +36,7 @@ install:	mhegc
 	install -m 755 mhegc ${DESTDIR}/bin
 
 clean:
-	rm -f mhegc ccc lex.*.c *.tab.[ch] parser.l parser.y *.o core
+	rm -f mhegc ccc lex.ccc.c ccc.tab.[ch] lex.parser.c parser.[lch] tokens.h *.o core
 
 tar:
 	make clean

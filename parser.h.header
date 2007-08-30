@@ -1,0 +1,8 @@
+#ifndef __NEW_PARSER_H__
+#define __NEW_PARSER_H__
+
+#include <stdbool.h>
+
+struct state { int dummy; };
+typedef int token_t;
+

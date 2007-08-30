@@ -1,0 +1,53 @@
+#include <stdio.h>
+
+#include "parser.h"
+#include "tokens.h"
+
+int yylineno = 1;
+
+int yylex(void);
+
+void
+yyerror(const char *str)
+{
+	fprintf(stderr, "Error: %s at line %d\n", str, yylineno);
+}
+
+int
+yywrap(void)
+{
+	return 1;
+}
+
+/*
+ * parser functions for the predefined types
+ */
+
+void parse_INTEGER(struct state *state)
+{
+}
+
+void parse_BOOLEAN(struct state *state)
+{
+}
+
+
+void parse_STRING(struct state *state)
+{
+}
+
+
+void parse_QPRINTABLE(struct state *state)
+{
+}
+
+
+void parse_BASE64(struct state *state)
+{
+}
+
+
+void parse_Null(struct state *state)
+{
+}
+
