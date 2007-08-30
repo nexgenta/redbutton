@@ -183,6 +183,7 @@ main(int argc, char *argv[])
 	bool show_parser = false;
 	bool show_header = false;
 	int arg;
+	struct str_list *t;
 
 	while((arg = getopt(argc, argv, "lph")) != EOF)
 	{
@@ -237,6 +238,9 @@ main(int argc, char *argv[])
 		/* output C header file */
 		printf("%s", state.parse_hdr.str);
 		printf("%s", state.is_hdr.str);
+		/* add is_Xxx functions for the tokens */
+		for(t=state.tokens; t; t=t->next)
+			printf("#define is_%s(TOK)\t(TOK == %s)\n", t->name, t->name);
 	}
 	else
 	{
@@ -498,7 +502,7 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n", item->name);
 		if(item->type == IT_LITERAL)
 		{
 			char *tok_name = unquote(item->name);
-			buf_append(&state.is_fns, "\treturn (tok == %s);\n", tok_name);
+			buf_append(&state.is_fns, "\treturn is_%s(tok);\n", tok_name);
 			free(tok_name);
 		}
 		else
