@@ -309,7 +309,7 @@ RectangleClass	::= "{:Rectangle" LineArtBody "}" .
 DynamicLineArtClass	::= "{:DynamicLineArt" LineArtBody "}" .
 
 
-// B.4.29 Text Cfass
+// B.4.29 Text Class
 
 TextClass		::= "{:Text" TextBody "}" .
 TextBody		::= Visible [OriginalFont] [FontAttributes]
