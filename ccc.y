@@ -53,8 +53,10 @@ struct
 	struct buf lexer;		/* lex output file */
 	struct str_list *tokens;	/* "%token" section of the yacc output file */
 	struct buf parse_fns;		/* parse_Xxx() C functions for the parser */
+	struct buf parse_enum_fns;	/* parse_Xxx() functions for enum values */
 	struct buf is_fns;		/* is_Xxx() C functions for the parser */
 	struct buf parse_hdr;		/* parse_Xxx() prototypes for the parser */
+	struct buf parse_enum_hdr;	/* parse_Xxx() prototypes for enum values */
 	struct buf is_hdr;		/* is_Xxx() C prototypes for the parser */
 } state;
 
@@ -221,27 +223,17 @@ main(int argc, char *argv[])
 	buf_init(&state.lexer);
 	state.tokens = NULL;
 	buf_init(&state.parse_fns);
+	buf_init(&state.parse_enum_fns);
 	buf_init(&state.is_fns);
 	buf_init(&state.parse_hdr);
+	buf_init(&state.parse_enum_hdr);
 	buf_init(&state.is_hdr);
 
 	yyparse();
 
-
-	/*
-	 * add parse_Xxx functions for the tokens
-	 * #define is_Xxx functions for the tokens
-	 */
+	/* #define is_Xxx functions for the tokens */
 	for(t=state.tokens; t; t=t->next)
-	{
-		buf_append(&state.parse_fns, "void parse_%s(struct state *state)\n{\n", t->name);
-buf_append(&state.parse_fns, "// TODO\n");
-		buf_append(&state.parse_fns, "}\n\n", t->name);
-		/* parse_Xxx prototype */
-		buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", t->name);
-		/* #define is_Xxx function */
 		buf_append(&state.is_hdr, "#define is_%s(TOK)\t(TOK == %s)\n", t->name, t->name);
-	}
 
 	/* output lexer */
 	if(lexer_name != NULL)
@@ -269,6 +261,7 @@ buf_append(&state.parse_fns, "// TODO\n");
 		file_append(parser_file, header);
 		/* output our stuff */
 		fprintf(parser_file, "%s", state.parse_fns.str);
+		fprintf(parser_file, "%s", state.parse_enum_fns.str);
 		fprintf(parser_file, "%s", state.is_fns.str);
 		/* output the footer if there is one */
 		snprintf(footer, sizeof(footer), "%s.footer", parser_name);
@@ -286,6 +279,7 @@ buf_append(&state.parse_fns, "// TODO\n");
 		file_append(header_file, header);
 		/* output our stuff */
 		fprintf(header_file, "%s", state.parse_hdr.str);
+		fprintf(header_file, "%s", state.parse_enum_hdr.str);
 		fprintf(header_file, "%s", state.is_hdr.str);
 		/* output the footer if there is one */
 		snprintf(footer, sizeof(footer), "%s.footer", header_name);
@@ -467,6 +461,14 @@ buf_append(&state.parse_fns, "printf(\"<%s>\\n\");\n", name);
 					char *tok_name = unquote(item->name);
 					buf_append(&state.parse_fns, "if(is_%s(next))\n", tok_name);
 					buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", tok_name);
+					/* create a parse_Xxx function for the enum value */
+					if(asn1type(name) != ASN1TYPE_ENUMERATED)
+						fatal("literal but not enum");
+					buf_append(&state.parse_enum_hdr, "void parse_%s(struct state *);\n", tok_name);
+					buf_append(&state.parse_enum_fns, "void parse_%s(struct state *state)\n{\n", tok_name);
+					buf_append(&state.parse_enum_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
+buf_append(&state.parse_enum_fns, "printf(\"<ENUM value=%s/>\\n\");\n", tok_name);
+					buf_append(&state.parse_enum_fns, "}\n\n");
 					free(tok_name);
 				}
 				else
@@ -569,9 +571,31 @@ buf_append(&state.parse_fns, "printf(\"</%s>\\n\");\n", name);
 	if(nitems == 1
 	|| state.items->type == IT_LITERAL)
 	{
-		/* check if the first item matches the token */
+		/* if it is an enum, check if any item matches the token */
+		bool is_enum = true;
+		for(item=state.items; item && is_enum; item=item->next)
+			is_enum = is_enum && (item->type == IT_LITERAL);
 		item = state.items;
-		if(item->type == IT_LITERAL)
+		if(is_enum)
+		{
+			if(asn1type(name) != ASN1TYPE_ENUMERATED)
+				fatal("is_enum but not ENUMERATED");
+			buf_append(&state.is_fns, "\treturn ");
+			while(item)
+			{
+				char *tok_name = unquote(item->name);
+				buf_append(&state.is_fns, "is_%s(tok)", tok_name);
+				free(tok_name);
+				/* is it the last one */
+				if(item->next)
+					buf_append(&state.is_fns, "\n\t    || ");
+				else
+					buf_append(&state.is_fns, ";\n");
+				item = item->next;
+			}
+		}
+		/* just check if the first item matches the token */
+		else if(item->type == IT_LITERAL)
 		{
 			char *tok_name = unquote(item->name);
 			buf_append(&state.is_fns, "\treturn is_%s(tok);\n", tok_name);

@@ -7,6 +7,7 @@ peek_token(void)
 {
 	token_t tok = yylex();
 
+printf("peek: '%s'\n", yytext);
 	/* return it to the input stream */
 	yyless(0);
 
@@ -25,7 +26,10 @@ expect_token(token_t tok, char *name)
 token_t
 next_token(void)
 {
-	return yylex();
+//	return yylex();
+token_t tok = yylex();
+printf("next: '%s'\n", yytext);
+return tok;
 }
 
 char *
