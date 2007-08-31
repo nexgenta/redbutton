@@ -27,7 +27,6 @@ struct item
 	struct item *next;
 	char *name;
 	enum item_type type;
-	bool include;		/* should we output this optional item or not */
 };
 
 /* a list of strings */
@@ -350,7 +349,6 @@ add_item(enum item_type type, char *name)
 	new_item->next = NULL;
 	new_item->name = name;		/* lex strdup's it for us */
 	new_item->type = type;
-	new_item->include = true;
 
 	/* if it is a literal, make a token for it */
 	if(new_item->type == IT_LITERAL)
