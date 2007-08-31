@@ -8,8 +8,7 @@ int yylineno = 1;
 void
 yyerror(const char *str)
 {
-//	fprintf(stderr, "Error: %s at line %d\n", str, yylineno);
-printf("Error: %s at line %d\n", str, yylineno);
+	fprintf(stderr, "Error: %s at line %d\n", str, yylineno);
 }
 
 int
@@ -27,7 +26,7 @@ void parse_INTEGER(struct state *state)
 	if(next_token() != INTEGER)
 		yyerror("Expecting INTEGER");
 
-printf("<INTEGER value=%s/>\n", token_text());
+	verbose("<INTEGER value=%s/>\n", token_text());
 
 	return;
 }
@@ -37,7 +36,7 @@ void parse_BOOLEAN(struct state *state)
 	if(next_token() != BOOLEAN)
 		yyerror("Expecting BOOLEAN");
 
-printf("<BOOLEAN value=%s/>\n", token_text());
+	verbose("<BOOLEAN value=%s/>\n", token_text());
 
 	return;
 }
@@ -48,7 +47,7 @@ void parse_STRING(struct state *state)
 	if(next_token() != STRING)
 		yyerror("Expecting STRING");
 
-printf("<STRING value=%s/>\n", token_text());
+	verbose("<STRING value=%s/>\n", token_text());
 
 	return;
 }
@@ -59,7 +58,7 @@ void parse_QPRINTABLE(struct state *state)
 	if(next_token() != QPRINTABLE)
 		yyerror("Expecting QPRINTABLE");
 
-printf("<QPRINTABLE value=%s/>\n", token_text());
+	verbose("<QPRINTABLE value=%s/>\n", token_text());
 
 	return;
 }
@@ -70,7 +69,7 @@ void parse_BASE64(struct state *state)
 	if(next_token() != BASE64)
 		yyerror("Expecting BASE64");
 
-printf("<BASE64 value=%s/>\n", token_text());
+	verbose("<BASE64 value=%s/>\n", token_text());
 
 	return;
 }
@@ -81,8 +80,11 @@ void parse_Null(struct state *state)
 	if(next_token() != Null)
 		yyerror("Expecting Null");
 
-printf("<Null/>\n");
+	verbose("<Null/>\n");
 
 	return;
 }
 
+/*
+ * auto-generated parser functions follow
+ */

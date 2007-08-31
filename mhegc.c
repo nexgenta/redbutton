@@ -20,15 +20,40 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "parser.h"
+
+void usage(char *);
+
+static int _verbose = 0;
 
 int
 main(int argc, char *argv[])
 {
+	char *prog_name = argv[0];
+	int arg;
 	struct state state;
+
+	while((arg = getopt(argc, argv, "v")) != EOF)
+	{
+		switch(arg)
+		{
+		case 'v':
+			_verbose ++;
+			break;
+
+		default:
+			usage(prog_name);
+			break;
+		}
+	}
+
+	if(optind != argc)
+		usage(prog_name);
 
 	parse_InterchangedObject(&state);
 
@@ -38,3 +63,44 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
+/*
+ * verbose functions send output to stderr so error messages get interleaved correctly
+ */
+
+void
+verbose(const char *fmt, ...)
+{
+	va_list ap;
+
+	if(_verbose)
+	{
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
+
+	return;
+}
+
+void
+vverbose(const char *fmt, ...)
+{
+	va_list ap;
+
+	if(_verbose > 1)
+	{
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
+
+	return;
+}
+
+void
+usage(char *prog_name)
+{
+	fprintf(stderr, "Usage: %s [-vv]\n", prog_name);
+
+	exit(EXIT_FAILURE);
+}

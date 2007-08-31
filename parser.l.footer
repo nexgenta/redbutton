@@ -7,7 +7,8 @@ peek_token(void)
 {
 	token_t tok = yylex();
 
-printf("peek: '%s'\n", yytext);
+	vverbose("peek: '%s'\n", yytext);
+
 	/* return it to the input stream */
 	yyless(0);
 
@@ -26,10 +27,11 @@ expect_token(token_t tok, char *name)
 token_t
 next_token(void)
 {
-//	return yylex();
-token_t tok = yylex();
-printf("next: '%s'\n", yytext);
-return tok;
+	token_t tok = yylex();
+
+	vverbose("next: '%s'\n", yytext);
+
+	return tok;
 }
 
 char *
@@ -49,7 +51,7 @@ parse_error(const char *fmt, ...)
 	va_start(ap, fmt);
 	if(vasprintf(&err, fmt, ap) < 0)
 	{
-		fprintf(stderr, "Out of memory or illegal format string");
+		fprintf(stderr, "Out of memory or illegal format string '%s'", fmt);
 		exit(EXIT_FAILURE);
 	}
 	va_end(ap);

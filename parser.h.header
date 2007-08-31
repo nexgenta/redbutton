@@ -14,3 +14,5 @@ char *token_text(void);
 
 void parse_error(const char *, ...);
 
+void verbose(const char *, ...);
+void vverbose(const char *, ...);

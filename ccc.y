@@ -369,7 +369,8 @@ output_def(char *name)
 	/* C code for the parse_Xxx functions */
 	buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", name);
 	buf_append(&state.parse_fns, "void parse_%s(struct state *state)\n{\n", name);
-buf_append(&state.parse_fns, "printf(\"<%s>\\n\");\n", name);
+	buf_append(&state.parse_fns, "\ttoken_t next;\n\n");
+	buf_append(&state.parse_fns, "\tverbose(\"<%s>\\n\");\n\n", name);
 	/* count how many items make it up */
 	nitems = 0;
 	/* skip literals at the start */
@@ -384,7 +385,6 @@ buf_append(&state.parse_fns, "printf(\"<%s>\\n\");\n", name);
 	}
 	if(nitems == 1)
 	{
-		buf_append(&state.parse_fns, "\ttoken_t next;\n\n");
 		item = state.items;
 		while(item && item->type == IT_LITERAL)
 		{
@@ -441,7 +441,7 @@ buf_append(&state.parse_fns, "printf(\"<%s>\\n\");\n", name);
 			/* assert */
 			if(state.and_items)
 				fatal("CHOICE or ENUMERATED type, but and_items set");
-			buf_append(&state.parse_fns, "\ttoken_t next = peek_token();\n\n");
+			buf_append(&state.parse_fns, "\tnext = peek_token();\n\n");
 			buf_append(&state.parse_fns, "\t/* CHOICE or ENUMERATED */\n");
 			item = state.items;
 			for(item=state.items; item; item=item->next)
@@ -467,8 +467,8 @@ buf_append(&state.parse_fns, "printf(\"<%s>\\n\");\n", name);
 					buf_append(&state.parse_enum_hdr, "void parse_%s(struct state *);\n", tok_name);
 					buf_append(&state.parse_enum_fns, "void parse_%s(struct state *state)\n{\n", tok_name);
 					buf_append(&state.parse_enum_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
-buf_append(&state.parse_enum_fns, "printf(\"<ENUM value=%s/>\\n\");\n", tok_name);
-					buf_append(&state.parse_enum_fns, "}\n\n");
+					buf_append(&state.parse_enum_fns, "\n\tverbose(\"<ENUM value=%s/>\\n\");\n", tok_name);
+					buf_append(&state.parse_enum_fns, "\n\treturn;\n}\n\n");
 					free(tok_name);
 				}
 				else
@@ -484,7 +484,6 @@ buf_append(&state.parse_enum_fns, "printf(\"<ENUM value=%s/>\\n\");\n", tok_name
 			/* assert */
 			if(!state.and_items)
 				fatal("SET but and_items not set");
-			buf_append(&state.parse_fns, "\ttoken_t next;\n\n");
 			item = state.items;
 			while(item && item->type == IT_LITERAL)
 			{
@@ -527,7 +526,6 @@ buf_append(&state.parse_enum_fns, "printf(\"<ENUM value=%s/>\\n\");\n", tok_name
 			if(!state.and_items)
 				fatal("SEQUENCE but and_items not set");
 			buf_append(&state.parse_fns, "\t/* SEQUENCE */\n");
-			buf_append(&state.parse_fns, "\ttoken_t next;\n");
 			item = state.items;
 			for(item=state.items; item; item=item->next)
 			{
@@ -537,7 +535,7 @@ buf_append(&state.parse_enum_fns, "printf(\"<ENUM value=%s/>\\n\");\n", tok_name
 				if(item->type == IT_LITERAL)
 				{
 					char *tok_name = unquote(item->name);
-					buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n\n", tok_name, item->name);
+					buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
 					free(tok_name);
 				}
 				else
@@ -559,8 +557,8 @@ buf_append(&state.parse_enum_fns, "printf(\"<ENUM value=%s/>\\n\");\n", tok_name
 			break;
 		}
 	}
-buf_append(&state.parse_fns, "printf(\"</%s>\\n\");\n", name);
-	buf_append(&state.parse_fns, "}\n\n");
+	buf_append(&state.parse_fns, "\n\tverbose(\"</%s>\\n\");\n", name);
+	buf_append(&state.parse_fns, "\n\treturn;\n}\n\n");
 
 	/* C code for the is_Xxx functions */
 	buf_append(&state.is_hdr, "bool is_%s(token_t);\n", name);
