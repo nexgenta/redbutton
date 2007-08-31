@@ -52,7 +52,13 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if(optind != argc)
+	/*
+	 * a single param is the name of a source file
+	 * default is to read from stdin
+	 */
+	if(optind == argc - 1)
+		set_input_file(argv[optind]);
+	else if(optind != argc)
 		usage(prog_name);
 
 	parse_InterchangedObject(&state);
@@ -100,7 +106,7 @@ vverbose(const char *fmt, ...)
 void
 usage(char *prog_name)
 {
-	fprintf(stderr, "Usage: %s [-vv]\n", prog_name);
+	fprintf(stderr, "Usage: %s [-vv] [<input_file>]\n", prog_name);
 
 	exit(EXIT_FAILURE);
 }

@@ -7,6 +7,8 @@
 struct state { int dummy; };
 typedef int token_t;
 
+void set_input_file(char *);
+
 token_t peek_token(void);
 void expect_token(token_t, char *);
 token_t next_token(void);

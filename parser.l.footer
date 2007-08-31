@@ -1,6 +1,18 @@
 .				return INVALID;
 %%
 
+void
+set_input_file(char *src_name)
+{
+	if((yyin = fopen(src_name, "r")) == NULL)
+	{
+		fprintf(stderr, "Unable to read %s: %s\n", src_name, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	return;
+}
+
 /* don't use #define in case they are macros too */
 token_t
 peek_token(void)
