@@ -32,6 +32,9 @@ main(int argc, char *argv[])
 
 	parse_InterchangedObject(&state);
 
+	if(next_token())
+		parse_error("Unexpected text after InterchangedObject");
+
 	return EXIT_SUCCESS;
 }
 

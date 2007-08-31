@@ -1,8 +1,16 @@
-#ifndef __NEW_PARSER_H__
-#define __NEW_PARSER_H__
+#ifndef __PARSER_H__
+#define __PARSER_H__
 
+#include <stdio.h>
 #include <stdbool.h>
 
 struct state { int dummy; };
 typedef int token_t;
+
+token_t peek_token(void);
+void expect_token(token_t, char *);
+token_t next_token(void);
+char *token_text(void);
+
+void parse_error(const char *, ...);
 

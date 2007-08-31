@@ -5,8 +5,6 @@
 
 int yylineno = 1;
 
-int yylex(void);
-
 void
 yyerror(const char *str)
 {
@@ -25,29 +23,65 @@ yywrap(void)
 
 void parse_INTEGER(struct state *state)
 {
+	if(next_token() != INTEGER)
+		yyerror("Expecting INTEGER");
+
+printf("<INTEGER value=%s/>\n", token_text());
+
+	return;
 }
 
 void parse_BOOLEAN(struct state *state)
 {
+	if(next_token() != BOOLEAN)
+		yyerror("Expecting BOOLEAN");
+
+printf("<BOOLEAN value=%s/>\n", token_text());
+
+	return;
 }
 
 
 void parse_STRING(struct state *state)
 {
+	if(next_token() != STRING)
+		yyerror("Expecting STRING");
+
+printf("<STRING value=%s/>\n", token_text());
+
+	return;
 }
 
 
 void parse_QPRINTABLE(struct state *state)
 {
+	if(next_token() != QPRINTABLE)
+		yyerror("Expecting QPRINTABLE");
+
+printf("<QPRINTABLE value=%s/>\n", token_text());
+
+	return;
 }
 
 
 void parse_BASE64(struct state *state)
 {
+	if(next_token() != BASE64)
+		yyerror("Expecting BASE64");
+
+printf("<BASE64 value=%s/>\n", token_text());
+
+	return;
 }
 
 
 void parse_Null(struct state *state)
 {
+	if(next_token() != Null)
+		yyerror("Expecting Null");
+
+printf("<Null/>\n");
+
+	return;
 }
 

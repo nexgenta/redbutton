@@ -1,5 +1,4 @@
 %{
-#define _GNU_SOURCE	/* for vasprintf */
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -72,7 +71,6 @@ void add_item(enum item_type, char *);
 
 void output_def(char *);
 
-void print_tokens(struct str_list *);
 char *add_token(struct str_list **, char *);
 char *unquote(char *);
 
@@ -377,6 +375,7 @@ output_def(char *name)
 	/* C code for the parse_Xxx functions */
 	buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", name);
 	buf_append(&state.parse_fns, "void parse_%s(struct state *state)\n{\n", name);
+buf_append(&state.parse_fns, "printf(\"<%s>\\n\");\n", name);
 	/* count how many items make it up */
 	nitems = 0;
 	/* skip literals at the start */
@@ -391,13 +390,17 @@ output_def(char *name)
 	}
 	if(nitems == 1)
 	{
+		buf_append(&state.parse_fns, "\ttoken_t next;\n\n");
 		item = state.items;
 		while(item && item->type == IT_LITERAL)
 		{
-buf_append(&state.parse_fns, "// TODO: eat %s\n\n", item->name);
+			char *tok_name = unquote(item->name);
+			buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
+			buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n\n", tok_name, item->name);
+			free(tok_name);
 			item = item->next;
 		}
-		buf_append(&state.parse_fns, "\ttoken_t next = next_token();\n\n");
+		buf_append(&state.parse_fns, "\tnext = peek_token();\n\n");
 		if(item->type == IT_IDENTIFIER)
 		{
 			buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
@@ -418,9 +421,8 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n\n", item->name);
 			buf_append(&state.parse_fns, "\twhile(is_%s(next))\n", item->name);
 			buf_append(&state.parse_fns, "\t{\n");
 			buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", item->name);
-			buf_append(&state.parse_fns, "\t\tnext = next_token();\n");
+			buf_append(&state.parse_fns, "\t\tnext = peek_token();\n");
 			buf_append(&state.parse_fns, "\t}\n");
-			buf_append(&state.parse_fns, "\n\tunget_token(next);\n");
 		}
 		else
 		{
@@ -429,7 +431,10 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n\n", item->name);
 		item = item->next;
 		while(item)
 		{
-buf_append(&state.parse_fns, "\n// TODO: eat %s\n", item->name);
+			char *tok_name = unquote(item->name);
+			buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
+			buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n\n", tok_name, item->name);
+			free(tok_name);
 			item = item->next;
 		}
 	}
@@ -442,7 +447,7 @@ buf_append(&state.parse_fns, "\n// TODO: eat %s\n", item->name);
 			/* assert */
 			if(state.and_items)
 				fatal("CHOICE or ENUMERATED type, but and_items set");
-			buf_append(&state.parse_fns, "\ttoken_t next = next_token();\n\n");
+			buf_append(&state.parse_fns, "\ttoken_t next = peek_token();\n\n");
 			buf_append(&state.parse_fns, "\t/* CHOICE or ENUMERATED */\n");
 			item = state.items;
 			for(item=state.items; item; item=item->next)
@@ -481,12 +486,15 @@ buf_append(&state.parse_fns, "\n// TODO: eat %s\n", item->name);
 			item = state.items;
 			while(item && item->type == IT_LITERAL)
 			{
-buf_append(&state.parse_fns, "// TODO: eat %s\n\n", item->name);
+				char *tok_name = unquote(item->name);
+				buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
+				buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n\n", tok_name, item->name);
+				free(tok_name);
 				item = item->next;
 			}
 			buf_append(&state.parse_fns, "\t/* SET */\n");
 			buf_append(&state.parse_fns, "\twhile(true)\n\t{\n");
-			buf_append(&state.parse_fns, "\t\tnext = next_token();\n");
+			buf_append(&state.parse_fns, "\t\tnext = peek_token();\n");
 			while(item && item->type != IT_LITERAL)
 			{
 				if(item->type != IT_IDENTIFIER && item->type != IT_OPTIONAL)
@@ -504,7 +512,10 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n\n", item->name);
 			/* eat any trailing literals */
 			while(item && item->type == IT_LITERAL)
 			{
-buf_append(&state.parse_fns, "\n// TODO: eat %s\n", item->name);
+				char *tok_name = unquote(item->name);
+				buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
+				buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n\n", tok_name, item->name);
+				free(tok_name);
 				item = item->next;
 			}
 			break;
@@ -523,11 +534,13 @@ buf_append(&state.parse_fns, "\n// TODO: eat %s\n", item->name);
 				buf_append(&state.parse_fns, "\n\t/* %s */\n", item->name);
 				if(item->type == IT_LITERAL)
 				{
-buf_append(&state.parse_fns, "// TODO: eat %s\n", item->name);
+					char *tok_name = unquote(item->name);
+					buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n\n", tok_name, item->name);
+					free(tok_name);
 				}
 				else
 				{
-					buf_append(&state.parse_fns, "\tnext = next_token();\n");
+					buf_append(&state.parse_fns, "\tnext = peek_token();\n");
 					buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
 					buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", item->name);
 					if(item->type != IT_OPTIONAL)
@@ -544,6 +557,7 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n", item->name);
 			break;
 		}
 	}
+buf_append(&state.parse_fns, "printf(\"</%s>\\n\");\n", name);
 	buf_append(&state.parse_fns, "}\n\n");
 
 	/* C code for the is_Xxx functions */
@@ -626,18 +640,6 @@ buf_append(&state.parse_fns, "// TODO: eat %s\n", item->name);
 		item = next;
 	}
 	state.items = NULL;
-
-	return;
-}
-
-void
-print_tokens(struct str_list *t)
-{
-	while(t)
-	{
-		printf("%%token %s\n", t->name);
-		t = t->next;
-	}
 
 	return;
 }

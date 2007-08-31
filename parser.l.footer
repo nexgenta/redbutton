@@ -3,19 +3,57 @@
 
 /* don't use #define in case they are macros too */
 token_t
+peek_token(void)
+{
+	token_t tok = yylex();
+
+	/* return it to the input stream */
+	yyless(0);
+
+	return tok;
+}
+
+void
+expect_token(token_t tok, char *name)
+{
+	if(next_token() != tok)
+		parse_error("Unexpected token; expecting '%s'", name);
+
+	return;
+}
+
+token_t
 next_token(void)
 {
 	return yylex();
 }
 
-void
-unget_token(token_t tok)
+char *
+token_text(void)
 {
-	unput(tok);
+	return yytext;
 }
 
+void yyerror(const char *);
+
 void
-parse_error(char *err)
+parse_error(const char *fmt, ...)
 {
+	va_list ap;
+	char *err;
+
+	va_start(ap, fmt);
+	if(vasprintf(&err, fmt, ap) < 0)
+	{
+		fprintf(stderr, "Out of memory or illegal format string");
+		exit(EXIT_FAILURE);
+	}
+	va_end(ap);
+
 	yyerror(err);
+
+	free(err);
+
+	return;
 }
+

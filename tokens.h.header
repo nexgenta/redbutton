@@ -1,3 +1,4 @@
+#define END_OF_SRC	0	/* must be 0 */
 #define INVALID	1
 #define INTEGER	2
 #define BOOLEAN	3

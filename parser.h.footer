@@ -6,5 +6,4 @@
 #define is_BASE64(TOK)	(TOK == BASE64)
 #define is_Null(TOK)	(TOK == Null)
 
-#endif	/* __NEW_PARSER_H__ */
-
+#endif	/* __PARSER_H__ */
