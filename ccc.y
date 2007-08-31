@@ -36,7 +36,7 @@ struct str_list
 	char *name;
 };
 
-/* build up the separate parts of the output file in these buffers */
+/* build up the separate parts of the output files in these buffers */
 struct buf
 {
 	char *str;		/* the buffer */
@@ -50,13 +50,13 @@ struct
 	struct item *items;		/* NULL => start a new identifier */
 	bool and_items;			/* true => identifier must contain all items */
 	struct buf lexer;		/* lex output file */
-	struct str_list *tokens;	/* "%token" section of the yacc output file */
+	struct str_list *tokens;	/* tokens returned by the lexer */
 	struct buf parse_fns;		/* parse_Xxx() C functions for the parser */
-	struct buf parse_enum_fns;	/* parse_Xxx() functions for enum values */
+	struct buf parse_enum_fns;	/* parse_Xxx() C functions for enum values */
 	struct buf is_fns;		/* is_Xxx() C functions for the parser */
 	struct buf parse_hdr;		/* parse_Xxx() prototypes for the parser */
 	struct buf parse_enum_hdr;	/* parse_Xxx() prototypes for enum values */
-	struct buf is_hdr;		/* is_Xxx() C prototypes for the parser */
+	struct buf is_hdr;		/* is_Xxx() prototypes for the parser */
 } state;
 
 /* header for files we generate */
@@ -296,7 +296,7 @@ main(int argc, char *argv[])
 		snprintf(header, sizeof(header), "%s.header", tokens_name);
 		file_append(tokens_file, header);
 		/* output our stuff */
-		tok_val = 256;
+		tok_val = 256;		// just needs to be larger than the last one in tokens.h.header
 		for(t=state.tokens; t; t=t->next)
 			fprintf(tokens_file, "#define %s\t%u\n", t->name, tok_val++);
 		/* output the footer if there is one */
@@ -333,13 +333,13 @@ add_item(enum item_type type, char *name)
 	if(new_item == NULL || name == NULL)
 		fatal("Out of memory");
 
+	/* find the end of the list */
 	if(state.items == NULL)
 	{
 		state.items = new_item;
 	}
 	else
 	{
-		/* find the end of the list */
 		struct item *i = state.items;
 		while(i->next)
 			i = i->next;
@@ -364,11 +364,14 @@ output_def(char *name)
 	struct item *next;
 	unsigned int nitems;
 
-	/* C code for the parse_Xxx functions */
+	/* prototype for the parse_Xxx function */
 	buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", name);
+
+	/* C code for the parse_Xxx functions */
 	buf_append(&state.parse_fns, "void parse_%s(struct state *state)\n{\n", name);
 	buf_append(&state.parse_fns, "\ttoken_t next;\n\n");
 	buf_append(&state.parse_fns, "\tverbose(\"<%s>\\n\");\n\n", name);
+
 	/* count how many items make it up */
 	nitems = 0;
 	/* skip literals at the start */
@@ -381,8 +384,11 @@ output_def(char *name)
 		nitems ++;
 		item = item->next;
 	}
+
+	/* a single item (not including literals) */
 	if(nitems == 1)
 	{
+		/* eat literals at the start */
 		item = state.items;
 		while(item && item->type == IT_LITERAL)
 		{
@@ -392,6 +398,7 @@ output_def(char *name)
 			free(tok_name);
 			item = item->next;
 		}
+		/* see if the next token is what we are expecting */
 		buf_append(&state.parse_fns, "\tnext = peek_token();\n\n");
 		if(item->type == IT_IDENTIFIER)
 		{
@@ -418,8 +425,10 @@ output_def(char *name)
 		}
 		else
 		{
+			/* assert */
 			fatal("nitems==1 but not Identifier/[Identifier]/Identifier+");
 		}
+		/* eat literals at the end */
 		item = item->next;
 		while(item)
 		{
@@ -430,8 +439,16 @@ output_def(char *name)
 			item = item->next;
 		}
 	}
+	/* more than one item (not including literals) */
 	else
 	{
+		/*
+		 * do we need to pick one item, or do we need them all?
+		 * ie are we building a CHOICE/ENUMERATED or a SET/SEQUENCE type
+		 * does the order in which the items appear matter?
+		 * ie are we building an ordered (SEQUENCE) or unordered (SET) type
+		 */
+/* TODO: could probably just check and_items rather than doing asn1type() now we know the grammar is consistent */
 		switch(asn1type(name))
 		{
 		case ASN1TYPE_CHOICE:
@@ -457,11 +474,12 @@ output_def(char *name)
 				else if(item->type == IT_LITERAL)
 				{
 					char *tok_name = unquote(item->name);
+					/* assert */
+					if(asn1type(name) != ASN1TYPE_ENUMERATED)
+						fatal("literal but not enum");
 					buf_append(&state.parse_fns, "if(is_%s(next))\n", tok_name);
 					buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", tok_name);
 					/* create a parse_Xxx function for the enum value */
-					if(asn1type(name) != ASN1TYPE_ENUMERATED)
-						fatal("literal but not enum");
 					buf_append(&state.parse_enum_hdr, "void parse_%s(struct state *);\n", tok_name);
 					buf_append(&state.parse_enum_fns, "void parse_%s(struct state *state)\n{\n", tok_name);
 					buf_append(&state.parse_enum_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
@@ -471,6 +489,7 @@ output_def(char *name)
 				}
 				else
 				{
+					/* assert */
 					fatal("CHOICE/ENUMERATED but not Identifier or Literal");
 				}
 			}
@@ -482,6 +501,7 @@ output_def(char *name)
 			/* assert */
 			if(!state.and_items)
 				fatal("SET but and_items not set");
+			/* eat any literals at the start */
 			item = state.items;
 			while(item && item->type == IT_LITERAL)
 			{
@@ -491,11 +511,13 @@ output_def(char *name)
 				free(tok_name);
 				item = item->next;
 			}
+			/* keep parsing items until we get one that should not be in the SET */
 			buf_append(&state.parse_fns, "\t/* SET */\n");
 			buf_append(&state.parse_fns, "\twhile(true)\n\t{\n");
 			buf_append(&state.parse_fns, "\t\tnext = peek_token();\n");
 			while(item && item->type != IT_LITERAL)
 			{
+				/* assert */
 				if(item->type != IT_IDENTIFIER && item->type != IT_OPTIONAL)
 					fatal("SET but not Identifier or Optional");
 				buf_append(&state.parse_fns, "\t\t/* %s */\n", item->name);
@@ -527,8 +549,10 @@ output_def(char *name)
 			item = state.items;
 			for(item=state.items; item; item=item->next)
 			{
+				/* assert */
 				if(item->type != IT_IDENTIFIER && item->type != IT_LITERAL && item->type != IT_OPTIONAL)
 					fatal("SEQUENCE but not Identifier, Literal or Optional");
+				/* eat literals, parse [optional] identifiers */
 				buf_append(&state.parse_fns, "\n\t/* %s */\n", item->name);
 				if(item->type == IT_LITERAL)
 				{
@@ -551,6 +575,7 @@ output_def(char *name)
 			break;
 
 		default:
+			/* assert */
 			fatal("Illegal ASN1TYPE");
 			break;
 		}
@@ -558,22 +583,40 @@ output_def(char *name)
 	buf_append(&state.parse_fns, "\n\tverbose(\"</%s>\\n\");\n", name);
 	buf_append(&state.parse_fns, "\n\treturn;\n}\n\n");
 
-	/* C code for the is_Xxx functions */
+	/*
+	 * generate the is_Xxx(token_t) functions
+	 * these functions should return true if the given token can be the first token for this type
+	 * for unordered types (SET/CHOICE/ENUMERATED) check if any of the items match the token
+	 * for ordered types (SEQUENCE) check if the first item matches the token
+	 */
+
+	/* prototype for the is_Xxx functions */
 	buf_append(&state.is_hdr, "bool is_%s(token_t);\n", name);
+
+	/* C code for the is_Xxx functions */
 	buf_append(&state.is_fns, "bool is_%s(token_t tok)\n{\n", name);
+
+	/* count the number of items */
 	nitems = 0;
 	for(item=state.items; item; item=item->next)
 		nitems ++;
+
+	/*
+	 * for single items (or ones that start with a literal) the token must match the first item
+	 * unless it's an ENUMERATED type,
+	 * in which case all items are literals and the token can match any of them
+	 */
 	if(nitems == 1
 	|| state.items->type == IT_LITERAL)
 	{
-		/* if it is an enum, check if any item matches the token */
+		/* if it is an enum, check if any of the enum items match the token */
 		bool is_enum = true;
 		for(item=state.items; item && is_enum; item=item->next)
 			is_enum = is_enum && (item->type == IT_LITERAL);
 		item = state.items;
 		if(is_enum)
 		{
+			/* assert */
 			if(asn1type(name) != ASN1TYPE_ENUMERATED)
 				fatal("is_enum but not ENUMERATED");
 			buf_append(&state.is_fns, "\treturn ");
@@ -590,7 +633,7 @@ output_def(char *name)
 				item = item->next;
 			}
 		}
-		/* just check if the first item matches the token */
+		/* not an enum, just check if the first item matches the token */
 		else if(item->type == IT_LITERAL)
 		{
 			char *tok_name = unquote(item->name);
@@ -606,13 +649,15 @@ output_def(char *name)
 	{
 		switch(asn1type(name))
 		{
-		case ASN1TYPE_CHOICE:
+/* TODO: we have taken care of ENUMERATED above */
 		case ASN1TYPE_ENUMERATED:
+		case ASN1TYPE_CHOICE:
 		case ASN1TYPE_SET:
 			/* check if any of the items match the token */
 			buf_append(&state.is_fns, "\treturn ");
 			for(item=state.items; item; item=item->next)
 			{
+				/* assert */
 				if(item->type != IT_IDENTIFIER && item->type != IT_OPTIONAL)
 					fatal("is_fns: expecting Identifier or [Identifier]");
 				buf_append(&state.is_fns, "is_%s(tok)", item->name);
@@ -639,11 +684,13 @@ output_def(char *name)
 			}
 			else
 			{
+				/* assert */
 				fatal("SEQUENCE but first item not Literal or Identifier");
 			}
 			break;
 
 		default:
+			/* assert */
 			fatal("Illegal ASN1TYPE");
 			break;
 		}
