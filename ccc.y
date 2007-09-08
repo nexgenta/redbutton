@@ -363,6 +363,7 @@ output_def(char *name)
 	struct item *item;
 	struct item *next;
 	unsigned int nitems;
+	unsigned int enum_val;
 
 	/* prototype for the parse_Xxx function */
 	buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", name);
@@ -458,6 +459,8 @@ output_def(char *name)
 				fatal("CHOICE or ENUMERATED type, but and_items set");
 			buf_append(&state.parse_fns, "\tnext = peek_token();\n\n");
 			buf_append(&state.parse_fns, "\t/* CHOICE or ENUMERATED */\n");
+			/* enum values all start at 1 and are listed in order in the grammar */
+			enum_val = 1;
 			item = state.items;
 			for(item=state.items; item; item=item->next)
 			{
@@ -483,9 +486,10 @@ output_def(char *name)
 					buf_append(&state.parse_enum_hdr, "void parse_%s(struct state *);\n", tok_name);
 					buf_append(&state.parse_enum_fns, "void parse_%s(struct state *state)\n{\n", tok_name);
 					buf_append(&state.parse_enum_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
-					buf_append(&state.parse_enum_fns, "\n\tverbose(\"<ENUM value=%s/>\\n\");\n", tok_name);
+					buf_append(&state.parse_enum_fns, "\n\tverbose(\"<ENUM name=%s value=%u/>\\n\");\n", tok_name, enum_val);
 					buf_append(&state.parse_enum_fns, "\n\treturn;\n}\n\n");
 					free(tok_name);
+					enum_val ++;
 				}
 				else
 				{
