@@ -486,7 +486,7 @@ output_def(char *name)
 					buf_append(&state.parse_enum_hdr, "void parse_%s(struct state *);\n", tok_name);
 					buf_append(&state.parse_enum_fns, "void parse_%s(struct state *state)\n{\n", tok_name);
 					buf_append(&state.parse_enum_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
-					buf_append(&state.parse_enum_fns, "\n\tverbose(\"<ENUM name=%s value=%u/>\\n\");\n", tok_name, enum_val);
+					buf_append(&state.parse_enum_fns, "\n\tverbose(\"<ENUM name=\\\"\"%s\"\\\" value=%u/>\\n\");\n", item->name, enum_val);
 					buf_append(&state.parse_enum_fns, "\n\treturn;\n}\n\n");
 					free(tok_name);
 					enum_val ++;
