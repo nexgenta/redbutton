@@ -36,7 +36,7 @@ main(int argc, char *argv[])
 {
 	char *prog_name = argv[0];
 	int arg;
-	struct state state;
+	struct node asn1obj;
 
 	while((arg = getopt(argc, argv, "v")) != EOF)
 	{
@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 	else if(optind != argc)
 		usage(prog_name);
 
-	parse_InterchangedObject(&state);
+	parse_InterchangedObject(&asn1obj);
 
 	if(next_token())
 		parse_error("Unexpected text after InterchangedObject");

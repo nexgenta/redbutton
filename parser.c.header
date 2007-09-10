@@ -21,20 +21,20 @@ yywrap(void)
  * parser functions for the predefined types
  */
 
-void parse_INTEGER(struct state *state)
+void parse_INTEGER(struct node *parent)
 {
 	if(next_token() != INTEGER)
-		yyerror("Expecting INTEGER");
+		parse_error("Unexpected token '%s'; expecting an integer", token_text());
 
 	verbose("<INTEGER value=%s/>\n", token_text());
 
 	return;
 }
 
-void parse_BOOLEAN(struct state *state)
+void parse_BOOLEAN(struct node *parent)
 {
 	if(next_token() != BOOLEAN)
-		yyerror("Expecting BOOLEAN");
+		parse_error("Unexpected token '%s'; expecting 'true' or 'false'", token_text());
 
 	verbose("<BOOLEAN value=%s/>\n", token_text());
 
@@ -42,10 +42,10 @@ void parse_BOOLEAN(struct state *state)
 }
 
 
-void parse_STRING(struct state *state)
+void parse_STRING(struct node *parent)
 {
 	if(next_token() != STRING)
-		yyerror("Expecting STRING");
+		parse_error("Unexpected token '%s'; expecting \"STRING\"", token_text());
 
 	verbose("<STRING value=%s/>\n", token_text());
 
@@ -53,10 +53,10 @@ void parse_STRING(struct state *state)
 }
 
 
-void parse_QPRINTABLE(struct state *state)
+void parse_QPRINTABLE(struct node *parent)
 {
 	if(next_token() != QPRINTABLE)
-		yyerror("Expecting QPRINTABLE");
+		parse_error("Unexpected token '%s'; expecting 'QPRINTABLE'", token_text());
 
 	verbose("<QPRINTABLE value=%s/>\n", token_text());
 
@@ -64,10 +64,10 @@ void parse_QPRINTABLE(struct state *state)
 }
 
 
-void parse_BASE64(struct state *state)
+void parse_BASE64(struct node *parent)
 {
 	if(next_token() != BASE64)
-		yyerror("Expecting BASE64");
+		parse_error("Unexpected token '%s'; expecting `BASE64`", token_text());
 
 	verbose("<BASE64 value=%s/>\n", token_text());
 
@@ -75,10 +75,10 @@ void parse_BASE64(struct state *state)
 }
 
 
-void parse_Null(struct state *state)
+void parse_Null(struct node *parent)
 {
 	if(next_token() != Null)
-		yyerror("Expecting Null");
+		parse_error("Unexpected token '%s'; expecting 'Null'", token_text());
 
 	verbose("<Null/>\n");
 
@@ -88,3 +88,4 @@ void parse_Null(struct state *state)
 /*
  * auto-generated parser functions follow
  */
+

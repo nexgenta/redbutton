@@ -366,10 +366,10 @@ output_def(char *name)
 	unsigned int enum_val;
 
 	/* prototype for the parse_Xxx function */
-	buf_append(&state.parse_hdr, "void parse_%s(struct state *);\n", name);
+	buf_append(&state.parse_hdr, "void parse_%s(struct node *);\n", name);
 
 	/* C code for the parse_Xxx functions */
-	buf_append(&state.parse_fns, "void parse_%s(struct state *state)\n{\n", name);
+	buf_append(&state.parse_fns, "void parse_%s(struct node *parent)\n{\n", name);
 	buf_append(&state.parse_fns, "\ttoken_t next;\n\n");
 	buf_append(&state.parse_fns, "\tverbose(\"<%s>\\n\");\n\n", name);
 
@@ -405,7 +405,7 @@ output_def(char *name)
 		{
 			buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
 			buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
-			buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", item->name);
+			buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
 			buf_append(&state.parse_fns, "\telse\n");
 			buf_append(&state.parse_fns, "\t\tparse_error(\"Expecting %s\");\n", item->name);
 		}
@@ -413,14 +413,14 @@ output_def(char *name)
 		{
 			buf_append(&state.parse_fns, "\t/* [%s] */\n", item->name);
 			buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
-			buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", item->name);
+			buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
 		}
 		else if(item->type == IT_ONEORMORE)
 		{
 			buf_append(&state.parse_fns, "\t/* %s+ */\n", item->name);
 			buf_append(&state.parse_fns, "\twhile(is_%s(next))\n", item->name);
 			buf_append(&state.parse_fns, "\t{\n");
-			buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", item->name);
+			buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
 			buf_append(&state.parse_fns, "\t\tnext = peek_token();\n");
 			buf_append(&state.parse_fns, "\t}\n");
 		}
@@ -472,7 +472,7 @@ output_def(char *name)
 				if(item->type == IT_IDENTIFIER)
 				{
 					buf_append(&state.parse_fns, "if(is_%s(next))\n", item->name);
-					buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", item->name);
+					buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
 				}
 				else if(item->type == IT_LITERAL)
 				{
@@ -481,10 +481,10 @@ output_def(char *name)
 					if(asn1type(name) != ASN1TYPE_ENUMERATED)
 						fatal("literal but not enum");
 					buf_append(&state.parse_fns, "if(is_%s(next))\n", tok_name);
-					buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", tok_name);
+					buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", tok_name);
 					/* create a parse_Xxx function for the enum value */
-					buf_append(&state.parse_enum_hdr, "void parse_%s(struct state *);\n", tok_name);
-					buf_append(&state.parse_enum_fns, "void parse_%s(struct state *state)\n{\n", tok_name);
+					buf_append(&state.parse_enum_hdr, "void parse_%s(struct node *);\n", tok_name);
+					buf_append(&state.parse_enum_fns, "void parse_%s(struct node *parent)\n{\n", tok_name);
 					buf_append(&state.parse_enum_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
 					buf_append(&state.parse_enum_fns, "\n\tverbose(\"<ENUM name=\\\"\"%s\"\\\" value=%u/>\\n\");\n", item->name, enum_val);
 					buf_append(&state.parse_enum_fns, "\n\treturn;\n}\n\n");
@@ -526,7 +526,7 @@ output_def(char *name)
 					fatal("SET but not Identifier or Optional");
 				buf_append(&state.parse_fns, "\t\t/* %s */\n", item->name);
 				buf_append(&state.parse_fns, "\t\tif(is_%s(next))\n\t\t{\n", item->name);
-				buf_append(&state.parse_fns, "\t\t\tparse_%s(state);\n", item->name);
+				buf_append(&state.parse_fns, "\t\t\tparse_%s(parent);\n", item->name);
 				buf_append(&state.parse_fns, "\t\t\tcontinue;\n\t\t}\n");
 				item = item->next;
 			}
@@ -568,7 +568,7 @@ output_def(char *name)
 				{
 					buf_append(&state.parse_fns, "\tnext = peek_token();\n");
 					buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
-					buf_append(&state.parse_fns, "\t\tparse_%s(state);\n", item->name);
+					buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
 					if(item->type != IT_OPTIONAL)
 					{
 						buf_append(&state.parse_fns, "\telse\n");
