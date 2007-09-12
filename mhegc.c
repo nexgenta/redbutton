@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <strings.h>
 
 #include "parser.h"
 
@@ -61,6 +62,8 @@ main(int argc, char *argv[])
 	else if(optind != argc)
 		usage(prog_name);
 
+	bzero(&asn1obj, sizeof(struct node));
+	asn1obj.asn1tag = ASN1TAG_SYNTHETIC;
 	parse_InterchangedObject(&asn1obj);
 
 	if(next_token())

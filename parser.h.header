@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "asn1tag.h"
+
 /* the parser builds a tree of ASN1 types */
 struct node
 {

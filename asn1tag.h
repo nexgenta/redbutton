@@ -25,7 +25,7 @@
 #define ASN1TAG_RemoteProgram	10
 #define ASN1TAG_InterchangedProgram	11
 #define ASN1TAG_Palette	12
-#define ASN1TAG_Font	13
+#define ASN1TAG_FontClass	13
 #define ASN1TAG_CursorShape	14
 #define ASN1TAG_BooleanVariable	15
 #define ASN1TAG_IntegerVariable	16
@@ -53,7 +53,7 @@
 #define ASN1TAG_BackgroundColour	39
 #define ASN1TAG_TextContentHook	40
 #define ASN1TAG_TextColour	41
-#define ASN1TAG_Font	42
+#define ASN1TAG_FontBody	42
 #define ASN1TAG_FontAttributes	43
 #define ASN1TAG_InterchangedProgramContentHook	44
 #define ASN1TAG_StreamContentHook	45
