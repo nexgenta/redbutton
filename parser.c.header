@@ -2,6 +2,11 @@
 
 #include "parser.h"
 #include "tokens.h"
+#include "utils.h"
+
+/*
+ * lexer functions we need to provide
+ */
 
 int yylineno = 1;
 
@@ -15,6 +20,39 @@ int
 yywrap(void)
 {
 	return 1;
+}
+
+/*
+ * parser helper functions
+ */
+
+struct node *
+add_child(struct node *parent, unsigned int asn1tag, unsigned int asn1class)
+{
+	struct node *child = safe_malloc(sizeof(struct node));
+
+	child->asn1tag = asn1tag;
+	child->asn1class = asn1class;
+	child->length = 0;
+	child->value = NULL;
+	child->children = NULL;
+	child->siblings = NULL;
+
+	/* is it the first */
+	if(parent->children == NULL)
+	{
+		parent->children = child;
+	}
+	else
+	{
+		/* add it to the end of the siblings list */
+		struct node *sib = parent->children;
+		while(sib->siblings != NULL)
+			sib = sib->siblings;
+		sib->siblings = child;
+	}
+
+	return child;
 }
 
 /*

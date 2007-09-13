@@ -5,6 +5,12 @@
 #ifndef __ASN1TAG_H__
 #define __ASN1TAG_H__
 
+/* tag classes */
+#define ASN1CLASS_UNIVERSAL	0x00
+#define ASN1CLASS_APPLICATION	0x40
+#define ASN1CLASS_CONTEXT	0x80
+#define ASN1CLASS_PRIVATE	0xc0
+
 /*
  * a synthetic object created as a result of the grammar definition
  * eg TextBody etc
