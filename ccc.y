@@ -403,6 +403,11 @@ output_def(char *name)
 		buf_append(&state.parse_fns, "\tnext = peek_token();\n\n");
 		if(item->type == IT_IDENTIFIER)
 		{
+#if 0
+			/* add a child ASN1 object */
+			buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_%s, ASN1CLASS_CONTEXT);\n\n", name);
+			/* read the item */
+#endif
 			buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
 			buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
 			buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
@@ -411,12 +416,18 @@ output_def(char *name)
 		}
 		else if(item->type == IT_OPTIONAL)
 		{
+			/* add a child ASN1 object */
+			buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_%s, ASN1CLASS_CONTEXT);\n\n", name);
+			/* read the item */
 			buf_append(&state.parse_fns, "\t/* [%s] */\n", item->name);
 			buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
 			buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
 		}
 		else if(item->type == IT_ONEORMORE)
 		{
+			/* add a child ASN1 object */
+			buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_%s, ASN1CLASS_CONTEXT);\n\n", name);
+			/* read the item */
 			buf_append(&state.parse_fns, "\t/* %s+ */\n", item->name);
 			buf_append(&state.parse_fns, "\twhile(is_%s(next))\n", item->name);
 			buf_append(&state.parse_fns, "\t{\n");

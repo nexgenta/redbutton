@@ -30,6 +30,7 @@
 #define ASN1TAG_Visible		ASN1TAG_SYNTHETIC
 #define ASN1TAG_Interactible	ASN1TAG_SYNTHETIC
 #define ASN1TAG_Button		ASN1TAG_SYNTHETIC
+#define ASN1TAG_TokenManager	ASN1TAG_SYNTHETIC
 
 /* tokens synthesised by the grammar */
 #define ASN1TAG_TokenGroupBody	ASN1TAG_SYNTHETIC
@@ -37,8 +38,10 @@
 #define ASN1TAG_TextBody	ASN1TAG_SYNTHETIC
 #define ASN1TAG_PushButtonBody	ASN1TAG_SYNTHETIC
 
-/* TODO: need to look at these - have different values in different places */
+
+/* start TODO */
 #define ASN1TAG_FIXME 99999
+/* TODO: need to look at these - have different values in different places */
 #define ASN1TAG_ReferencedContent	ASN1TAG_FIXME
 #define ASN1TAG_XYPosition		ASN1TAG_FIXME
 #define ASN1TAG_Point			ASN1TAG_FIXME
@@ -46,6 +49,18 @@
 #define ASN1TAG_Rational		ASN1TAG_FIXME
 #define ASN1TAG_ExternalReference	ASN1TAG_FIXME
 #define ASN1TAG_NewReferencedContent	ASN1TAG_FIXME
+#define ASN1TAG_NextScene		ASN1TAG_FIXME
+#define ASN1TAG_TokenGroupItem		ASN1TAG_FIXME
+/* TODO: an INTEGER ie class=UNIVERSAL, tag=2 */
+#define ASN1TAG_Movement	ASN1TAG_FIXME
+/* TODO: sequences */
+#define ASN1TAG_ActionSlots	ASN1TAG_FIXME
+#define ASN1TAG_InVariables	ASN1TAG_FIXME
+#define ASN1TAG_OutVariables	ASN1TAG_FIXME
+#define ASN1TAG_ActionClass	ASN1TAG_FIXME
+#define ASN1TAG_Parameters	ASN1TAG_FIXME
+#define ASN1TAG_PointList	ASN1TAG_FIXME
+/* end TODO */
 
 /* ASN1 tags */
 #define ASN1TAG_ApplicationClass	0
@@ -56,6 +71,7 @@
 #define ASN1TAG_OnStartUp	5
 #define ASN1TAG_OnCloseDown	6
 #define ASN1TAG_OriginalGroupCachePriority	7
+#define ASN1TAG_Items	8
 #define ASN1TAG_ResidentProgramClass	9
 #define ASN1TAG_RemoteProgramClass	10
 #define ASN1TAG_InterchangedProgramClass	11
@@ -84,6 +100,7 @@
 #define ASN1TAG_ListGroupClass	34
 #define ASN1TAG_OnSpawnCloseDown	35
 #define ASN1TAG_OnRestart	36
+#define ASN1TAG_DefaultAttributes	37
 #define ASN1TAG_CharacterSet	38
 #define ASN1TAG_BackgroundColour	39
 #define ASN1TAG_TextContentHook	40
@@ -101,7 +118,7 @@
 #define ASN1TAG_SceneCoordinateSystem	52
 #define ASN1TAG_AspectRatio	53
 #define ASN1TAG_MovingCursor	54
-#define ASN1TAG_NextScene	55
+#define ASN1TAG_NextScenes	55
 #define ASN1TAG_InitiallyActive	56
 #define ASN1TAG_ContentHook	57
 #define ASN1TAG_OriginalContent	58
@@ -116,10 +133,10 @@
 #define ASN1TAG_OriginalValue	67
 #define ASN1TAG_ObjectReference	68
 #define ASN1TAG_ContentReference	69
-// TODO 70
-#define ASN1TAG_TokenGroupItem	71
-// TODO 72
-// TODO 73
+#define ASN1TAG_MovementTable	70
+#define ASN1TAG_TokenGroupItems	71
+#define ASN1TAG_NoTokenActionSlots	72
+#define ASN1TAG_Positions	73
 #define ASN1TAG_WrapAround	74
 #define ASN1TAG_MultipleSelection	75
 #define ASN1TAG_BoxSize	76
@@ -137,7 +154,7 @@
 #define ASN1TAG_LineOrientation	89
 #define ASN1TAG_StartCorner	90
 #define ASN1TAG_TextWrapping	91
-// TODO 92
+#define ASN1TAG_Multiplex	92
 #define ASN1TAG_Storage	93
 // TODO 94
 #define ASN1TAG_AudioClass	95
