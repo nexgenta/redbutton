@@ -16,43 +16,72 @@
  * eg TextBody etc
  * don't output this object, just output its children
  */
-#define ASN1TAG_SYNTHETIC	99999
+#define ASN1TAG_SYNTHETIC	10000
+/* the tag for CHOICE types is determined by which choice we choose */
+#define ASN1TAG_CHOICE		10001
+/* ENUMERATED types are encoded as INTEGERs */
+#define ASN1TAG_ENUMERATED	10002
+
+/* abstract types */
+#define ASN1TAG_Group		ASN1TAG_SYNTHETIC
+#define ASN1TAG_Ingredient	ASN1TAG_SYNTHETIC
+#define ASN1TAG_Program		ASN1TAG_SYNTHETIC
+#define ASN1TAG_Variable	ASN1TAG_SYNTHETIC
+#define ASN1TAG_Visible		ASN1TAG_SYNTHETIC
+#define ASN1TAG_Interactible	ASN1TAG_SYNTHETIC
+#define ASN1TAG_Button		ASN1TAG_SYNTHETIC
+
+/* tokens synthesised by the grammar */
+#define ASN1TAG_TokenGroupBody	ASN1TAG_SYNTHETIC
+#define ASN1TAG_LineArtBody	ASN1TAG_SYNTHETIC
+#define ASN1TAG_TextBody	ASN1TAG_SYNTHETIC
+#define ASN1TAG_PushButtonBody	ASN1TAG_SYNTHETIC
+
+/* TODO: need to look at these - have different values in different places */
+#define ASN1TAG_FIXME 99999
+#define ASN1TAG_ReferencedContent	ASN1TAG_FIXME
+#define ASN1TAG_XYPosition		ASN1TAG_FIXME
+#define ASN1TAG_Point			ASN1TAG_FIXME
+/* TODO: as above, but only used once */
+#define ASN1TAG_Rational		ASN1TAG_FIXME
+#define ASN1TAG_ExternalReference	ASN1TAG_FIXME
+#define ASN1TAG_NewReferencedContent	ASN1TAG_FIXME
 
 /* ASN1 tags */
-#define ASN1TAG_Application	0
-#define ASN1TAG_Scene	1
+#define ASN1TAG_ApplicationClass	0
+#define ASN1TAG_SceneClass	1
 #define ASN1TAG_StandardIdentifier	2
 #define ASN1TAG_StandardVersion	3
 #define ASN1TAG_ObjectInformation	4
 #define ASN1TAG_OnStartUp	5
 #define ASN1TAG_OnCloseDown	6
 #define ASN1TAG_OriginalGroupCachePriority	7
-#define ASN1TAG_ResidentProgram	9
-#define ASN1TAG_RemoteProgram	10
-#define ASN1TAG_InterchangedProgram	11
-#define ASN1TAG_Palette	12
+#define ASN1TAG_ResidentProgramClass	9
+#define ASN1TAG_RemoteProgramClass	10
+#define ASN1TAG_InterchangedProgramClass	11
+#define ASN1TAG_PaletteClass	12
 #define ASN1TAG_FontClass	13
-#define ASN1TAG_CursorShape	14
-#define ASN1TAG_BooleanVariable	15
-#define ASN1TAG_IntegerVariable	16
-#define ASN1TAG_OctetStringVariable	17
-#define ASN1TAG_ObjectRefVariable	18
-#define ASN1TAG_ContentRefVariable	19
-#define ASN1TAG_Link	20
-#define ASN1TAG_Stream	21
-#define ASN1TAG_Bitmap	22
-#define ASN1TAG_LineArt	23
-#define ASN1TAG_DynamicLineArt	24
-#define ASN1TAG_Rectangle	25
-#define ASN1TAG_Hotspot	26
-#define ASN1TAG_SwitchButton	27
-#define ASN1TAG_PushButton	28
-#define ASN1TAG_Text	29
-#define ASN1TAG_EntryField	30
-#define ASN1TAG_HyperText	31
-#define ASN1TAG_Slider	32
-#define ASN1TAG_TokenGroup	33
-#define ASN1TAG_ListGroup	34
+#define ASN1TAG_CursorShapeClass	14
+#define ASN1TAG_BooleanVariableClass	15
+#define ASN1TAG_IntegerVariableClass	16
+#define ASN1TAG_OctetStringVariableClass	17
+#define ASN1TAG_ObjectRefVariableClass	18
+#define ASN1TAG_ContentRefVariableClass	19
+#define ASN1TAG_LinkClass	20
+#define ASN1TAG_StreamClass	21
+#define ASN1TAG_BitmapClass	22
+#define ASN1TAG_LineArtClass	23
+#define ASN1TAG_DynamicLineArtClass	24
+#define ASN1TAG_RectangleClass	25
+#define ASN1TAG_HotspotClass	26
+#define ASN1TAG_SwitchButtonClass	27
+#define ASN1TAG_PushButtonClass	28
+#define ASN1TAG_TextClass	29
+#define ASN1TAG_EntryFieldClass	30
+#define ASN1TAG_HyperTextClass	31
+#define ASN1TAG_SliderClass	32
+#define ASN1TAG_TokenGroupClass	33
+#define ASN1TAG_ListGroupClass	34
 #define ASN1TAG_OnSpawnCloseDown	35
 #define ASN1TAG_OnRestart	36
 #define ASN1TAG_CharacterSet	38
@@ -72,6 +101,7 @@
 #define ASN1TAG_SceneCoordinateSystem	52
 #define ASN1TAG_AspectRatio	53
 #define ASN1TAG_MovingCursor	54
+#define ASN1TAG_NextScene	55
 #define ASN1TAG_InitiallyActive	56
 #define ASN1TAG_ContentHook	57
 #define ASN1TAG_OriginalContent	58
@@ -86,9 +116,13 @@
 #define ASN1TAG_OriginalValue	67
 #define ASN1TAG_ObjectReference	68
 #define ASN1TAG_ContentReference	69
+// TODO 70
+#define ASN1TAG_TokenGroupItem	71
+// TODO 72
+// TODO 73
 #define ASN1TAG_WrapAround	74
 #define ASN1TAG_MultipleSelection	75
-#define ASN1TAG_OriginalBoxSize	76
+#define ASN1TAG_BoxSize	76
 #define ASN1TAG_OriginalPosition	77
 #define ASN1TAG_OriginalPaletteRef	78
 #define ASN1TAG_Tiling	79
@@ -103,10 +137,12 @@
 #define ASN1TAG_LineOrientation	89
 #define ASN1TAG_StartCorner	90
 #define ASN1TAG_TextWrapping	91
+// TODO 92
 #define ASN1TAG_Storage	93
-#define ASN1TAG_Audio	95
-#define ASN1TAG_Video	96
-#define ASN1TAG_Rtgraphics	97
+// TODO 94
+#define ASN1TAG_AudioClass	95
+#define ASN1TAG_VideoClass	96
+#define ASN1TAG_RTGraphicsClass	97
 #define ASN1TAG_ComponentTag	98
 #define ASN1TAG_OriginalVolume	99
 #define ASN1TAG_Termination	100
@@ -245,9 +281,10 @@
 #define ASN1TAG_NewFontReference	233
 #define ASN1TAG_NewContentSize	234
 #define ASN1TAG_NewContentCachePriority	235
+// TODO 236
 #define ASN1TAG_SetBackgroundColour	237
 #define ASN1TAG_SetCellPosition	238
-#define ASN1TAG_SetInputRegister	239
+#define ASN1TAG_SetInputReg	239
 #define ASN1TAG_SetTextColour	240
 #define ASN1TAG_SetFontAttributes	241
 #define ASN1TAG_SetVideoDecodeOffset	242

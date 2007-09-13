@@ -457,6 +457,12 @@ output_def(char *name)
 			/* assert */
 			if(state.and_items)
 				fatal("CHOICE or ENUMERATED type, but and_items set");
+			/* add a child ASN1 object */
+			if(asn1type(name) == ASN1TYPE_CHOICE)
+				buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_CHOICE, 0);\n\n");
+			else
+				buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_ENUMERATED, 0);\n\n");
+			/* peek at the next token */
 			buf_append(&state.parse_fns, "\tnext = peek_token();\n\n");
 			buf_append(&state.parse_fns, "\t/* CHOICE or ENUMERATED */\n");
 			/* enum values all start at 1 and are listed in order in the grammar */
@@ -505,6 +511,8 @@ output_def(char *name)
 			/* assert */
 			if(!state.and_items)
 				fatal("SET but and_items not set");
+			/* add a child ASN1 object */
+			buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_%s, ASN1CLASS_CONTEXT);\n\n", name);
 			/* eat any literals at the start */
 			item = state.items;
 			while(item && item->type == IT_LITERAL)
@@ -549,6 +557,8 @@ output_def(char *name)
 			/* assert */
 			if(!state.and_items)
 				fatal("SEQUENCE but and_items not set");
+			/* add a child ASN1 object */
+			buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_%s, ASN1CLASS_CONTEXT);\n\n", name);
 			buf_append(&state.parse_fns, "\t/* SEQUENCE */\n");
 			item = state.items;
 			for(item=state.items; item; item=item->next)
