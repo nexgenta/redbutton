@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "parser.h"
 #include "tokens.h"
+#include "der_encode.h"
 #include "utils.h"
 
 /*
@@ -60,16 +62,6 @@ add_child(struct node *parent, uint32_t asn1tagclass)
  * parser functions for the predefined types
  */
 
-void parse_INTEGER(struct node *parent)
-{
-	if(next_token() != INTEGER)
-		parse_error("Unexpected token '%s'; expecting an integer", token_text());
-
-	verbose("<INTEGER value=%s/>\n", token_text());
-
-	return;
-}
-
 void parse_BOOLEAN(struct node *parent)
 {
 	if(next_token() != BOOLEAN)
@@ -77,9 +69,23 @@ void parse_BOOLEAN(struct node *parent)
 
 	verbose("<BOOLEAN value=%s/>\n", token_text());
 
+	der_encode_BOOLEAN(&parent->value, &parent->length, strcmp(token_text(), "false"));
+
 	return;
 }
 
+
+void parse_INTEGER(struct node *parent)
+{
+	if(next_token() != INTEGER)
+		parse_error("Unexpected token '%s'; expecting an integer", token_text());
+
+	verbose("<INTEGER value=%s/>\n", token_text());
+
+	der_encode_INTEGER(&parent->value, &parent->length, strtol(token_text(), NULL, 0));
+
+	return;
+}
 
 void parse_STRING(struct node *parent)
 {
@@ -87,6 +93,8 @@ void parse_STRING(struct node *parent)
 		parse_error("Unexpected token '%s'; expecting \"STRING\"", token_text());
 
 	verbose("<STRING value=%s/>\n", token_text());
+
+	der_encode_OctetString(&parent->value, &parent->length, token_text());
 
 	return;
 }
@@ -99,6 +107,8 @@ void parse_QPRINTABLE(struct node *parent)
 
 	verbose("<QPRINTABLE value=%s/>\n", token_text());
 
+	der_encode_OctetString(&parent->value, &parent->length, token_text());
+
 	return;
 }
 
@@ -110,6 +120,8 @@ void parse_BASE64(struct node *parent)
 
 	verbose("<BASE64 value=%s/>\n", token_text());
 
+	der_encode_OctetString(&parent->value, &parent->length, token_text());
+
 	return;
 }
 
@@ -120,6 +132,10 @@ void parse_Null(struct node *parent)
 		parse_error("Unexpected token '%s'; expecting 'Null'", token_text());
 
 	verbose("<Null/>\n");
+
+	/* assert */
+	if(parent->length != 0)
+		fatal("Null: length=%u", parent->length);
 
 	return;
 }

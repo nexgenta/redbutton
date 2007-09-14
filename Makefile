@@ -14,6 +14,8 @@ DESTDIR=/usr/local
 OBJS=	mhegc.o	\
 	lex.parser.o	\
 	parser.o	\
+	der_encode.o	\
+	asn1tag.o	\
 	utils.o
 
 TARDIR=`basename ${PWD}`

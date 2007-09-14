@@ -27,6 +27,11 @@
 #include <strings.h>
 
 #include "parser.h"
+#include "asn1tag.h"
+#include "utils.h"
+
+void print_node(struct node *, unsigned int);
+void print_indent(unsigned int);
 
 void usage(char *);
 
@@ -69,12 +74,55 @@ main(int argc, char *argv[])
 	if(next_token())
 		parse_error("Unexpected text after InterchangedObject");
 
+	/* assert */
+	if(asn1obj.siblings != NULL)
+		fatal("Top level object has siblings");
+
+	if(_verbose)
+	{
+		verbose("\nASN1 object tree:\n");
+		print_node(&asn1obj, 0);
+	}
+
 	return EXIT_SUCCESS;
 }
 
 /*
  * verbose functions send output to stderr so error messages get interleaved correctly
  */
+
+void
+print_node(struct node *n, unsigned int indent)
+{
+	struct node *kid;
+
+	print_indent(indent);
+	fprintf(stderr, "[%s %d]\n", asn1class_name(n->asn1class), n->asn1tag);
+
+	if(n->children)
+	{
+		print_indent(indent);
+		fprintf(stderr, "{\n");
+		for(kid=n->children; kid; kid=kid->siblings)
+			print_node(kid, indent + 1);
+		print_indent(indent);
+		fprintf(stderr, "}\n");
+	}
+
+	return;
+}
+
+void
+print_indent(unsigned int indent)
+{
+	while(indent > 0)
+	{
+		fprintf(stderr, "    ");
+		indent --;
+	}
+
+	return;
+}
 
 void
 verbose(const char *fmt, ...)

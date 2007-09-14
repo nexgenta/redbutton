@@ -389,6 +389,8 @@ output_def(char *name)
 	/* a single item (not including literals) */
 	if(nitems == 1)
 	{
+		/* add a child ASN1 object */
+		buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAGCLASS_%s);\n\n", name);
 		/* eat literals at the start */
 		item = state.items;
 		while(item && item->type == IT_LITERAL)
@@ -403,11 +405,6 @@ output_def(char *name)
 		buf_append(&state.parse_fns, "\tnext = peek_token();\n\n");
 		if(item->type == IT_IDENTIFIER)
 		{
-#if 0
-			/* add a child ASN1 object */
-			buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAGCLASS_%s);\n\n", name);
-			/* read the item */
-#endif
 			buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
 			buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
 			buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
@@ -416,18 +413,12 @@ output_def(char *name)
 		}
 		else if(item->type == IT_OPTIONAL)
 		{
-			/* add a child ASN1 object */
-			buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAGCLASS_%s);\n\n", name);
-			/* read the item */
 			buf_append(&state.parse_fns, "\t/* [%s] */\n", item->name);
 			buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
 			buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
 		}
 		else if(item->type == IT_ONEORMORE)
 		{
-			/* add a child ASN1 object */
-			buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAGCLASS_%s);\n\n", name);
-			/* read the item */
 			buf_append(&state.parse_fns, "\t/* %s+ */\n", item->name);
 			buf_append(&state.parse_fns, "\twhile(is_%s(next))\n", item->name);
 			buf_append(&state.parse_fns, "\t{\n");
@@ -504,6 +495,7 @@ output_def(char *name)
 					buf_append(&state.parse_enum_fns, "void parse_%s(struct node *parent)\n{\n", tok_name);
 					buf_append(&state.parse_enum_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
 					buf_append(&state.parse_enum_fns, "\n\tverbose(\"<ENUM name=\\\"\"%s\"\\\" value=%u/>\\n\");\n", item->name, enum_val);
+					buf_append(&state.parse_enum_fns, "\n\tder_encode_INTEGER(&parent->value, &parent->length, %u);\n", enum_val);
 					buf_append(&state.parse_enum_fns, "\n\treturn;\n}\n\n");
 					free(tok_name);
 					enum_val ++;
@@ -557,8 +549,8 @@ output_def(char *name)
 			while(item && item->type == IT_LITERAL)
 			{
 				char *tok_name = unquote(item->name);
-				buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
-				buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n\n", tok_name, item->name);
+				buf_append(&state.parse_fns, "\n\t/* %s */\n", item->name);
+				buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
 				free(tok_name);
 				item = item->next;
 			}
