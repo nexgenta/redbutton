@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "asn1tag.h"
 
@@ -21,7 +22,7 @@ struct node
 };
 
 /* add a child to a node */
-struct node *add_child(struct node *, unsigned int, unsigned int);
+struct node *add_child(struct node *, uint32_t);
 
 /* lexer token type */
 typedef int token_t;

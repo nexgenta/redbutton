@@ -23,43 +23,43 @@
 #define ASN1TAG_ENUMERATED	10002
 
 /* abstract types */
-#define ASN1TAG_Group		ASN1TAG_SYNTHETIC
-#define ASN1TAG_Ingredient	ASN1TAG_SYNTHETIC
-#define ASN1TAG_Program		ASN1TAG_SYNTHETIC
-#define ASN1TAG_Variable	ASN1TAG_SYNTHETIC
-#define ASN1TAG_Visible		ASN1TAG_SYNTHETIC
-#define ASN1TAG_Interactible	ASN1TAG_SYNTHETIC
-#define ASN1TAG_Button		ASN1TAG_SYNTHETIC
-#define ASN1TAG_TokenManager	ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_Root		ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_Group		ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_Ingredient		ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_Program		ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_Variable		ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_Visible		ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_Interactible	ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_Button		ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_TokenManager	ASN1TAG_SYNTHETIC
 
 /* tokens synthesised by the grammar */
-#define ASN1TAG_TokenGroupBody	ASN1TAG_SYNTHETIC
-#define ASN1TAG_LineArtBody	ASN1TAG_SYNTHETIC
-#define ASN1TAG_TextBody	ASN1TAG_SYNTHETIC
-#define ASN1TAG_PushButtonBody	ASN1TAG_SYNTHETIC
-
+#define ASN1TAGCLASS_TokenGroupBody	ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_LineArtBody	ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_TextBody		ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_PushButtonBody	ASN1TAG_SYNTHETIC
 
 /* start TODO */
 #define ASN1TAG_FIXME 99999
 /* TODO: need to look at these - have different values in different places */
-#define ASN1TAG_ReferencedContent	ASN1TAG_FIXME
-#define ASN1TAG_XYPosition		ASN1TAG_FIXME
-#define ASN1TAG_Point			ASN1TAG_FIXME
+#define ASN1TAGCLASS_ReferencedContent	ASN1TAG_FIXME
+#define ASN1TAGCLASS_XYPosition		ASN1TAG_FIXME
+#define ASN1TAGCLASS_Point		ASN1TAG_FIXME
 /* TODO: as above, but only used once */
-#define ASN1TAG_Rational		ASN1TAG_FIXME
-#define ASN1TAG_ExternalReference	ASN1TAG_FIXME
-#define ASN1TAG_NewReferencedContent	ASN1TAG_FIXME
-#define ASN1TAG_NextScene		ASN1TAG_FIXME
-#define ASN1TAG_TokenGroupItem		ASN1TAG_FIXME
+#define ASN1TAGCLASS_Rational			ASN1TAG_FIXME
+#define ASN1TAGCLASS_ExternalReference		ASN1TAG_FIXME
+#define ASN1TAGCLASS_NewReferencedContent	ASN1TAG_FIXME
+#define ASN1TAGCLASS_NextScene			ASN1TAG_FIXME
+#define ASN1TAGCLASS_TokenGroupItem		ASN1TAG_FIXME
 /* TODO: an INTEGER ie class=UNIVERSAL, tag=2 */
-#define ASN1TAG_Movement	ASN1TAG_FIXME
+#define ASN1TAGCLASS_Movement		ASN1TAG_FIXME
 /* TODO: sequences */
-#define ASN1TAG_ActionSlots	ASN1TAG_FIXME
-#define ASN1TAG_InVariables	ASN1TAG_FIXME
-#define ASN1TAG_OutVariables	ASN1TAG_FIXME
-#define ASN1TAG_ActionClass	ASN1TAG_FIXME
-#define ASN1TAG_Parameters	ASN1TAG_FIXME
-#define ASN1TAG_PointList	ASN1TAG_FIXME
+#define ASN1TAGCLASS_ActionSlots	ASN1TAG_FIXME
+#define ASN1TAGCLASS_InVariables	ASN1TAG_FIXME
+#define ASN1TAGCLASS_OutVariables	ASN1TAG_FIXME
+#define ASN1TAGCLASS_ActionClass	ASN1TAG_FIXME
+#define ASN1TAGCLASS_Parameters		ASN1TAG_FIXME
+#define ASN1TAGCLASS_PointList		ASN1TAG_FIXME
 /* end TODO */
 
 /* ASN1 tags */
@@ -156,7 +156,7 @@
 #define ASN1TAG_TextWrapping	91
 #define ASN1TAG_Multiplex	92
 #define ASN1TAG_Storage	93
-// TODO 94
+#define ASN1TAG_Looping	94
 #define ASN1TAG_AudioClass	95
 #define ASN1TAG_VideoClass	96
 #define ASN1TAG_RTGraphicsClass	97
@@ -298,7 +298,7 @@
 #define ASN1TAG_NewFontReference	233
 #define ASN1TAG_NewContentSize	234
 #define ASN1TAG_NewContentCachePriority	235
-// TODO 236
+#define ASN1TAG_IndirectReference	236
 #define ASN1TAG_SetBackgroundColour	237
 #define ASN1TAG_SetCellPosition	238
 #define ASN1TAG_SetInputReg	239
@@ -311,6 +311,256 @@
 #define ASN1TAG_SetBitmapDecodeOffset	246
 #define ASN1TAG_GetBitmapDecodeOffset	247
 #define ASN1TAG_SetSliderParameters	248
+
+/* tag and class in a single value */
+#define ASN1TAGCLASS_ApplicationClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ApplicationClass)
+#define ASN1TAGCLASS_SceneClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SceneClass)
+#define ASN1TAGCLASS_StandardIdentifier	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_StandardIdentifier)
+#define ASN1TAGCLASS_StandardVersion	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_StandardVersion)
+#define ASN1TAGCLASS_ObjectInformation	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ObjectInformation)
+#define ASN1TAGCLASS_OnStartUp	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OnStartUp)
+#define ASN1TAGCLASS_OnCloseDown	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OnCloseDown)
+#define ASN1TAGCLASS_OriginalGroupCachePriority	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalGroupCachePriority)
+#define ASN1TAGCLASS_Items	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Items)
+#define ASN1TAGCLASS_ResidentProgramClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ResidentProgramClass)
+#define ASN1TAGCLASS_RemoteProgramClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_RemoteProgramClass)
+#define ASN1TAGCLASS_InterchangedProgramClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InterchangedProgramClass)
+#define ASN1TAGCLASS_PaletteClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_PaletteClass)
+#define ASN1TAGCLASS_FontClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_FontClass)
+#define ASN1TAGCLASS_CursorShapeClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_CursorShapeClass)
+#define ASN1TAGCLASS_BooleanVariableClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_BooleanVariableClass)
+#define ASN1TAGCLASS_IntegerVariableClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_IntegerVariableClass)
+#define ASN1TAGCLASS_OctetStringVariableClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OctetStringVariableClass)
+#define ASN1TAGCLASS_ObjectRefVariableClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ObjectRefVariableClass)
+#define ASN1TAGCLASS_ContentRefVariableClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentRefVariableClass)
+#define ASN1TAGCLASS_LinkClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_LinkClass)
+#define ASN1TAGCLASS_StreamClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_StreamClass)
+#define ASN1TAGCLASS_BitmapClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_BitmapClass)
+#define ASN1TAGCLASS_LineArtClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_LineArtClass)
+#define ASN1TAGCLASS_DynamicLineArtClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DynamicLineArtClass)
+#define ASN1TAGCLASS_RectangleClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_RectangleClass)
+#define ASN1TAGCLASS_HotspotClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_HotspotClass)
+#define ASN1TAGCLASS_SwitchButtonClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SwitchButtonClass)
+#define ASN1TAGCLASS_PushButtonClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_PushButtonClass)
+#define ASN1TAGCLASS_TextClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TextClass)
+#define ASN1TAGCLASS_EntryFieldClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_EntryFieldClass)
+#define ASN1TAGCLASS_HyperTextClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_HyperTextClass)
+#define ASN1TAGCLASS_SliderClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SliderClass)
+#define ASN1TAGCLASS_TokenGroupClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TokenGroupClass)
+#define ASN1TAGCLASS_ListGroupClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ListGroupClass)
+#define ASN1TAGCLASS_OnSpawnCloseDown	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OnSpawnCloseDown)
+#define ASN1TAGCLASS_OnRestart	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OnRestart)
+#define ASN1TAGCLASS_DefaultAttributes	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DefaultAttributes)
+#define ASN1TAGCLASS_CharacterSet	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_CharacterSet)
+#define ASN1TAGCLASS_BackgroundColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_BackgroundColour)
+#define ASN1TAGCLASS_TextContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TextContentHook)
+#define ASN1TAGCLASS_TextColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TextColour)
+#define ASN1TAGCLASS_FontBody	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_FontBody)
+#define ASN1TAGCLASS_FontAttributes	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_FontAttributes)
+#define ASN1TAGCLASS_InterchangedProgramContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InterchangedProgramContentHook)
+#define ASN1TAGCLASS_StreamContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_StreamContentHook)
+#define ASN1TAGCLASS_BitmapContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_BitmapContentHook)
+#define ASN1TAGCLASS_LineArtContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_LineArtContentHook)
+#define ASN1TAGCLASS_ButtonRefColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ButtonRefColour)
+#define ASN1TAGCLASS_HighlightRefColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_HighlightRefColour)
+#define ASN1TAGCLASS_SliderRefColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SliderRefColour)
+#define ASN1TAGCLASS_InputEventRegister	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InputEventRegister)
+#define ASN1TAGCLASS_SceneCoordinateSystem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SceneCoordinateSystem)
+#define ASN1TAGCLASS_AspectRatio	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_AspectRatio)
+#define ASN1TAGCLASS_MovingCursor	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MovingCursor)
+#define ASN1TAGCLASS_NextScenes	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NextScenes)
+#define ASN1TAGCLASS_InitiallyActive	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InitiallyActive)
+#define ASN1TAGCLASS_ContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentHook)
+#define ASN1TAGCLASS_OriginalContent	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalContent)
+#define ASN1TAGCLASS_Shared	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Shared)
+#define ASN1TAGCLASS_ContentSize	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentSize)
+#define ASN1TAGCLASS_ContentCachePriority	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentCachePriority)
+#define ASN1TAGCLASS_LinkCondition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_LinkCondition)
+#define ASN1TAGCLASS_LinkEffect	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_LinkEffect)
+#define ASN1TAGCLASS_Name	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Name)
+#define ASN1TAGCLASS_InitiallyAvailable	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InitiallyAvailable)
+#define ASN1TAGCLASS_ProgramConnectionTag	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ProgramConnectionTag)
+#define ASN1TAGCLASS_OriginalValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalValue)
+#define ASN1TAGCLASS_ObjectReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ObjectReference)
+#define ASN1TAGCLASS_ContentReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentReference)
+#define ASN1TAGCLASS_MovementTable	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MovementTable)
+#define ASN1TAGCLASS_TokenGroupItems	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TokenGroupItems)
+#define ASN1TAGCLASS_NoTokenActionSlots	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NoTokenActionSlots)
+#define ASN1TAGCLASS_Positions	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Positions)
+#define ASN1TAGCLASS_WrapAround	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_WrapAround)
+#define ASN1TAGCLASS_MultipleSelection	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MultipleSelection)
+#define ASN1TAGCLASS_BoxSize	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_BoxSize)
+#define ASN1TAGCLASS_OriginalPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalPosition)
+#define ASN1TAGCLASS_OriginalPaletteRef	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalPaletteRef)
+#define ASN1TAGCLASS_Tiling	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Tiling)
+#define ASN1TAGCLASS_OriginalTransparency	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalTransparency)
+#define ASN1TAGCLASS_BorderedBoundingBox	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_BorderedBoundingBox)
+#define ASN1TAGCLASS_OriginalLineWidth	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalLineWidth)
+#define ASN1TAGCLASS_OriginalRefLineColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalRefLineColour)
+#define ASN1TAGCLASS_OriginalRefFillColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalRefFillColour)
+#define ASN1TAGCLASS_OriginalFont	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalFont)
+#define ASN1TAGCLASS_HorizontalJustification	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_HorizontalJustification)
+#define ASN1TAGCLASS_VerticalJustification	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_VerticalJustification)
+#define ASN1TAGCLASS_LineOrientation	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_LineOrientation)
+#define ASN1TAGCLASS_StartCorner	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_StartCorner)
+#define ASN1TAGCLASS_TextWrapping	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TextWrapping)
+#define ASN1TAGCLASS_Multiplex	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Multiplex)
+#define ASN1TAGCLASS_Storage	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Storage)
+#define ASN1TAGCLASS_Looping	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Looping)
+#define ASN1TAGCLASS_AudioClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_AudioClass)
+#define ASN1TAGCLASS_VideoClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_VideoClass)
+#define ASN1TAGCLASS_RTGraphicsClass	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_RTGraphicsClass)
+#define ASN1TAGCLASS_ComponentTag	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ComponentTag)
+#define ASN1TAGCLASS_OriginalVolume	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalVolume)
+#define ASN1TAGCLASS_Termination	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Termination)
+#define ASN1TAGCLASS_EngineResp	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_EngineResp)
+#define ASN1TAGCLASS_Orientation	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Orientation)
+#define ASN1TAGCLASS_MaxValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MaxValue)
+#define ASN1TAGCLASS_MinValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MinValue)
+#define ASN1TAGCLASS_InitialValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InitialValue)
+#define ASN1TAGCLASS_InitialPortion	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InitialPortion)
+#define ASN1TAGCLASS_StepSize	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_StepSize)
+#define ASN1TAGCLASS_SliderStyle	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SliderStyle)
+#define ASN1TAGCLASS_InputType	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InputType)
+#define ASN1TAGCLASS_CharList	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_CharList)
+#define ASN1TAGCLASS_ObscuredInput	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ObscuredInput)
+#define ASN1TAGCLASS_MaxLength	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MaxLength)
+#define ASN1TAGCLASS_OriginalLabel	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalLabel)
+#define ASN1TAGCLASS_ButtonStyle	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ButtonStyle)
+#define ASN1TAGCLASS_Activate	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Activate)
+#define ASN1TAGCLASS_Add	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Add)
+#define ASN1TAGCLASS_AddItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_AddItem)
+#define ASN1TAGCLASS_Append	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Append)
+#define ASN1TAGCLASS_BringToFront	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_BringToFront)
+#define ASN1TAGCLASS_Call	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Call)
+#define ASN1TAGCLASS_CallActionSlot	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_CallActionSlot)
+#define ASN1TAGCLASS_Clear	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Clear)
+#define ASN1TAGCLASS_Clone	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Clone)
+#define ASN1TAGCLASS_CloseConnection	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_CloseConnection)
+#define ASN1TAGCLASS_Deactivate	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Deactivate)
+#define ASN1TAGCLASS_DelItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DelItem)
+#define ASN1TAGCLASS_Deselect	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Deselect)
+#define ASN1TAGCLASS_DeselectItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DeselectItem)
+#define ASN1TAGCLASS_Divide	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Divide)
+#define ASN1TAGCLASS_DrawArc	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DrawArc)
+#define ASN1TAGCLASS_DrawLine	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DrawLine)
+#define ASN1TAGCLASS_DrawOval	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DrawOval)
+#define ASN1TAGCLASS_DrawPolygon	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DrawPolygon)
+#define ASN1TAGCLASS_DrawPolyline	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DrawPolyline)
+#define ASN1TAGCLASS_DrawRectangle	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DrawRectangle)
+#define ASN1TAGCLASS_DrawSector	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_DrawSector)
+#define ASN1TAGCLASS_Fork	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Fork)
+#define ASN1TAGCLASS_GetAvailabilityStatus	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetAvailabilityStatus)
+#define ASN1TAGCLASS_GetBoxSize	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetBoxSize)
+#define ASN1TAGCLASS_GetCellItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetCellItem)
+#define ASN1TAGCLASS_GetCursorPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetCursorPosition)
+#define ASN1TAGCLASS_GetEngineSupport	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetEngineSupport)
+#define ASN1TAGCLASS_GetEntryPoint	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetEntryPoint)
+#define ASN1TAGCLASS_GetFillColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetFillColour)
+#define ASN1TAGCLASS_GetFirstItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetFirstItem)
+#define ASN1TAGCLASS_GetHighlightStatus	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetHighlightStatus)
+#define ASN1TAGCLASS_GetInteractionStatus	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetInteractionStatus)
+#define ASN1TAGCLASS_GetItemStatus	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetItemStatus)
+#define ASN1TAGCLASS_GetLabel	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetLabel)
+#define ASN1TAGCLASS_GetLastAnchorFired	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetLastAnchorFired)
+#define ASN1TAGCLASS_GetLineColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetLineColour)
+#define ASN1TAGCLASS_GetLineStyle	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetLineStyle)
+#define ASN1TAGCLASS_GetLineWidth	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetLineWidth)
+#define ASN1TAGCLASS_GetListItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetListItem)
+#define ASN1TAGCLASS_GetListSize	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetListSize)
+#define ASN1TAGCLASS_GetOverwriteMode	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetOverwriteMode)
+#define ASN1TAGCLASS_GetPortion	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetPortion)
+#define ASN1TAGCLASS_GetPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetPosition)
+#define ASN1TAGCLASS_GetRunningStatus	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetRunningStatus)
+#define ASN1TAGCLASS_GetSelectionStatus	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetSelectionStatus)
+#define ASN1TAGCLASS_GetSliderValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetSliderValue)
+#define ASN1TAGCLASS_GetTextContent	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetTextContent)
+#define ASN1TAGCLASS_GetTextData	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetTextData)
+#define ASN1TAGCLASS_GetTokenPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetTokenPosition)
+#define ASN1TAGCLASS_GetVolume	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetVolume)
+#define ASN1TAGCLASS_Launch	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Launch)
+#define ASN1TAGCLASS_LockScreen	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_LockScreen)
+#define ASN1TAGCLASS_Modulo	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Modulo)
+#define ASN1TAGCLASS_Move	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Move)
+#define ASN1TAGCLASS_MoveTo	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MoveTo)
+#define ASN1TAGCLASS_Multiply	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Multiply)
+#define ASN1TAGCLASS_OpenConnection	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OpenConnection)
+#define ASN1TAGCLASS_Preload	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Preload)
+#define ASN1TAGCLASS_PutBefore	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_PutBefore)
+#define ASN1TAGCLASS_PutBehind	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_PutBehind)
+#define ASN1TAGCLASS_Quit	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Quit)
+#define ASN1TAGCLASS_ReadPersistent	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ReadPersistent)
+#define ASN1TAGCLASS_Run	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Run)
+#define ASN1TAGCLASS_ScaleBitmap	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ScaleBitmap)
+#define ASN1TAGCLASS_ScaleVideo	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ScaleVideo)
+#define ASN1TAGCLASS_ScrollItems	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ScrollItems)
+#define ASN1TAGCLASS_Select	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Select)
+#define ASN1TAGCLASS_SelectItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SelectItem)
+#define ASN1TAGCLASS_SendEvent	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SendEvent)
+#define ASN1TAGCLASS_SendToBack	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SendToBack)
+#define ASN1TAGCLASS_SetBoxSize	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetBoxSize)
+#define ASN1TAGCLASS_SetCachePriority	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetCachePriority)
+#define ASN1TAGCLASS_SetCounterEndPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetCounterEndPosition)
+#define ASN1TAGCLASS_SetCounterPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetCounterPosition)
+#define ASN1TAGCLASS_SetCounterTrigger	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetCounterTrigger)
+#define ASN1TAGCLASS_SetCursorPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetCursorPosition)
+#define ASN1TAGCLASS_SetCursorShape	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetCursorShape)
+#define ASN1TAGCLASS_SetData	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetData)
+#define ASN1TAGCLASS_SetEntryPoint	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetEntryPoint)
+#define ASN1TAGCLASS_SetFillColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetFillColour)
+#define ASN1TAGCLASS_SetFirstItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetFirstItem)
+#define ASN1TAGCLASS_SetFontRef	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetFontRef)
+#define ASN1TAGCLASS_SetHighlightStatus	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetHighlightStatus)
+#define ASN1TAGCLASS_SetInteractionStatus	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetInteractionStatus)
+#define ASN1TAGCLASS_SetLabel	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetLabel)
+#define ASN1TAGCLASS_SetLineColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetLineColour)
+#define ASN1TAGCLASS_SetLineStyle	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetLineStyle)
+#define ASN1TAGCLASS_SetLineWidth	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetLineWidth)
+#define ASN1TAGCLASS_SetOverwriteMode	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetOverwriteMode)
+#define ASN1TAGCLASS_SetPaletteRef	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetPaletteRef)
+#define ASN1TAGCLASS_SetPortion	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetPortion)
+#define ASN1TAGCLASS_SetPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetPosition)
+#define ASN1TAGCLASS_SetSliderValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetSliderValue)
+#define ASN1TAGCLASS_SetSpeed	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetSpeed)
+#define ASN1TAGCLASS_SetTimer	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetTimer)
+#define ASN1TAGCLASS_SetTransparency	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetTransparency)
+#define ASN1TAGCLASS_SetVariable	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetVariable)
+#define ASN1TAGCLASS_SetVolume	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetVolume)
+#define ASN1TAGCLASS_Spawn	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Spawn)
+#define ASN1TAGCLASS_Step	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Step)
+#define ASN1TAGCLASS_Stop	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Stop)
+#define ASN1TAGCLASS_StorePersistent	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_StorePersistent)
+#define ASN1TAGCLASS_Subtract	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Subtract)
+#define ASN1TAGCLASS_TestVariable	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TestVariable)
+#define ASN1TAGCLASS_Toggle	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Toggle)
+#define ASN1TAGCLASS_ToggleItem	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ToggleItem)
+#define ASN1TAGCLASS_TransitionTo	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TransitionTo)
+#define ASN1TAGCLASS_Unload	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Unload)
+#define ASN1TAGCLASS_UnlockScreen	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_UnlockScreen)
+#define ASN1TAGCLASS_NewGenericBoolean	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericBoolean)
+#define ASN1TAGCLASS_NewGenericInteger	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericInteger)
+#define ASN1TAGCLASS_NewGenericOctetstring	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericOctetstring)
+#define ASN1TAGCLASS_NewGenericObjectReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericObjectReference)
+#define ASN1TAGCLASS_NewGenericContentReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericContentReference)
+#define ASN1TAGCLASS_NewColourIndex	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewColourIndex)
+#define ASN1TAGCLASS_NewAbsoluteColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewAbsoluteColour)
+#define ASN1TAGCLASS_NewFontName	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewFontName)
+#define ASN1TAGCLASS_NewFontReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewFontReference)
+#define ASN1TAGCLASS_NewContentSize	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewContentSize)
+#define ASN1TAGCLASS_NewContentCachePriority	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewContentCachePriority)
+#define ASN1TAGCLASS_IndirectReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_IndirectReference)
+#define ASN1TAGCLASS_SetBackgroundColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetBackgroundColour)
+#define ASN1TAGCLASS_SetCellPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetCellPosition)
+#define ASN1TAGCLASS_SetInputReg	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetInputReg)
+#define ASN1TAGCLASS_SetTextColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetTextColour)
+#define ASN1TAGCLASS_SetFontAttributes	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetFontAttributes)
+#define ASN1TAGCLASS_SetVideoDecodeOffset	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetVideoDecodeOffset)
+#define ASN1TAGCLASS_GetVideoDecodeOffset	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetVideoDecodeOffset)
+#define ASN1TAGCLASS_GetFocusPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetFocusPosition)
+#define ASN1TAGCLASS_SetFocusPosition	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetFocusPosition)
+#define ASN1TAGCLASS_SetBitmapDecodeOffset	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetBitmapDecodeOffset)
+#define ASN1TAGCLASS_GetBitmapDecodeOffset	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_GetBitmapDecodeOffset)
+#define ASN1TAGCLASS_SetSliderParameters	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_SetSliderParameters)
 
 #endif	/* __ASN1TAG_H__ */
 

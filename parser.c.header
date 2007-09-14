@@ -27,12 +27,13 @@ yywrap(void)
  */
 
 struct node *
-add_child(struct node *parent, unsigned int asn1tag, unsigned int asn1class)
+add_child(struct node *parent, uint32_t asn1tagclass)
 {
 	struct node *child = safe_malloc(sizeof(struct node));
 
-	child->asn1tag = asn1tag;
-	child->asn1class = asn1class;
+	/* class is in the top 8 bits, tag is the bottom 24 bits */
+	child->asn1tag = asn1tagclass & 0xffffff;
+	child->asn1class = (asn1tagclass >> 24) & 0xff;
 	child->length = 0;
 	child->value = NULL;
 	child->children = NULL;
