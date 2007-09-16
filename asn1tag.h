@@ -85,7 +85,7 @@ char *asn1class_name(unsigned int);
 #define ASN1TAG_BackgroundColour	39
 #define ASN1TAG_TextContentHook	40
 #define ASN1TAG_TextColour	41
-#define ASN1TAG_FontBody	42
+#define ASN1TAG_Font	42
 #define ASN1TAG_FontAttributes	43
 #define ASN1TAG_InterchangedProgramContentHook	44
 #define ASN1TAG_StreamContentHook	45
@@ -335,7 +335,7 @@ char *asn1class_name(unsigned int);
 #define ASN1TAGCLASS_BackgroundColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_BackgroundColour)
 #define ASN1TAGCLASS_TextContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TextContentHook)
 #define ASN1TAGCLASS_TextColour	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TextColour)
-#define ASN1TAGCLASS_FontBody	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_FontBody)
+#define ASN1TAGCLASS_Font	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_Font)
 #define ASN1TAGCLASS_FontAttributes	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_FontAttributes)
 #define ASN1TAGCLASS_InterchangedProgramContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InterchangedProgramContentHook)
 #define ASN1TAGCLASS_StreamContentHook	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_StreamContentHook)
@@ -557,7 +557,7 @@ char *asn1class_name(unsigned int);
 
 /* start TODO */
 #define ASN1TAG_FIXME 99999
-#define ASN1TAGCLASS_Font	ASN1TAG_FIXME
+#define ASN1TAGCLASS_FontBody	ASN1TAG_FIXME
 #define ASN1TAGCLASS_DirectFont	ASN1TAG_FIXME
 #define ASN1TAGCLASS_IndirectFont	ASN1TAG_FIXME
 #define ASN1TAGCLASS_XScene	ASN1TAG_FIXME
@@ -699,11 +699,9 @@ char *asn1class_name(unsigned int);
 #define ASN1TAGCLASS_AbsoluteColour	ASN1TAG_FIXME
 #define ASN1TAGCLASS_XPosition	ASN1TAG_FIXME
 #define ASN1TAGCLASS_YPosition	ASN1TAG_FIXME
-/* TODO: need to look at these - have different values in different places */
 #define ASN1TAGCLASS_ReferencedContent	ASN1TAG_FIXME
 #define ASN1TAGCLASS_XYPosition		ASN1TAG_FIXME
 #define ASN1TAGCLASS_Point		ASN1TAG_FIXME
-/* TODO: as above, but only used once */
 #define ASN1TAGCLASS_Rational			ASN1TAG_FIXME
 #define ASN1TAGCLASS_ExternalReference		ASN1TAG_FIXME
 #define ASN1TAGCLASS_NewReferencedContent	ASN1TAG_FIXME
