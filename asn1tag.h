@@ -557,7 +557,6 @@ char *asn1class_name(unsigned int);
 
 /* start TODO */
 #define ASN1TAG_FIXME 99999
-#define ASN1TAGCLASS_FontBody	ASN1TAG_FIXME
 #define ASN1TAGCLASS_DirectFont	ASN1TAG_FIXME
 #define ASN1TAGCLASS_IndirectFont	ASN1TAG_FIXME
 #define ASN1TAGCLASS_XScene	ASN1TAG_FIXME
