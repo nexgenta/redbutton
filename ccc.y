@@ -459,6 +459,7 @@ output_def(char *name)
 			/* assert */
 			if(state.and_items)
 				fatal("CHOICE or ENUMERATED type, but and_items set");
+/* TODO: these can probably both be ASN1TAGCLASS_SYNTHETIC */
 			/* add a child ASN1 object */
 			if(asn1type(name) == ASN1TYPE_CHOICE)
 				buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_CHOICE);\n\n");
