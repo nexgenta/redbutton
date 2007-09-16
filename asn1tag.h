@@ -23,6 +23,9 @@ char *asn1class_name(unsigned int);
 #define ASN1TAG_CHOICE		10001
 /* ENUMERATED types are encoded as INTEGERs */
 #define ASN1TAG_ENUMERATED	10002
+/* SEQUENCEs and SETs are just used to group their children together */
+#define ASN1TAG_SEQUENCE	10003
+#define ASN1TAG_SET		10004
 
 /* abstract types */
 #define ASN1TAGCLASS_Root		ASN1TAG_SYNTHETIC
@@ -554,11 +557,11 @@ char *asn1class_name(unsigned int);
 /* UNIVERSAL ASN1 types in the grammar */
 #define ASN1TAGCLASS_JointIsoItuIdentifier	ASN1TAGCLASS_INTEGER
 #define ASN1TAGCLASS_MHEGStandardIdentifier	ASN1TAGCLASS_INTEGER
+#define ASN1TAGCLASS_DirectFont	ASN1TAGCLASS_OctetString
+#define ASN1TAGCLASS_IndirectFont	ASN1TAG_SYNTHETIC
 
 /* start TODO */
 #define ASN1TAG_FIXME 99999
-#define ASN1TAGCLASS_DirectFont	ASN1TAG_FIXME
-#define ASN1TAGCLASS_IndirectFont	ASN1TAG_FIXME
 #define ASN1TAGCLASS_XScene	ASN1TAG_FIXME
 #define ASN1TAGCLASS_YScene	ASN1TAG_FIXME
 #define ASN1TAGCLASS_Width	ASN1TAG_FIXME
@@ -699,7 +702,7 @@ char *asn1class_name(unsigned int);
 #define ASN1TAGCLASS_XPosition	ASN1TAG_FIXME
 #define ASN1TAGCLASS_YPosition	ASN1TAG_FIXME
 #define ASN1TAGCLASS_ReferencedContent	ASN1TAG_FIXME
-#define ASN1TAGCLASS_XYPosition		ASN1TAG_FIXME
+#define ASN1TAGCLASS_XYPosition		ASN1TAG_SEQUENCE
 #define ASN1TAGCLASS_Point		ASN1TAG_FIXME
 #define ASN1TAGCLASS_Rational			ASN1TAG_FIXME
 #define ASN1TAGCLASS_ExternalReference		ASN1TAG_FIXME
