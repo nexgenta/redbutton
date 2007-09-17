@@ -19,6 +19,12 @@ peek_token(void)
 {
 	token_t tok = yylex();
 
+	while(tok == COMMENT)
+	{
+		vverbose("peek: skip comment '%s'\n", yytext);
+		tok = yylex();
+	}
+
 	vverbose("peek: '%s'\n", yytext);
 
 	/* return it to the input stream */
@@ -40,6 +46,12 @@ token_t
 next_token(void)
 {
 	token_t tok = yylex();
+
+	while(tok == COMMENT)
+	{
+		vverbose("next: skip comment '%s'\n", yytext);
+		tok = yylex();
+	}
 
 	vverbose("next: '%s'\n", yytext);
 
