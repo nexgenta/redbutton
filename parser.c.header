@@ -129,7 +129,7 @@ void parse_STRING(struct node *parent)
 	/* give our parent a UNIVERSAL type if it is synthetic */
 	if(is_synthetic(parent->asn1tag))
 	{
-		parent->asn1tag = ASN1TAG_OctetString;
+		parent->asn1tag = ASN1TAG_OCTETSTRING;
 		parent->asn1class = ASN1CLASS_UNIVERSAL;
 	}
 
@@ -149,7 +149,7 @@ void parse_QPRINTABLE(struct node *parent)
 	/* give our parent a UNIVERSAL type if it is synthetic */
 	if(is_synthetic(parent->asn1tag))
 	{
-		parent->asn1tag = ASN1TAG_OctetString;
+		parent->asn1tag = ASN1TAG_OCTETSTRING;
 		parent->asn1class = ASN1CLASS_UNIVERSAL;
 	}
 
@@ -169,7 +169,7 @@ void parse_BASE64(struct node *parent)
 	/* give our parent a UNIVERSAL type if it is synthetic */
 	if(is_synthetic(parent->asn1tag))
 	{
-		parent->asn1tag = ASN1TAG_OctetString;
+		parent->asn1tag = ASN1TAG_OCTETSTRING;
 		parent->asn1class = ASN1CLASS_UNIVERSAL;
 	}
 
@@ -193,7 +193,7 @@ void parse_Null(struct node *parent)
 	/* give our parent a UNIVERSAL type if it is synthetic */
 	if(is_synthetic(parent->asn1tag))
 	{
-		parent->asn1tag = ASN1TAG_Null;
+		parent->asn1tag = ASN1TAG_NULL;
 		parent->asn1class = ASN1CLASS_UNIVERSAL;
 	}
 
