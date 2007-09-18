@@ -28,20 +28,22 @@ der_encode_INTEGER(unsigned char **out, unsigned int *len, int val)
 {
 	unsigned int shifted;
 	unsigned int i;
+	unsigned int uval;
 
 	/* assert */
 	if(*out != NULL || *len != 0)
 		fatal("der_encode_INTEGER: length already %u", *len);
 
-	/*
-	 * work out how many bytes we need to store 'val'
-	 * ints in DER are signed, so first byte we store must be <= 127
-	 * we add a leading 0 if first byte is > 127
-	 */
+	/* is it +ve or -ve */
 	if(val >= 0)
 	{
+		/*
+		 * work out how many bytes we need to store 'val'
+		 * ints in DER are signed, so first byte we store must be <= 127
+		 * we add a leading 0 if first byte is > 127
+		 */
 		shifted = val;
-		(*len) = 1;
+		*len = 1;
 		while(shifted > 127)
 		{
 			(*len) ++;
@@ -54,7 +56,17 @@ der_encode_INTEGER(unsigned char **out, unsigned int *len, int val)
 	}
 	else
 	{
-fatal("TODO: negative INTEGER: %d", val);
+		/*
+		 * TODO
+		 * should really use as few bytes as possible
+		 * ie chop off leading 0xff's while the next byte has its top bit set
+		 */
+		*len = sizeof(unsigned int);
+		*out = safe_malloc(*len);
+		/* big endian */
+		uval = (unsigned int) val;
+		for(i=1; i<=(*len); i++)
+			(*out)[i - 1] = (uval >> (((*len) - i) * 8)) & 0xff;
 	}
 
 	return;
