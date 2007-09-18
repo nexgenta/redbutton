@@ -104,7 +104,7 @@ fatal(char *message, ...)
 #define HEXDUMP_WIDTH	16
 
 void
-hexdump(unsigned char *data, size_t nbytes)
+hexdump(FILE *out, unsigned char *data, size_t nbytes)
 {
 	size_t nout;
 	int i;
@@ -114,16 +114,16 @@ hexdump(unsigned char *data, size_t nbytes)
 	{
 		/* byte offset at start of line */
 		if((nout % HEXDUMP_WIDTH) == 0)
-			printf("0x%.8x  ", nout);
+			fprintf(out, "0x%.8x  ", nout);
 		/* the byte value in hex */
-		printf("%.2x ", data[nout]);
+		fprintf(out, "%.2x ", data[nout]);
 		/* the ascii equivalent at the end of the line */
 		if((nout % HEXDUMP_WIDTH) == (HEXDUMP_WIDTH - 1))
 		{
-			printf(" ");
+			fprintf(out, " ");
 			for(i=HEXDUMP_WIDTH-1; i>=0; i--)
-				printf("%c", isprint(data[nout - i]) ? data[nout - i] : '.');
-			printf("\n");
+				fprintf(out, "%c", isprint(data[nout - i]) ? data[nout - i] : '.');
+			fprintf(out, "\n");
 		}
 		nout ++;
 	}
@@ -133,13 +133,13 @@ hexdump(unsigned char *data, size_t nbytes)
 	{
 		/* pad to the start of the ascii equivalent */
 		for(i=(nout % HEXDUMP_WIDTH); i<HEXDUMP_WIDTH; i++)
-			printf("   ");
-		printf(" ");
+			fprintf(out, "   ");
+		fprintf(out, " ");
 		/* print the ascii equivalent */
 		nout --;
 		for(i=(nout % HEXDUMP_WIDTH); i>=0; i--)
-			printf("%c", isprint(data[nout - i]) ? data[nout - i] : '.');
-		printf("\n");
+			fprintf(out, "%c", isprint(data[nout - i]) ? data[nout - i] : '.');
+		fprintf(out, "\n");
 	}
 
 	return;

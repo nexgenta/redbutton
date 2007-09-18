@@ -121,11 +121,11 @@ print_node(struct node *n, unsigned int indent)
 		}
 	}
 
-	if(show_kids)
-	{
-		for(kid=n->children; kid; kid=kid->siblings)
-			print_node(kid, indent);
-	}
+	if(n->length > 0)
+		hexdump(stderr, n->value, n->length);
+
+	for(kid=n->children; kid; kid=kid->siblings)
+		print_node(kid, indent);
 
 	if(show_node && show_kids)
 	{

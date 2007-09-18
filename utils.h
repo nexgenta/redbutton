@@ -25,12 +25,13 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 void *safe_malloc(size_t);
 void *safe_realloc(void *, size_t);
 void safe_free(void *);
 
-void hexdump(unsigned char *, size_t);
+void hexdump(FILE *, unsigned char *, size_t);
 
 void error(char *, ...);
 void fatal(char *, ...);

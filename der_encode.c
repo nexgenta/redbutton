@@ -3,6 +3,7 @@
  */
 
 #include <stdbool.h>
+#include <string.h>
 
 #include "utils.h"
 
@@ -32,6 +33,12 @@ der_encode_OctetString(unsigned char **out, unsigned int *len, const char *str)
 	/* assert */
 	if(*out != NULL || *len != 0)
 		fatal("der_encode_OctetString: length already %u", *len);
+
+	/* convert the STRING, QPRINTABLE or BASE64 data to an OctetString */
+/* TODO: fixme */
+*len = strlen(str) + 1;
+*out=safe_malloc(*len);
+strcpy(*out,str);
 
 	return;
 }
