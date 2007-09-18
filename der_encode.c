@@ -22,9 +22,36 @@ der_encode_BOOLEAN(unsigned char **out, unsigned int *len, bool val)
 void
 der_encode_INTEGER(unsigned char **out, unsigned int *len, int val)
 {
+	unsigned int shifted;
+	unsigned int i;
+
 	/* assert */
 	if(*out != NULL || *len != 0)
 		fatal("der_encode_INTEGER: length already %u", *len);
+
+	/*
+	 * work out how many bytes we need to store 'val'
+	 * ints in DER are signed, so first byte we store must be <= 127
+	 * we add a leading 0 if first byte is > 127
+	 */
+	if(val >= 0)
+	{
+		shifted = val;
+		(*len) = 1;
+		while(shifted > 127)
+		{
+			(*len) ++;
+			shifted >>= 8;
+		}
+		*out = safe_malloc(*len);
+		/* big endian */
+		for(i=1; i<=(*len); i++)
+			(*out)[i - 1] = (val >> (((*len) - i) * 8)) & 0xff;
+	}
+	else
+	{
+fatal("TODO: negative INTEGER: %d", val);
+	}
 
 	return;
 }
