@@ -87,6 +87,13 @@ void parse_BOOLEAN(struct node *parent)
 
 	verbose("<BOOLEAN value=%s/>\n", token_text());
 
+	/* give our parent a UNIVERSAL type if it is synthetic */
+	if(is_synthetic(parent->asn1tag))
+	{
+		parent->asn1tag = ASN1TAG_BOOLEAN;
+		parent->asn1class = ASN1CLASS_UNIVERSAL;
+	}
+
 	der_encode_BOOLEAN(&parent->value, &parent->length, strcmp(token_text(), "false"));
 
 	return;
@@ -100,6 +107,13 @@ void parse_INTEGER(struct node *parent)
 
 	verbose("<INTEGER value=%s/>\n", token_text());
 
+	/* give our parent a UNIVERSAL type if it is synthetic */
+	if(is_synthetic(parent->asn1tag))
+	{
+		parent->asn1tag = ASN1TAG_INTEGER;
+		parent->asn1class = ASN1CLASS_UNIVERSAL;
+	}
+
 	der_encode_INTEGER(&parent->value, &parent->length, strtol(token_text(), NULL, 0));
 
 	return;
@@ -111,6 +125,13 @@ void parse_STRING(struct node *parent)
 		parse_error("Unexpected token '%s'; expecting \"STRING\"", token_text());
 
 	verbose("<STRING value=%s/>\n", token_text());
+
+	/* give our parent a UNIVERSAL type if it is synthetic */
+	if(is_synthetic(parent->asn1tag))
+	{
+		parent->asn1tag = ASN1TAG_OctetString;
+		parent->asn1class = ASN1CLASS_UNIVERSAL;
+	}
 
 	der_encode_OctetString(&parent->value, &parent->length, token_text());
 
@@ -125,6 +146,13 @@ void parse_QPRINTABLE(struct node *parent)
 
 	verbose("<QPRINTABLE value=%s/>\n", token_text());
 
+	/* give our parent a UNIVERSAL type if it is synthetic */
+	if(is_synthetic(parent->asn1tag))
+	{
+		parent->asn1tag = ASN1TAG_OctetString;
+		parent->asn1class = ASN1CLASS_UNIVERSAL;
+	}
+
 	der_encode_OctetString(&parent->value, &parent->length, token_text());
 
 	return;
@@ -137,6 +165,13 @@ void parse_BASE64(struct node *parent)
 		parse_error("Unexpected token '%s'; expecting `BASE64`", token_text());
 
 	verbose("<BASE64 value=%s/>\n", token_text());
+
+	/* give our parent a UNIVERSAL type if it is synthetic */
+	if(is_synthetic(parent->asn1tag))
+	{
+		parent->asn1tag = ASN1TAG_OctetString;
+		parent->asn1class = ASN1CLASS_UNIVERSAL;
+	}
 
 	der_encode_OctetString(&parent->value, &parent->length, token_text());
 
@@ -154,6 +189,13 @@ void parse_Null(struct node *parent)
 	/* assert */
 	if(parent->length != 0)
 		fatal("Null: length=%u", parent->length);
+
+	/* give our parent a UNIVERSAL type if it is synthetic */
+	if(is_synthetic(parent->asn1tag))
+	{
+		parent->asn1tag = ASN1TAG_Null;
+		parent->asn1class = ASN1CLASS_UNIVERSAL;
+	}
 
 	return;
 }

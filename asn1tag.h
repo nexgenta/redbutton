@@ -555,10 +555,12 @@ bool is_synthetic(unsigned int);
 #define ASN1TAG_BOOLEAN		1
 #define ASN1TAG_INTEGER		2
 #define ASN1TAG_OctetString	4
+#define ASN1TAG_Null		5
 /* and with the class included */
 #define ASN1TAGCLASS_BOOLEAN		((ASN1CLASS_UNIVERSAL << 24) | ASN1TAG_BOOLEAN)
 #define ASN1TAGCLASS_INTEGER		((ASN1CLASS_UNIVERSAL << 24) | ASN1TAG_INTEGER)
 #define ASN1TAGCLASS_OctetString	((ASN1CLASS_UNIVERSAL << 24) | ASN1TAG_OctetString)
+#define ASN1TAGCLASS_Null		((ASN1CLASS_UNIVERSAL << 24) | ASN1TAG_Null)
 
 /* UNIVERSAL ASN1 types in the grammar */
 #define ASN1TAGCLASS_JointIsoItuIdentifier	ASN1TAGCLASS_INTEGER
