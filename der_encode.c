@@ -50,12 +50,14 @@ der_encode_OctetString(unsigned char **out, unsigned int *len, const char *str)
 
 /*
  * string is enclosed in "
+ * contains chars 0x20 to 0x7e
  * " and \ within the string are encoded as \" and \\
  */
 
 void
 convert_STRING(unsigned char **out, unsigned int *len, const char *str)
 {
+	unsigned char *whole_str = str;
 	unsigned char *p;
 
 	/* max size it could be */
@@ -66,7 +68,11 @@ convert_STRING(unsigned char **out, unsigned int *len, const char *str)
 	p = *out;
 	while(*str != '"')
 	{
-		if(*str != '\\')
+		if(*str < 0x20 || *str > 0x7e)
+		{
+			fatal("Invalid character (0x%02x) in STRING: %s", *str, whole_str);
+		}
+		else if(*str != '\\')
 		{
 			*p = *str;
 			p ++;
@@ -86,13 +92,13 @@ convert_STRING(unsigned char **out, unsigned int *len, const char *str)
 		}
 		else
 		{
-			fatal("Invalid escape sequence in STRING: %s", str - 1);
+			fatal("Invalid escape sequence in STRING: %s", whole_str);
 		}
 	}
 
 	/* check we got to the closing quote */
 	if(*(str + 1) != '\0')
-		fatal("Unquoted \" in STRING: %s", str - 1);
+		fatal("Unquoted \" in STRING: %s", whole_str);
 
 	/* return the length (note: no \0 terminator) */
 	*len = (p - *out);
