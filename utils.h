@@ -27,6 +27,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+unsigned int char2hex(unsigned char);
+
 void *safe_malloc(size_t);
 void *safe_realloc(void *, size_t);
 void safe_free(void *);

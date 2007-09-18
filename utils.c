@@ -28,6 +28,21 @@
 #include "utils.h"
 
 /*
+ * returns 15 for 'f' etc
+ */
+
+unsigned int
+char2hex(unsigned char c)
+{
+	if(!isxdigit(c))
+		return 0;
+	else if(c >= '0' && c <= '9')
+		return c - '0';
+	else
+		return 10 + (tolower(c) - 'a');
+}
+
+/*
  * I don't want to double the size of my code just to deal with malloc failures
  * if you've run out of memory you're fscked anyway, me trying to recover is not gonna help...
  */

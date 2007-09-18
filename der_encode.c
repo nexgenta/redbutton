@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "der_encode.h"
 #include "utils.h"
@@ -29,7 +30,7 @@ der_encode_INTEGER(unsigned char **out, unsigned int *len, int val)
 }
 
 void
-der_encode_OctetString(unsigned char **out, unsigned int *len, const char *str)
+der_encode_OctetString(unsigned char **out, unsigned int *len, const unsigned char *str)
 {
 	/* assert */
 	if(*out != NULL || *len != 0)
@@ -55,9 +56,9 @@ der_encode_OctetString(unsigned char **out, unsigned int *len, const char *str)
  */
 
 void
-convert_STRING(unsigned char **out, unsigned int *len, const char *str)
+convert_STRING(unsigned char **out, unsigned int *len, const unsigned char *str)
 {
-	unsigned char *whole_str = str;
+	const unsigned char *whole_str = str;
 	unsigned char *p;
 
 	/* max size it could be */
@@ -92,6 +93,7 @@ convert_STRING(unsigned char **out, unsigned int *len, const char *str)
 		}
 		else
 		{
+			/* TODO: show the line number */
 			fatal("Invalid escape sequence in STRING: %s", whole_str);
 		}
 	}
@@ -106,13 +108,58 @@ convert_STRING(unsigned char **out, unsigned int *len, const char *str)
 	return;
 }
 
+/*
+ * string is enclosed in '
+ * encoded as specified in RFC 1521 (MIME)
+ * in addition, ' is encoded as =27
+ * and line breaks do not need to be converted to CRLF
+ */
+
 void
-convert_QPRINTABLE(unsigned char **out, unsigned int *len, const char *str)
+convert_QPRINTABLE(unsigned char **out, unsigned int *len, const unsigned char *str)
 {
+	const unsigned char *whole_str = str;
+	unsigned char *p;
+
+	/* max size it could be */
+	*out = safe_malloc(strlen(str));
+
+	/* skip the initial ' */
+	str ++;
+	p = *out;
+	while(*str != '\'')
+	{
+		if(*str != '=')
+		{
+			*p = *str;
+			p ++;
+			str ++;
+		}
+		else if(isxdigit(*(str + 1)) && isxdigit(*(str + 2)))
+		{
+			*p = char2hex(*(str + 1)) << 4 | char2hex(*(str + 2));
+			p ++;
+			str += 3;
+		}
+		else
+		{
+			/* TODO: show the line number */
+			fatal("Invalid escape sequence in QPRINTABLE: %s", whole_str);
+		}
+	}
+
+	/* check we got to the closing quote */
+	if(*(str + 1) != '\0')
+		fatal("Unquoted ' in QPRINTABLE: %s", whole_str);
+
+	/* return the length (note: no \0 terminator) */
+	*len = (p - *out);
+
+	return;
 }
 
 void
-convert_BASE64(unsigned char **out, unsigned int *len, const char *str)
+convert_BASE64(unsigned char **out, unsigned int *len, const unsigned char *str)
 {
 }
 
