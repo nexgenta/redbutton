@@ -16,6 +16,10 @@ der_encode_BOOLEAN(unsigned char **out, unsigned int *len, bool val)
 	if(*out != NULL || *len != 0)
 		fatal("der_encode_BOOLEAN: length already %u", *len);
 
+	*len = 1;
+	*out = safe_malloc(1);
+	(*out)[0] = val ? 1 : 0;
+
 	return;
 }
 
