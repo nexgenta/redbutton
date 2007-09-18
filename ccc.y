@@ -459,12 +459,11 @@ output_def(char *name)
 			/* assert */
 			if(state.and_items)
 				fatal("CHOICE or ENUMERATED type, but and_items set");
-/* TODO: these can probably both be ASN1TAGCLASS_SYNTHETIC */
 			/* add a child ASN1 object */
 			if(asn1type(name) == ASN1TYPE_CHOICE)
 				buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_CHOICE);\n\n");
-			else
-				buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAG_ENUMERATED);\n\n");
+//			else
+//				buf_append(&state.parse_fns, "\tparent = add_child(parent, ASN1TAGCLASS_ENUMERATED);\n\n");
 			/* peek at the next token */
 			buf_append(&state.parse_fns, "\tnext = peek_token();\n\n");
 			buf_append(&state.parse_fns, "\t/* CHOICE or ENUMERATED */\n");
