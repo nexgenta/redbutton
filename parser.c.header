@@ -59,6 +59,24 @@ add_child(struct node *parent, uint32_t asn1tagclass)
 }
 
 /*
+ * return true if any of the node's descendants are not synthetic
+ */
+
+bool
+has_real_children(struct node *n)
+{
+	struct node *kid;
+
+	for(kid=n->children; kid; kid=kid->siblings)
+	{
+		if(has_real_children(kid) || !is_synthetic(kid->asn1tag))
+			return true;
+	}
+
+	return false;
+}
+
+/*
  * parser functions for the predefined types
  */
 

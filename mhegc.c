@@ -67,6 +67,11 @@ main(int argc, char *argv[])
 	else if(optind != argc)
 		usage(prog_name);
 
+	if(optind == argc - 1)
+		verbose("Parsing '%s':\n", argv[optind]);
+	else
+		verbose("Parsing stdin:\n");
+
 	bzero(&asn1obj, sizeof(struct node));
 	asn1obj.asn1tag = ASN1TAG_SYNTHETIC;
 	parse_InterchangedObject(&asn1obj);
@@ -94,17 +99,37 @@ main(int argc, char *argv[])
 void
 print_node(struct node *n, unsigned int indent)
 {
+	bool show_node;
+	bool show_kids;
 	struct node *kid;
 
-	print_indent(indent);
-	fprintf(stderr, "[%s %d]\n", asn1class_name(n->asn1class), n->asn1tag);
+	/* only show synthetic nodes if -vv was given on the cmd line */
+	show_node = (!is_synthetic(n->asn1tag) || _verbose > 1);
 
-	if(n->children)
+	/* only show non-synthetic children, unless -vv was given */
+	show_kids = (has_real_children(n) || _verbose > 1);
+
+	if(show_node)
 	{
 		print_indent(indent);
-		fprintf(stderr, "{\n");
+		fprintf(stderr, "[%s %d]\n", asn1class_name(n->asn1class), n->asn1tag);
+		if(show_kids)
+		{
+			print_indent(indent);
+			fprintf(stderr, "{\n");
+			indent ++;
+		}
+	}
+
+	if(show_kids)
+	{
 		for(kid=n->children; kid; kid=kid->siblings)
-			print_node(kid, indent + 1);
+			print_node(kid, indent);
+	}
+
+	if(show_node && show_kids)
+	{
+		indent --;
 		print_indent(indent);
 		fprintf(stderr, "}\n");
 	}

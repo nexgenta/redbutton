@@ -15,3 +15,9 @@ asn1class_name(unsigned int c)
 	return "ILLEGAL-ASN1-CLASS-NUMBER";
 }
 
+bool
+is_synthetic(unsigned int asn1tag)
+{
+/* TODO: only need one value for synthetic types (ie no need for separate ASN1TAG_CHOICE etc) */
+	return (asn1tag >= ASN1TAG_SYNTHETIC);
+}
