@@ -38,6 +38,7 @@ add_child(struct node *parent, uint32_t asn1tagclass)
 	child->asn1class = (asn1tagclass >> 24) & 0xff;
 	child->length = 0;
 	child->value = NULL;
+	child->parent = parent;
 	child->children = NULL;
 	child->siblings = NULL;
 
@@ -119,15 +120,16 @@ void parse_INTEGER(struct node *parent)
 	return;
 }
 
-void parse_STRING(struct node *parent)
+void parse_OCTETSTRING(struct node *parent)
 {
-	if(next_token() != STRING)
-		parse_error("Unexpected token '%s'; expecting \"STRING\"", token_text());
-
-	verbose("<STRING value=%s/>\n", token_text());
-
-	/* give our parent a UNIVERSAL type if it is synthetic */
-	if(is_synthetic(parent->asn1tag))
+	/*
+	 * give our parent's parent a UNIVERSAL type if it is synthetic
+	 * need to look at our parent's parent because an OctetString in the grammar
+	 * is a choice between a STRING, a QPRINTABLE or a BASE64
+	 * so our parent will always be a choice node
+	 * the OCTETSTRING ASN1 type does not have this extra choice parent node
+	 */
+	if(is_synthetic(parent->parent->asn1tag))
 	{
 		parent->asn1tag = ASN1TAG_OCTETSTRING;
 		parent->asn1class = ASN1CLASS_UNIVERSAL;
@@ -138,6 +140,17 @@ void parse_STRING(struct node *parent)
 	return;
 }
 
+void parse_STRING(struct node *parent)
+{
+	if(next_token() != STRING)
+		parse_error("Unexpected token '%s'; expecting \"STRING\"", token_text());
+
+	verbose("<STRING value=%s/>\n", token_text());
+
+	parse_OCTETSTRING(parent);
+
+	return;
+}
 
 void parse_QPRINTABLE(struct node *parent)
 {
@@ -146,18 +159,10 @@ void parse_QPRINTABLE(struct node *parent)
 
 	verbose("<QPRINTABLE value=%s/>\n", token_text());
 
-	/* give our parent a UNIVERSAL type if it is synthetic */
-	if(is_synthetic(parent->asn1tag))
-	{
-		parent->asn1tag = ASN1TAG_OCTETSTRING;
-		parent->asn1class = ASN1CLASS_UNIVERSAL;
-	}
-
-	der_encode_OctetString(&parent->value, &parent->length, token_text());
+	parse_OCTETSTRING(parent);
 
 	return;
 }
-
 
 void parse_BASE64(struct node *parent)
 {
@@ -166,18 +171,10 @@ void parse_BASE64(struct node *parent)
 
 	verbose("<BASE64 value=%s/>\n", token_text());
 
-	/* give our parent a UNIVERSAL type if it is synthetic */
-	if(is_synthetic(parent->asn1tag))
-	{
-		parent->asn1tag = ASN1TAG_OCTETSTRING;
-		parent->asn1class = ASN1CLASS_UNIVERSAL;
-	}
-
-	der_encode_OctetString(&parent->value, &parent->length, token_text());
+	parse_OCTETSTRING(parent);
 
 	return;
 }
-
 
 void parse_Null(struct node *parent)
 {
