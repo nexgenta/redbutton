@@ -250,8 +250,10 @@ TokenGroupItem		::= "(" AVisible [ActionSlots] ")" .
 AVisible		::= ObjectReference .
 ActionSlots		::= ":ActionSlots" "(" ActionSlot+ ")" .
 ActionSlot		::= ActionClass | Null .
-NoTokenActionSlots	::= ":NoTokenActionSlots" "(" ActionSlot+ ")" .
-
+NoTokenActionSlots	::= ":NoTokenActionSlots" "(" ActionSlotSeq+ ")" .
+// srk - to get an explicit SEQUENCE tag under NoTokenActionSlots
+ActionSlotSeq		::= ActionClassSeq | Null .
+ActionClassSeq		::= ActionClass .
 
 // B.4.23 ListGroup Class
 

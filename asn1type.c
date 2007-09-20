@@ -212,6 +212,7 @@ asn1type(char *name)
 	MATCH(GetFocusPosition, SEQUENCE)
 	MATCH(SetFocusPosition, SEQUENCE)
 	MATCH(OctetString, CHOICE);
+	MATCH(ActionSlotSeq, CHOICE);
 
 	fprintf(stderr, "Unknown ASN1 type: %s\n", name);
 	exit(EXIT_FAILURE);

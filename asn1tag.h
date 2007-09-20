@@ -725,9 +725,11 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_ActionSlots ASN1TAGCLASS_SEQUENCE
 #define ASN1TAGCLASS_InVariables ASN1TAGCLASS_SEQUENCE
 #define ASN1TAGCLASS_OutVariables ASN1TAGCLASS_SEQUENCE
-#define ASN1TAGCLASS_ActionClass ASN1TAGCLASS_SEQUENCE
+#define ASN1TAGCLASS_ActionClass ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_Parameters  ASN1TAGCLASS_SEQUENCE
 #define ASN1TAGCLASS_PointList  ASN1TAGCLASS_SEQUENCE
+/* added by me to get an explicit SEQUENCE under NoTokenActionSlot */
+#define ASN1TAGCLASS_ActionClassSeq	ASN1TAGCLASS_SEQUENCE
 
 #endif	/* __ASN1TAG_H__ */
 
