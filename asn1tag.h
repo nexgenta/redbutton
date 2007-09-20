@@ -115,8 +115,8 @@ bool is_synthetic(unsigned int);
 #define ASN1TAG_InitiallyAvailable	65
 #define ASN1TAG_ProgramConnectionTag	66
 #define ASN1TAG_OriginalValue	67
-#define ASN1TAG_ObjectReference	68
-#define ASN1TAG_ContentReference	69
+#define ASN1TAG_ObjectReferenceValue	68
+#define ASN1TAG_ContentReferenceValue	69
 #define ASN1TAG_MovementTable	70
 #define ASN1TAG_TokenGroupItems	71
 #define ASN1TAG_NoTokenActionSlots	72
@@ -366,8 +366,8 @@ bool is_synthetic(unsigned int);
 #define ASN1TAGCLASS_InitiallyAvailable	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_InitiallyAvailable)
 #define ASN1TAGCLASS_ProgramConnectionTag	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ProgramConnectionTag)
 #define ASN1TAGCLASS_OriginalValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalValue)
-#define ASN1TAGCLASS_ObjectReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ObjectReference)
-#define ASN1TAGCLASS_ContentReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentReference)
+#define ASN1TAGCLASS_ObjectReferenceValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ObjectReferenceValue)
+#define ASN1TAGCLASS_ContentReferenceValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentReferenceValue)
 #define ASN1TAGCLASS_MovementTable	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MovementTable)
 #define ASN1TAGCLASS_TokenGroupItems	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TokenGroupItems)
 #define ASN1TAGCLASS_NoTokenActionSlots	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NoTokenActionSlots)
@@ -580,8 +580,8 @@ bool is_synthetic(unsigned int);
 #define ASN1TAGCLASS_EventSource	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_EventType	ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_EventData	ASN1TAG_CHOICE
-#define ASN1TAGCLASS_ObjectReferenceValue	ASN1TAG_SYNTHETIC
-#define ASN1TAGCLASS_ContentReferenceValue	ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_ObjectReference	ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_ContentReference	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_TargetElement	ASN1TAGCLASS_INTEGER
 #define ASN1TAGCLASS_AVisible	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_Position	ASN1TAGCLASS_SEQUENCE
