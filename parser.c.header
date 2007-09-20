@@ -31,7 +31,12 @@ yywrap(void)
 struct node *
 add_child(struct node *parent, uint32_t asn1tagclass)
 {
-	struct node *child = safe_malloc(sizeof(struct node));
+	struct node *child;
+
+	if(asn1tagclass == ASN1TAG_SYNTHETIC)
+		return parent;
+
+	child = safe_malloc(sizeof(struct node));
 
 	/* class is in the top 8 bits, tag is the bottom 24 bits */
 	child->asn1tag = asn1tagclass & 0xffffff;
@@ -88,12 +93,9 @@ void parse_BOOLEAN(struct node *parent)
 
 	verbose("<BOOLEAN value=%s/>\n", token_text());
 
-	/* give our parent a UNIVERSAL type if it is synthetic */
-	if(is_synthetic(parent->asn1tag))
-	{
-		parent->asn1tag = ASN1TAG_BOOLEAN;
-		parent->asn1class = ASN1CLASS_UNIVERSAL;
-	}
+	/* create an explicit UNIVERSAL type if necessary */
+	if(needs_tagging(parent->asn1tag, parent->asn1class))
+		parent = add_child(parent, ASN1TAGCLASS_BOOLEAN);
 
 	der_encode_BOOLEAN(&parent->value, &parent->length, strcmp(token_text(), "false"));
 
@@ -108,12 +110,9 @@ void parse_INTEGER(struct node *parent)
 
 	verbose("<INTEGER value=%s/>\n", token_text());
 
-	/* give our parent a UNIVERSAL type if it is synthetic */
-	if(is_synthetic(parent->asn1tag))
-	{
-		parent->asn1tag = ASN1TAG_INTEGER;
-		parent->asn1class = ASN1CLASS_UNIVERSAL;
-	}
+	/* create an explicit UNIVERSAL type if necessary */
+	if(needs_tagging(parent->asn1tag, parent->asn1class))
+		parent = add_child(parent, ASN1TAGCLASS_INTEGER);
 
 	der_encode_INTEGER(&parent->value, &parent->length, strtol(token_text(), NULL, 0));
 
@@ -123,17 +122,14 @@ void parse_INTEGER(struct node *parent)
 void parse_OCTETSTRING(struct node *parent)
 {
 	/*
-	 * give our parent's parent a UNIVERSAL type if it is synthetic
+	 * create an explicit UNIVERSAL type if necessary
 	 * need to look at our parent's parent because an OctetString in the grammar
 	 * is a choice between a STRING, a QPRINTABLE or a BASE64
 	 * so our parent will always be a choice node
-	 * the OCTETSTRING ASN1 type does not have this extra choice parent node
+	 * the OCTET STRING ASN1 type does not have this extra choice parent node
 	 */
-	if(is_synthetic(parent->parent->asn1tag))
-	{
-		parent->asn1tag = ASN1TAG_OCTETSTRING;
-		parent->asn1class = ASN1CLASS_UNIVERSAL;
-	}
+	if(needs_tagging(parent->parent->asn1tag, parent->parent->asn1class))
+		parent = add_child(parent, ASN1TAGCLASS_OCTETSTRING);
 
 	der_encode_OctetString(&parent->value, &parent->length, token_text());
 
@@ -187,12 +183,9 @@ void parse_Null(struct node *parent)
 	if(parent->length != 0)
 		fatal("Null: length=%u", parent->length);
 
-	/* give our parent a UNIVERSAL type if it is synthetic */
-	if(is_synthetic(parent->asn1tag))
-	{
-		parent->asn1tag = ASN1TAG_NULL;
-		parent->asn1class = ASN1CLASS_UNIVERSAL;
-	}
+	/* create an explicit UNIVERSAL type if necessary */
+	if(needs_tagging(parent->asn1tag, parent->asn1class))
+		parent = add_child(parent, ASN1TAGCLASS_NULL);
 
 	return;
 }

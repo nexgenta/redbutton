@@ -21,3 +21,16 @@ is_synthetic(unsigned int asn1tag)
 /* TODO: only need one value for synthetic types (ie no need for separate ASN1TAG_CHOICE etc) */
 	return (asn1tag >= ASN1TAG_SYNTHETIC);
 }
+
+/*
+ * returns true if we need an explicit tag for this primitive type
+ */
+
+bool
+needs_tagging(unsigned int asn1tag, unsigned int asn1class)
+{
+	/* only need an explicit tag if we are a choice or a constructed type */
+	return (asn1tag == ASN1TAG_CHOICE)
+	    || (asn1class == ASN1CLASS_UNIVERSAL && asn1tag == ASN1TAG_SEQUENCE)
+	    || (asn1class == ASN1CLASS_UNIVERSAL && asn1tag == ASN1TAG_SET);
+}

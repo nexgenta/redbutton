@@ -15,6 +15,7 @@
 
 char *asn1class_name(unsigned int);
 bool is_synthetic(unsigned int);
+bool needs_tagging(unsigned int, unsigned int);
 
 /*
  * a synthetic object created as a result of the grammar definition
@@ -43,8 +44,14 @@ bool is_synthetic(unsigned int);
 #define ASN1TAGCLASS_LineArtBody	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_TextBody		ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_PushButtonBody	ASN1TAG_SYNTHETIC
-#define ASN1TAGCLASS_OctetString	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_BoxSize		ASN1TAG_SYNTHETIC
+
+/*
+ * this is not the same as an ASN1 OCTET STRING type
+ * rather it a choice about how you define the data in your source file
+ * ie as a STRING, QPRINTABLE or BASE64
+ */
+#define ASN1TAGCLASS_OctetString	ASN1TAG_CHOICE
 
 /* ASN1 CONTEXT tag values */
 #define ASN1TAG_ApplicationClass	0
