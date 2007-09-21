@@ -199,7 +199,7 @@ OriginalValueBody	::= BOOLEAN | INTEGER | OctetString
 				| ObjectReferenceValue
 				| ContentReferenceValue .
 ObjectReferenceValue	::= ":ObjectRef" ObjectReference .
-ContentReferenceValue	::= ":ContentRef" ContentReference .
+ContentReferenceValue	::= ":ContentRef" ContentReference69 .
 
 
 // B.4.15 BooleanVariable Class
@@ -905,12 +905,14 @@ GroupIdentifier		::= OctetString .
 ObjectNumber		::= INTEGER .
 
 ContentReference	::= OctetString .
+// srk - ContentReference is [69] except in ReferencedContent
+ContentReference69	::= OctetString .
 
 GenericObjectReference	::= DirectReference | IndirectReference .
 DirectReference		::= ObjectReference .
 IndirectReference	::= ":IndirectRef" ObjectReference .
 
-GenericContentReference	::= ContentReference | IndirectReference .
+GenericContentReference	::= ContentReference69 | IndirectReference .
 
 GenericInteger		::= INTEGER | IndirectReference .
 

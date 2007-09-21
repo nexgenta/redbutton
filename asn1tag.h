@@ -123,7 +123,7 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAG_ProgramConnectionTag	66
 #define ASN1TAG_OriginalValue	67
 #define ASN1TAG_ObjectReferenceValue	68
-#define ASN1TAG_ContentReferenceValue	69
+#define ASN1TAG_ContentReference69	69
 #define ASN1TAG_MovementTable	70
 #define ASN1TAG_TokenGroupItems	71
 #define ASN1TAG_NoTokenActionSlots	72
@@ -374,7 +374,7 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_ProgramConnectionTag	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ProgramConnectionTag)
 #define ASN1TAGCLASS_OriginalValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_OriginalValue)
 #define ASN1TAGCLASS_ObjectReferenceValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ObjectReferenceValue)
-#define ASN1TAGCLASS_ContentReferenceValue	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentReferenceValue)
+#define ASN1TAGCLASS_ContentReference69	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_ContentReference69)
 #define ASN1TAGCLASS_MovementTable	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_MovementTable)
 #define ASN1TAGCLASS_TokenGroupItems	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_TokenGroupItems)
 #define ASN1TAGCLASS_NoTokenActionSlots	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NoTokenActionSlots)
@@ -588,7 +588,7 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_EventType	ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_EventData	ASN1TAG_CHOICE
 #define ASN1TAGCLASS_ObjectReference	ASN1TAG_SYNTHETIC
-#define ASN1TAGCLASS_ContentReference	ASN1TAG_SYNTHETIC
+#define ASN1TAGCLASS_ContentReferenceValue	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_TargetElement	ASN1TAGCLASS_INTEGER
 #define ASN1TAGCLASS_AVisible	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_Position	ASN1TAGCLASS_SEQUENCE
@@ -730,6 +730,8 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_PointList  ASN1TAGCLASS_SEQUENCE
 /* added by me to get an explicit SEQUENCE under NoTokenActionSlot */
 #define ASN1TAGCLASS_ActionClassSeq	ASN1TAGCLASS_SEQUENCE
+/* ContentReference is [69] except in ReferencedContent */
+#define ASN1TAGCLASS_ContentReference	ASN1TAG_SYNTHETIC
 
 #endif	/* __ASN1TAG_H__ */
 
