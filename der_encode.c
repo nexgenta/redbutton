@@ -56,15 +56,21 @@ der_encode_INTEGER(unsigned char **out, unsigned int *len, int val)
 	}
 	else
 	{
+		/* work with an unsigned value */
+		uval = (unsigned int) val;
 		/*
-		 * TODO
-		 * should really use as few bytes as possible
+		 * use as few bytes as possible
 		 * ie chop off leading 0xff's while the next byte has its top bit set
 		 */
 		*len = sizeof(unsigned int);
+		while((*len) > 1
+		   && ((uval >> (((*len) - 1) * 8)) & 0xff) == 0xff
+		   && ((uval >> (((*len) - 2) * 8)) & 0x80) == 0x80)
+		{
+			(*len) --;
+		}
 		*out = safe_malloc(*len);
 		/* big endian */
-		uval = (unsigned int) val;
 		for(i=1; i<=(*len); i++)
 			(*out)[i - 1] = (uval >> (((*len) - i) * 8)) & 0xff;
 	}
