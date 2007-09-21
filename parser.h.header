@@ -40,6 +40,7 @@ token_t next_token(void);
 char *token_text(void);
 
 void parse_error(const char *, ...);
+unsigned int nparse_errors(void);
 
 void verbose(const char *, ...);
 void vverbose(const char *, ...);

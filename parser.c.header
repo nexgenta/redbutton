@@ -10,12 +10,17 @@
  * lexer functions we need to provide
  */
 
-int yylineno = 1;
+unsigned int yylineno = 1;
+unsigned int yynerrs = 0;
 
 void
 yyerror(const char *str)
 {
 	fprintf(stderr, "Error: %s at line %d\n", str, yylineno);
+
+	yynerrs ++;
+
+	return;
 }
 
 int

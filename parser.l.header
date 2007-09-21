@@ -5,7 +5,8 @@
 #include <errno.h>
 #include "parser.h"
 #include "tokens.h"
-extern int yylineno;
+extern unsigned int yylineno;
+extern unsigned int yynerrs;
 %}
 %%
 \/\/[^\n\r\f]*			return COMMENT;

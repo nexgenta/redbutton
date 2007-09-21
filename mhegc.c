@@ -43,6 +43,7 @@ main(int argc, char *argv[])
 	char *prog_name = argv[0];
 	int arg;
 	struct node asn1obj;
+	unsigned int nerrs;
 
 	while((arg = getopt(argc, argv, "v")) != EOF)
 	{
@@ -78,6 +79,10 @@ main(int argc, char *argv[])
 
 	if(next_token())
 		parse_error("Unexpected text after InterchangedObject");
+
+	/* don't generate an object if there were any errors */
+	if((nerrs = nparse_errors()) > 0)
+		fatal("%u parsing error%s", nerrs, (nerrs == 1) ? "" : "s");
 
 	/* assert */
 	if(asn1obj.siblings != NULL)

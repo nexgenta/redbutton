@@ -87,3 +87,9 @@ parse_error(const char *fmt, ...)
 	return;
 }
 
+unsigned int
+nparse_errors(void)
+{
+	return yynerrs;
+}
+
