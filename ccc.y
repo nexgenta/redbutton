@@ -436,8 +436,8 @@ output_def(char *name)
 		while(item)
 		{
 			char *tok_name = unquote(item->name);
-			buf_append(&state.parse_fns, "\t/* %s */\n", item->name);
-			buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n\n", tok_name, item->name);
+			buf_append(&state.parse_fns, "\n\t/* %s */\n", item->name);
+			buf_append(&state.parse_fns, "\texpect_token(%s, %s);\n", tok_name, item->name);
 			free(tok_name);
 			item = item->next;
 		}
