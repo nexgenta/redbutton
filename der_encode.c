@@ -237,9 +237,6 @@ gen_der_header(struct node *n)
 	}
 	else
 	{
-		/* assert */
-		if(n->length == 0 && !(n->asn1tag == ASN1TAG_NULL && n->asn1class == ASN1CLASS_UNIVERSAL))
-			fatal("Type [%s %u] has 0 length", asn1class_name(n->asn1class), n->asn1tag);
 		val_length = n->length;
 	}
 
