@@ -46,8 +46,13 @@ add_child(struct node *parent, uint32_t asn1tagclass)
 	/* class is in the top 8 bits, tag is the bottom 24 bits */
 	child->asn1tag = asn1tagclass & 0xffffff;
 	child->asn1class = (asn1tagclass >> 24) & 0xff;
+	/* DER tag/length header */
+	child->hdr_length = 0;
+	child->hdr_value = NULL;
+	/* DER value */
 	child->length = 0;
 	child->value = NULL;
+	/* the tree of nodes */
 	child->parent = parent;
 	child->children = NULL;
 	child->siblings = NULL;

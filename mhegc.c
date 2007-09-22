@@ -27,6 +27,7 @@
 #include <strings.h>
 
 #include "parser.h"
+#include "der_encode.h"
 #include "asn1tag.h"
 #include "utils.h"
 
@@ -44,6 +45,7 @@ main(int argc, char *argv[])
 	int arg;
 	struct node asn1obj;
 	unsigned int nerrs;
+	unsigned int filesize;
 
 	while((arg = getopt(argc, argv, "v")) != EOF)
 	{
@@ -93,6 +95,10 @@ main(int argc, char *argv[])
 		verbose("\nASN1 object tree:\n");
 		print_node(&asn1obj, 0);
 	}
+
+	/* create the DER tag/length header for each node */
+	filesize = gen_der_header(&asn1obj);
+	verbose("\nDER Object size: %u bytes\n", filesize);
 
 	return EXIT_SUCCESS;
 }

@@ -210,5 +210,20 @@ convert_QPRINTABLE(unsigned char **out, unsigned int *len, const unsigned char *
 void
 convert_BASE64(unsigned char **out, unsigned int *len, const unsigned char *str)
 {
+/* TODO */
+printf("TODO: convert_BASE64\n");
+}
+
+/*
+ * recursively generate the DER tag/length header for the tree of nodes
+ */
+
+unsigned int
+gen_der_header(struct node *n)
+{
+/* TODO */
+printf("TODO: gen_der_header\n");
+
+	return n->hdr_length + n->length;
 }
 
