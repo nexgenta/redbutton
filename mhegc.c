@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	parse_InterchangedObject(&asn1obj);
 
 	if(next_token())
-		parse_error("Unexpected text after InterchangedObject");
+		parse_error("Unexpected text '%s' after InterchangedObject", token_text());
 
 	/* don't generate an object if there were any errors */
 	if((nerrs = nparse_errors()) > 0)
