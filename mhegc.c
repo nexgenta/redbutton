@@ -124,7 +124,7 @@ print_node(struct node *n, unsigned int indent)
 	{
 		print_indent(indent);
 		fprintf(stderr, "[%s %d]\n", asn1class_name(n->asn1class), n->asn1tag);
-		if(show_kids)
+		if(show_kids && n->children)
 		{
 			print_indent(indent);
 			fprintf(stderr, "{\n");
@@ -138,7 +138,7 @@ print_node(struct node *n, unsigned int indent)
 	for(kid=n->children; kid; kid=kid->siblings)
 		print_node(kid, indent);
 
-	if(show_node && show_kids)
+	if(show_node && show_kids && n->children)
 	{
 		indent --;
 		print_indent(indent);
