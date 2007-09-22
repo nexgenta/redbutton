@@ -221,9 +221,34 @@ printf("TODO: convert_BASE64\n");
 unsigned int
 gen_der_header(struct node *n)
 {
-/* TODO */
-printf("TODO: gen_der_header\n");
+	unsigned int val_length;
+	struct node *kid;
 
-	return n->hdr_length + n->length;
+	/* if it is a constructed type, sum the length of its children */
+	if(n->children)
+	{
+		/* assert */
+		if(n->length != 0)
+			fatal("Constructed type [%s %u] has a value", asn1class_name(n->asn1class), n->asn1tag);
+		/* recursively generate the DER headers for our child nodes */
+		val_length = 0;
+		for(kid=n->children; kid; kid=kid->siblings)
+			val_length += gen_der_header(kid);
+	}
+	else
+	{
+		/* assert */
+		if(n->length == 0 && !(n->asn1tag == ASN1TAG_NULL && n->asn1class == ASN1CLASS_UNIVERSAL))
+			fatal("Type [%s %u] has 0 length", asn1class_name(n->asn1class), n->asn1tag);
+		val_length = n->length;
+	}
+
+	/* we don't need a header if we are a synthetic object */
+	if(!is_synthetic(n->asn1tag))
+	{
+printf("TODO: gen_der_header: tag=%u class=%s len=%u\n", n->asn1tag, asn1class_name(n->asn1class), val_length);
+	}
+
+	return n->hdr_length + val_length;
 }
 
