@@ -1,9 +1,10 @@
 #define END_OF_SRC	0	/* must be 0 */
 #define COMMENT		1
-#define INVALID		2
-#define INTEGER		3
-#define BOOLEAN		4
-#define STRING		5
-#define QPRINTABLE	6
-#define BASE64		7
-#define Null		8
+#define UNKNOWN_WORD	2
+#define INVALID_CHAR	3
+#define INTEGER		4
+#define BOOLEAN		5
+#define STRING		6
+#define QPRINTABLE	7
+#define BASE64		8
+#define Null		9

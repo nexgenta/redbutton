@@ -1,4 +1,5 @@
-.				return INVALID;
+[a-z0-9:]+			return UNKNOWN_WORD;
+.				return INVALID_CHAR;
 %%
 
 void
