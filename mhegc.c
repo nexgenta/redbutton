@@ -24,14 +24,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <strings.h>
+#include <errno.h>
 
 #include "parser.h"
 #include "der_encode.h"
 #include "asn1tag.h"
 #include "utils.h"
 
+/* default output name is 'a' */
+#define DEFAULT_OUT_NAME	"a"
+
 void print_node(struct node *, unsigned int);
+void print_der(struct node *, unsigned int);
 void print_indent(unsigned int);
 
 void usage(char *);
@@ -43,14 +49,20 @@ main(int argc, char *argv[])
 {
 	char *prog_name = argv[0];
 	int arg;
+	char *out_name = DEFAULT_OUT_NAME;
 	struct node asn1obj;
 	unsigned int nerrs;
 	unsigned int filesize;
+	FILE *out_file;
 
-	while((arg = getopt(argc, argv, "v")) != EOF)
+	while((arg = getopt(argc, argv, "o:v")) != EOF)
 	{
 		switch(arg)
 		{
+		case 'o':
+			out_name = optarg;
+			break;
+
 		case 'v':
 			_verbose ++;
 			break;
@@ -99,6 +111,19 @@ main(int argc, char *argv[])
 	/* create the DER tag/length header for each node */
 	filesize = gen_der_header(&asn1obj);
 	verbose("\nDER Object size: %u bytes\n", filesize);
+
+	/* write the output file */
+	if((out_file = fopen(out_name, "w")) == NULL)
+		fatal("Unable to open output file '%s': %s", out_name, strerror(errno));
+	verbose("Writing '%s'\n", out_name);
+	write_der_object(out_file, &asn1obj);
+	fclose(out_file);
+
+	if(_verbose > 1)
+	{
+		vverbose("\nDER file:\n");
+		print_der(&asn1obj, 0);
+	}
 
 	return EXIT_SUCCESS;
 }
@@ -149,6 +174,37 @@ print_node(struct node *n, unsigned int indent)
 }
 
 void
+print_der(struct node *n, unsigned int indent)
+{
+	struct node *kid;
+
+	/* write our tag/length header */
+	if(!is_synthetic(n->asn1tag))
+	{
+		print_indent(indent);
+		fprintf(stderr, "[%s %u]\n", asn1class_name(n->asn1class), n->asn1tag);
+		hexdump(stderr, n->hdr_value, n->hdr_length);
+	}
+
+	/* and our value */
+	if(has_real_children(n))
+	{
+		print_indent(indent);
+		fprintf(stderr, "{\n");
+		for(kid=n->children; kid; kid=kid->siblings)
+			print_der(kid, indent + 1);
+		print_indent(indent);
+		fprintf(stderr, "}\n");
+	}
+	else
+	{
+		hexdump(stderr, n->value, n->length);
+	}
+
+	return;
+}
+
+void
 print_indent(unsigned int indent)
 {
 	while(indent > 0)
@@ -193,7 +249,7 @@ vverbose(const char *fmt, ...)
 void
 usage(char *prog_name)
 {
-	fprintf(stderr, "Usage: %s [-vv] [<input_file>]\n", prog_name);
+	fprintf(stderr, "Usage: %s [-vv] [-o <output_file>] [<input_file>]\n", prog_name);
 
 	exit(EXIT_FAILURE);
 }

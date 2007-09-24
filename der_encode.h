@@ -43,5 +43,7 @@ void convert_BASE64(unsigned char **, unsigned int *, const unsigned char *);
 
 unsigned int gen_der_header(struct node *);
 
+void write_der_object(FILE *, struct node *);
+
 #endif	/* __DER_ENCODE_H__ */
 

@@ -27,6 +27,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+void write_all(FILE *, unsigned char *, size_t);
+
 unsigned int char2hex(unsigned char);
 
 void *safe_malloc(size_t);

@@ -274,7 +274,7 @@ gen_der_header(struct node *n)
 		 * the big-endian tag value is encoded in the bottom 7-bits
 		 */
 		n->hdr_value[0] = n->asn1class;
-		if(n->children)
+		if(has_real_children(n))
 			n->hdr_value[0] |= 0x20;
 		if(n->asn1tag < 31)
 		{
@@ -292,7 +292,7 @@ gen_der_header(struct node *n)
 			}
 			else if(n->asn1tag <= 0x3fff)
 			{
-				n->hdr_value[1] = (n->asn1tag >> 7) & 0x7f;
+				n->hdr_value[1] = 0x80 | ((n->asn1tag >> 7) & 0x7f);
 				n->hdr_value[2] = n->asn1tag & 0x7f;
 				n->hdr_length = 3;
 			}
@@ -343,5 +343,28 @@ gen_der_header(struct node *n)
 	}
 
 	return n->hdr_length + val_length;
+}
+
+void
+write_der_object(FILE *out, struct node *n)
+{
+	struct node *kid;
+
+	/* write our tag/length header */
+	if(!is_synthetic(n->asn1tag))
+		write_all(out, n->hdr_value, n->hdr_length);
+
+	/* and our value */
+	if(n->children)
+	{
+		for(kid=n->children; kid; kid=kid->siblings)
+			write_der_object(out, kid);
+	}
+	else
+	{
+		write_all(out, n->value, n->length);
+	}
+
+	return;
 }
 

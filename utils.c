@@ -24,8 +24,19 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <string.h>
+#include <errno.h>
 
 #include "utils.h"
+
+void
+write_all(FILE *out, unsigned char *buf, size_t len)
+{
+	if(fwrite(buf, 1, len, out) != len)
+		fatal("Error writing to file: %s", strerror(errno));
+
+	return;
+}
 
 /*
  * returns 15 for 'f' etc
