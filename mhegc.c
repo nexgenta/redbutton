@@ -184,21 +184,30 @@ print_der(struct node *n, unsigned int indent)
 		print_indent(indent);
 		fprintf(stderr, "[%s %u]\n", asn1class_name(n->asn1class), n->asn1tag);
 		hexdump(stderr, n->hdr_value, n->hdr_length);
+		if(has_real_children(n))
+		{
+			print_indent(indent);
+			fprintf(stderr, "{\n");
+			indent ++;
+		}
 	}
 
 	/* and our value */
-	if(has_real_children(n))
+	if(n->children)
 	{
-		print_indent(indent);
-		fprintf(stderr, "{\n");
 		for(kid=n->children; kid; kid=kid->siblings)
-			print_der(kid, indent + 1);
-		print_indent(indent);
-		fprintf(stderr, "}\n");
+			print_der(kid, indent);
 	}
 	else
 	{
 		hexdump(stderr, n->value, n->length);
+	}
+
+	if(!is_synthetic(n->asn1tag) && has_real_children(n))
+	{
+		indent --;
+		print_indent(indent);
+		fprintf(stderr, "}\n");
 	}
 
 	return;
