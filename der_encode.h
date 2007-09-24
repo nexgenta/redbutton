@@ -27,6 +27,12 @@
 
 #include <stdbool.h>
 
+/*
+ * max size a DER tag/length header could be
+ * (this is not the theoretical max, but it is big enough for us)
+ */
+#define MAX_DER_HDR_LENGTH	16
+
 void der_encode_BOOLEAN(unsigned char **, unsigned int *, bool);
 void der_encode_INTEGER(unsigned char **, unsigned int *, int);
 void der_encode_OctetString(unsigned char **, unsigned int *, const unsigned char *);

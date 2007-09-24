@@ -261,7 +261,85 @@ gen_der_header(struct node *n)
 	/* we don't need a header if we are a synthetic object */
 	if(!is_synthetic(n->asn1tag))
 	{
-printf("TODO: gen_der_header: tag=%u class=%s len=%u\n", n->asn1tag, asn1class_name(n->asn1class), val_length);
+		/* allocate more than we will need */
+		n->hdr_value = safe_malloc(MAX_DER_HDR_LENGTH);
+		/*
+		 * first DER type byte is:
+		 * AABCCCCC
+		 * AA = ASN1 class (UNIVERSAL, CONTEXT, etc)
+		 * B = 1 if it is a constructed type (ie has children)
+		 * CCCCC = tag value (0-30)
+		 * if the tag is set to 31, then:
+		 * while the next byte has its top-bit set,
+		 * the big-endian tag value is encoded in the bottom 7-bits
+		 */
+		n->hdr_value[0] = n->asn1class;
+		if(n->children)
+			n->hdr_value[0] |= 0x20;
+		if(n->asn1tag < 31)
+		{
+			n->hdr_value[0] |= n->asn1tag;
+			n->hdr_length = 1;
+		}
+		else
+		{
+			n->hdr_value[0] |= 0x1f;
+			/* cheat - we know it is < 0x3fff (16383) */
+			if(n->asn1tag <= 0x7f)
+			{
+				n->hdr_value[1] = n->asn1tag & 0x7f;
+				n->hdr_length = 2;
+			}
+			else if(n->asn1tag <= 0x3fff)
+			{
+				n->hdr_value[1] = (n->asn1tag >> 7) & 0x7f;
+				n->hdr_value[2] = n->asn1tag & 0x7f;
+				n->hdr_length = 3;
+			}
+			else
+			{
+				/* assert */
+				fatal("gen_der_header: tag=%u class=%s", n->asn1tag, asn1class_name(n->asn1class));
+			}
+		}
+		/*
+		 * if DER length is <128, then it is encoded as:
+		 * 0LLLLLLL, where LLLLLLL is the 7-bit length
+		 * if DER length is >=128, then it is encoded as:
+		 * 1LLLLLLL, where LLLLLLL are the number of following bytes
+		 * encoding the big-endian length
+		 */
+		if(val_length < 128)
+		{
+			n->hdr_value[n->hdr_length] = val_length;
+			n->hdr_length ++;
+		}
+		else
+		{
+			unsigned int nlens = 1;
+			unsigned int len = val_length;
+			unsigned int i;
+			while(len > 255)
+			{
+				len >>= 8;
+				nlens ++;
+			}
+			/* assert */
+			if(n->hdr_length + nlens > MAX_DER_HDR_LENGTH)
+				fatal("gen_der_header: tag=%u class=%s nlens=%u", n->asn1tag, asn1class_name(n->asn1class), nlens);
+			n->hdr_value[n->hdr_length] = 0x80 | nlens;
+			n->hdr_length ++;
+			for(i=nlens; i>0; i--)
+			{
+				n->hdr_value[n->hdr_length] = (val_length >> ((i - 1) * 8)) & 0xff;
+				n->hdr_length ++;
+			}
+		}
+		/*
+		 * this header is followed by the DER encoded value
+		 * the value of constructed types is one or more DER types
+		 * ie one or more DER header/value pairs
+		 */
 	}
 
 	return n->hdr_length + val_length;
