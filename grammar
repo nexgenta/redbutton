@@ -729,7 +729,7 @@ TestVariable	::= ":TestVariable" "(" Target Operator
 			ComparisonValue ")" .
 Toggle	::= ":Toggle" "(" Target ")" .
 ToggleItem	::= ":ToggleItem" "(" Target ItemIndex ")" .
-TransitionTo	::= ":TransitionTo" "(" Target [ConnectionTag]
+TransitionTo	::= ":TransitionTo" "(" Target ConnectionTag?
 			[TransitionEffect] ")" .
 Unload	::= ":Unload" "(" Target ")" .
 UnlockScreen	::= ":UnlockScreen" "(" Target ")" .
@@ -820,7 +820,7 @@ NewOverwriteMode	::= GenericBoolean .
 NewPaletteRef		::= GenericObjectReference .
 NewPortion		::= GenericInteger .
 NewReferencedContent	::= ":NewRefContent" "(" GenericContentReference
-				[NewContentSize]
+				NewContentSize?
 				[NewContentCachePriority] ")" .
 NewSliderValue		::= GenericInteger .
 NewSpeed		::= Rational .

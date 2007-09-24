@@ -19,7 +19,8 @@ enum item_type
 	IT_LITERAL,	/* "LiteralString" */
 	IT_IDENTIFIER,	/* NormalIdentifier */
 	IT_OPTIONAL,	/* [OptionalIdentifier] */
-	IT_ONEORMORE	/* OneOrMoreIdentifier+ */
+	IT_ONEORMORE,	/* OneOrMoreIdentifier+ */
+	IT_IDENTORNULL	/* IdentifierOrNull? */
 };
 
 struct item
@@ -109,6 +110,7 @@ yywrap(void)
 %token LBRACKET
 %token RBRACKET
 %token ONEORMORE
+%token IDENTORNULL
 %token ENDCLAUSE
 %token INVALID
 
@@ -171,6 +173,11 @@ item:
 	IDENTIFIER ONEORMORE
 	{
 		add_item(IT_ONEORMORE, $1);
+	}
+	|
+	IDENTIFIER IDENTORNULL
+	{
+		add_item(IT_IDENTORNULL, $1);
 	}
 	;
 %%
@@ -565,8 +572,8 @@ output_def(char *name)
 			for(item=state.items; item; item=item->next)
 			{
 				/* assert */
-				if(item->type != IT_IDENTIFIER && item->type != IT_LITERAL && item->type != IT_OPTIONAL)
-					fatal("SEQUENCE but not Identifier, Literal or Optional");
+				if(item->type == IT_ONEORMORE)
+					fatal("SEQUENCE contains OneOrMore+");
 				/* eat literals, parse [optional] identifiers */
 				buf_append(&state.parse_fns, "\n\t/* %s */\n", item->name);
 				if(item->type == IT_LITERAL)
@@ -580,11 +587,19 @@ output_def(char *name)
 					buf_append(&state.parse_fns, "\tnext = peek_token();\n");
 					buf_append(&state.parse_fns, "\tif(is_%s(next))\n", item->name);
 					buf_append(&state.parse_fns, "\t\tparse_%s(parent);\n", item->name);
-					if(item->type != IT_OPTIONAL)
+					/* not optional => generate an error if it is not present */
+					if(item->type == IT_IDENTIFIER)
 					{
 						buf_append(&state.parse_fns, "\telse\n");
 						buf_append(&state.parse_fns, "\t\tparse_error(\"Expecting %s\");\n", item->name);
 					}
+					/* not optional - if it is not present, add a Null instead */
+					else if(item->type == IT_IDENTORNULL)
+					{
+						buf_append(&state.parse_fns, "\telse\n");
+						buf_append(&state.parse_fns, "\t\t(void) add_child(parent, ASN1TAGCLASS_NULL);\n");
+					}
+					/* else { optional - don't care if it is not present } */
 				}
 			}
 			break;

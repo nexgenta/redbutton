@@ -1,13 +1,4 @@
-NewContentSize param in NewReferencedContent should compile to:
-[CONTEXT 234] { ... [UNIVERSAL 5] ... }
-not just [CONTEXT 234] { ... nothing ... }
-- ie need to add an explicit Null child node
-
-same with ConnectionTag param in TransitionTo
-
-temp fix - add "Null" to the relevent 2 places in the grammar?
-real fix - add "Identifier?" to the grammar => optional, but adds a Null if not
-           present (or perhaps "<Identifier>")
+NewReferencedContent Null is in the wrong place
 
 ---
 

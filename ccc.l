@@ -13,6 +13,7 @@ extern int yylineno;
 "["			return LBRACKET;
 "]"			return RBRACKET;
 "+"			return ONEORMORE;
+"?"			return IDENTORNULL;
 "."			return ENDCLAUSE;
 [\n\r\f]		yylineno ++;
 [ \t]+			/* ignore whitespace */
