@@ -1,7 +1,3 @@
-NewReferencedContent Null is in the wrong place
-
----
-
 output filename should default to App/Scene GroupIdentifier rather than "a"
 (but warn if file exists - stops accidental overwrite of source!)
 

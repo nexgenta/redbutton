@@ -46,6 +46,9 @@ struct node
 /* add a child to a node */
 struct node *add_child(struct node *, uint32_t);
 
+/* add a Null ASN1 object child to a node */
+void add_null_child(struct node *, uint32_t);
+
 /* return true if any of the node's descendants are not synthetic */
 bool has_real_children(struct node *);
 

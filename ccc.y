@@ -597,7 +597,7 @@ output_def(char *name)
 					else if(item->type == IT_IDENTORNULL)
 					{
 						buf_append(&state.parse_fns, "\telse\n");
-						buf_append(&state.parse_fns, "\t\t(void) add_child(parent, ASN1TAGCLASS_NULL);\n");
+						buf_append(&state.parse_fns, "\t\tadd_null_child(parent, ASN1TAGCLASS_%s);\n", item->name);
 					}
 					/* else { optional - don't care if it is not present } */
 				}

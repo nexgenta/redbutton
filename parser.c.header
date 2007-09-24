@@ -93,6 +93,20 @@ add_child(struct node *parent, uint32_t asn1tagclass)
 }
 
 /*
+ * add this child and add a Null below it
+ */
+
+void
+add_null_child(struct node *parent, uint32_t asn1tagclass)
+{
+	parent = add_child(parent, asn1tagclass);
+
+	(void) add_child(parent, ASN1TAGCLASS_NULL);
+
+	return;
+}
+
+/*
  * return true if any of the node's descendants are not synthetic
  */
 
