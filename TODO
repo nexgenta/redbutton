@@ -7,9 +7,5 @@ convert_BASE64() function
 
 ---
 
-change fatal()'s to parse_error()'s in convert_STRING() et al.
-
----
-
 clean up ccc.y
 

@@ -127,6 +127,7 @@ convert_STRING(unsigned char **out, unsigned int *len, const unsigned char *str)
 {
 	const unsigned char *whole_str = str;
 	unsigned char *p;
+	bool err;
 
 	/* max size it could be */
 	*out = safe_malloc(strlen(str));
@@ -134,11 +135,13 @@ convert_STRING(unsigned char **out, unsigned int *len, const unsigned char *str)
 	/* skip the initial " */
 	str ++;
 	p = *out;
-	while(*str != '"')
+	err = false;
+	while(!err && *str != '"')
 	{
 		if(*str < 0x20 || *str > 0x7e)
 		{
-			fatal("Invalid character (0x%02x) in STRING: %s", *str, whole_str);
+			parse_error("Invalid character (0x%02x) in STRING: %s", *str, whole_str);
+			err = true;
 		}
 		else if(*str != '\\')
 		{
@@ -160,17 +163,30 @@ convert_STRING(unsigned char **out, unsigned int *len, const unsigned char *str)
 		}
 		else
 		{
-			/* TODO: show the line number */
-			fatal("Invalid escape sequence in STRING: %s", whole_str);
+			parse_error("Invalid escape sequence in STRING: %s", whole_str);
+			err = true;
 		}
 	}
 
 	/* check we got to the closing quote */
-	if(*(str + 1) != '\0')
-		fatal("Unquoted \" in STRING: %s", whole_str);
+	if(!err && *(str + 1) != '\0')
+	{
+		parse_error("Unquoted \" in STRING: %s", whole_str);
+		err = true;
+	}
 
-	/* return the length (note: no \0 terminator) */
-	*len = (p - *out);
+	if(!err)
+	{
+		/* return the length (note: no \0 terminator) */
+		*len = (p - *out);
+	}
+	else
+	{
+		/* clean up */
+		safe_free(*out);
+		*out = NULL;
+		*len = 0;
+	}
 
 	return;
 }
@@ -187,6 +203,7 @@ convert_QPRINTABLE(unsigned char **out, unsigned int *len, const unsigned char *
 {
 	const unsigned char *whole_str = str;
 	unsigned char *p;
+	bool err;
 
 	/* max size it could be */
 	*out = safe_malloc(strlen(str));
@@ -194,7 +211,8 @@ convert_QPRINTABLE(unsigned char **out, unsigned int *len, const unsigned char *
 	/* skip the initial ' */
 	str ++;
 	p = *out;
-	while(*str != '\'')
+	err = false;
+	while(!err && *str != '\'')
 	{
 		if(*str != '=')
 		{
@@ -210,17 +228,30 @@ convert_QPRINTABLE(unsigned char **out, unsigned int *len, const unsigned char *
 		}
 		else
 		{
-			/* TODO: show the line number */
-			fatal("Invalid escape sequence in QPRINTABLE: %s", whole_str);
+			parse_error("Invalid escape sequence in QPRINTABLE: %s", whole_str);
+			err = true;
 		}
 	}
 
 	/* check we got to the closing quote */
-	if(*(str + 1) != '\0')
-		fatal("Unquoted ' in QPRINTABLE: %s", whole_str);
+	if(!err && *(str + 1) != '\0')
+	{
+		parse_error("Unquoted ' in QPRINTABLE: %s", whole_str);
+		err = true;
+	}
 
-	/* return the length (note: no \0 terminator) */
-	*len = (p - *out);
+	if(!err)
+	{
+		/* return the length (note: no \0 terminator) */
+		*len = (p - *out);
+	}
+	else
+	{
+		/* clean up */
+		safe_free(*out);
+		*out = NULL;
+		*len = 0;
+	}
 
 	return;
 }
