@@ -3,9 +3,5 @@ output filename should default to App/Scene GroupIdentifier rather than "a"
 
 ---
 
-convert_BASE64() function
-
----
-
 clean up ccc.y
 
