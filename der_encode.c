@@ -256,11 +256,109 @@ convert_QPRINTABLE(unsigned char **out, unsigned int *len, const unsigned char *
 	return;
 }
 
+/*
+ * enclosed in `
+ * base 64 encoded as described in RFC 1521
+ * line breaks in the input can be ignored
+ */
+
+unsigned char next_base64_char(unsigned char **);
+
 void
 convert_BASE64(unsigned char **out, unsigned int *len, const unsigned char *str)
 {
-/* TODO */
-printf("TODO: convert_BASE64\n");
+	const unsigned char *whole_str = str;
+	unsigned char *p;
+	bool err;
+
+	/* max size it could be */
+	*out = safe_malloc(strlen(str));
+
+	/* skip the initial ` */
+	str ++;
+	p = *out;
+	err = false;
+	while(!err && *str != '`')
+	{
+		/* need 4 chars */
+		unsigned char v1 = next_base64_char((unsigned char **) &str);
+		unsigned char v2 = next_base64_char((unsigned char **) &str);
+		unsigned char v3 = next_base64_char((unsigned char **) &str);
+		unsigned char v4 = next_base64_char((unsigned char **) &str);
+		/* how many chars are valid */
+		if(v1 < 64 && v2 < 64 && v3 < 64 && v4 < 64)
+		{
+			/* 4 chars => 24 bits */
+			p[0] = (v1 << 2) | (v2 >> 4);
+			p[1] = (v2 << 4) | (v3 >> 2);
+			p[2] = (v3 << 6) | v4;
+			p += 3;
+		}
+		else if(v1 < 64 && v2 < 64 && v3 < 64 && v4 == 64)
+		{
+			/* 3 chars => 16 bits */
+			p[0] = (v1 << 2) | (v2 >> 4);
+			p[1] = (v2 << 4) | (v3 >> 2);
+			p += 2;
+		}
+		else if(v1 < 64 && v2 < 64 && v3 == 64 && v4 == 64)
+		{
+			/* 2 chars => 8 bits */
+			p[0] = (v1 << 2) | (v2 >> 4);
+			p += 1;
+		}
+		else
+		{
+			parse_error("Invalid BASE64 string: %s", whole_str);
+			err = true;
+		}
+	}
+
+	/* check we got to the closing quote */
+	if(!err && *(str + 1) != '\0')
+	{
+		parse_error("Unexpected ` in BASE64: %s", whole_str);
+		err = true;
+	}
+
+	if(!err)
+	{
+		/* return the length (note: no \0 terminator) */
+		*len = (p - *out);
+	}
+	else
+	{
+		/* clean up */
+		safe_free(*out);
+		*out = NULL;
+		*len = 0;
+	}
+
+	return;
+}
+
+/*
+ * updates *in
+ */
+
+unsigned char
+next_base64_char(unsigned char **in)
+{
+	/* would be faster with a 256 byte lookup table */
+	unsigned char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+	unsigned char *pos;
+	unsigned char out;
+
+	while(**in != '`')
+	{
+		out = **in;
+		(*in) ++;
+		if((pos = strchr(alphabet, out)) != NULL)
+			return (pos - alphabet);
+	}
+
+	/* EOF, return (strchr(alphabet, '=') - alphabet) */
+	return 64;
 }
 
 /*
