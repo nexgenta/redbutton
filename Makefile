@@ -123,7 +123,7 @@ install:	rb-browser rb-keymap
 	install -m 755 rb-keymap ${DESTDIR}/bin
 
 clean:
-	rm -f rb-browser rb-keymap xsd2c dertest dertest-mheg.[ch] berdecode *.o ISO13522-MHEG-5.[ch] clone.[ch] rtti.h gmon.out core
+	rm -f rb-browser rb-keymap xsd2c dertest dertest-mheg.[ch] *.o ISO13522-MHEG-5.[ch] clone.[ch] rtti.h gmon.out core
 
 TARDIR=`basename ${PWD}`
 
