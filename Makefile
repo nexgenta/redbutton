@@ -35,11 +35,14 @@ lex.parser.c parser.c parser.h:	parser.l.* parser.c.* parser.h.* tokens.h.* gram
 .c.o:
 	${CC} ${CFLAGS} ${DEFS} -c $<
 
+berdecode:	berdecode.c
+	${CC} ${CFLAGS} ${DEFS} -o berdecode berdecode.c
+
 install:	mhegc
 	install -m 755 mhegc ${DESTDIR}/bin
 
 clean:
-	rm -f mhegc ccc lex.ccc.c ccc.tab.[ch] lex.parser.c parser.[lch] tokens.h *.o core
+	rm -f mhegc ccc lex.ccc.c ccc.tab.[ch] lex.parser.c parser.[lch] tokens.h *.o berdecode core
 
 tar:
 	make clean
