@@ -10,7 +10,6 @@
 #include "der_decode.h"
 
 void verbose(char *, ...);
-char hexdigit(unsigned char);
 
 /* DER does not allow indefinite lengths */
 
@@ -119,15 +118,16 @@ der_decode_OctetString(FILE *der, FILE *out, int length)
 
 	verbose("<OctetString size=\"%d\">\n", length);
 
+	/* output a QPRINTABLE string */
 	fprintf(out, "'");
 	while(left > 0)
 	{
 		if(der_read_file(der, 1, &byte) < 0)
 			return der_error("OctetString");
 		if(byte != '\'' && byte >= 0x20 && byte < 0x7f)
-		fprintf(out, "%c", byte);
+			fprintf(out, "%c", byte);
 		else
-		fprintf(out, "=%c%c", hexdigit((byte >> 4) & 0xf), hexdigit(byte & 0xf));
+			fprintf(out, "=%02x", byte);
 		left --;
 	}
 	fprintf(out, "'");
@@ -161,17 +161,6 @@ der_decode_ENUMERATED(FILE *der, FILE *out, int length, unsigned int max, char *
 	fprintf(out, "%s", names[val - 1]);
 
 	return length;
-}
-
-char
-hexdigit(unsigned char nibble)
-{
-	if(nibble < 10)
-		return '0' + nibble;
-	else if(nibble < 16)
-		return 'a' + nibble;
-	else
-		return '?';
 }
 
 int
