@@ -134,7 +134,7 @@ der_decode_Integer(FILE *der, int *type, int length)
 	int i;
 
 	if(length > sizeof(int))
-		der_error("Integer: length=%d", length);
+		return der_error("Integer: length=%d", length);
 
 	/* is it -ve */
 	if(der_read_file(der, 1, &byte) < 0)
