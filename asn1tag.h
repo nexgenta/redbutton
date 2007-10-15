@@ -589,6 +589,8 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_ENUMERATED		((ASN1CLASS_UNIVERSAL << 24) | ASN1TAG_ENUMERATED)
 #define ASN1TAGCLASS_SEQUENCE		((ASN1CLASS_UNIVERSAL << 24) | ASN1TAG_SEQUENCE)
 #define ASN1TAGCLASS_SET		((ASN1CLASS_UNIVERSAL << 24) | ASN1TAG_SET)
+/* alias */
+#define ASN1TAGCLASS_Null		ASN1TAGCLASS_NULL
 
 /* the ASN1 types in the grammar that are not CONTEXT class types */
 #define ASN1TAGCLASS_JointIsoItuIdentifier	ASN1TAGCLASS_INTEGER

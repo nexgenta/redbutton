@@ -58,6 +58,9 @@ struct
 	struct buf parse_hdr;		/* parse_Xxx() prototypes for the parser */
 	struct buf parse_enum_hdr;	/* parse_Xxx() prototypes for enum values */
 	struct buf is_hdr;		/* is_Xxx() prototypes for the parser */
+	struct buf decode_fns;		/* asn1decode_Xxx() C functions for mhegd */
+	struct buf decode_is_fns;	/* is_Xxx() C functions for mhegd */
+	struct buf decode_hdr;		/* asn1decode_Xxx() prototypes for mhegd */
 } state;
 
 /* header for files we generate */
@@ -191,12 +194,14 @@ main(int argc, char *argv[])
 	char *parser_name = NULL;
 	char *header_name = NULL;
 	char *tokens_name = NULL;
+	char *decode_name = NULL;
+	char *decode_hdr_name = NULL;
 	int arg;
 	struct str_list *t;
 	char header[PATH_MAX];
 	char footer[PATH_MAX];
 
-	while((arg = getopt(argc, argv, "l:p:h:t:")) != EOF)
+	while((arg = getopt(argc, argv, "l:p:h:t:d:e:")) != EOF)
 	{
 		switch(arg)
 		{
@@ -214,6 +219,14 @@ main(int argc, char *argv[])
 
 		case 't':
 			tokens_name = optarg;
+			break;
+
+		case 'd':
+			decode_name = optarg;
+			break;
+
+		case 'e':
+			decode_hdr_name = optarg;
 			break;
 
 		default:
@@ -234,6 +247,9 @@ main(int argc, char *argv[])
 	buf_init(&state.parse_hdr);
 	buf_init(&state.parse_enum_hdr);
 	buf_init(&state.is_hdr);
+	buf_init(&state.decode_fns);
+	buf_init(&state.decode_is_fns);
+	buf_init(&state.decode_hdr);
 
 	yyparse();
 
@@ -312,13 +328,46 @@ main(int argc, char *argv[])
 		fclose(tokens_file);
 	}
 
+	/* output ASN1 decoder file */
+	if(decode_name != NULL)
+	{
+		FILE *decode_file = safe_fopen(decode_name, "w");
+		fprintf(decode_file, STANDARD_HEADER);
+		/* output the header if there is one */
+		snprintf(header, sizeof(header), "%s.header", decode_name);
+		file_append(decode_file, header);
+		/* output our stuff */
+		fprintf(decode_file, "%s", state.decode_fns.str);
+		fprintf(decode_file, "%s", state.decode_is_fns.str);
+		/* output the footer if there is one */
+		snprintf(footer, sizeof(footer), "%s.footer", decode_name);
+		file_append(decode_file, footer);
+		fclose(decode_file);
+	}
+
+	/* output ASN1 decoder header file */
+	if(decode_hdr_name != NULL)
+	{
+		FILE *decode_hdr_file = safe_fopen(decode_hdr_name, "w");
+		fprintf(decode_hdr_file, STANDARD_HEADER);
+		/* output the header if there is one */
+		snprintf(header, sizeof(header), "%s.header", decode_hdr_name);
+		file_append(decode_hdr_file, header);
+		/* output our stuff */
+		fprintf(decode_hdr_file, "%s", state.decode_hdr.str);
+		/* output the footer if there is one */
+		snprintf(footer, sizeof(footer), "%s.footer", decode_hdr_name);
+		file_append(decode_hdr_file, footer);
+		fclose(decode_hdr_file);
+	}
+
 	return EXIT_SUCCESS;
 }
 
 void
 usage(char *prog_name)
 {
-	fprintf(stderr, "Syntax: %s [-l <lexer-file>] [-p <parser-c-file>] [-h <parser-h-file>] [-t <tokens-file>]\n", prog_name);
+	fprintf(stderr, "Syntax: %s [-l <lexer-file>] [-p <parser-c-file>] [-h <parser-h-file>] [-t <tokens-file>] [-d <decode-c-file>] [-e <decode-h-file>]\n", prog_name);
 
 	exit(EXIT_FAILURE);
 }
@@ -371,6 +420,7 @@ output_def(char *name)
 	struct item *next;
 	unsigned int nitems;
 	unsigned int enum_val;
+	bool first;
 
 	/* prototype for the parse_Xxx function */
 	buf_append(&state.parse_hdr, "void parse_%s(struct node *);\n", name);
@@ -727,6 +777,217 @@ output_def(char *name)
 	}
 	buf_append(&state.is_fns, "}\n\n");
 
+	/* ASN1 decode prototypes */
+	buf_append(&state.decode_hdr, "int asn1decode_%s(FILE *, FILE *, int);\n", name);
+	buf_append(&state.decode_hdr, "bool is_%s(unsigned char, unsigned int);\n\n", name);
+
+	/* ASN1 decode_Xxx() functions */
+	buf_append(&state.decode_fns, "int asn1decode_%s(FILE *der, FILE *out, int length)\n{\n", name);
+	buf_append(&state.decode_fns, "\tint left = length;\n");
+	buf_append(&state.decode_fns, "\tint sublen;\n");
+	buf_append(&state.decode_fns, "\tstruct der_tag tag;\n\n");
+	buf_append(&state.decode_fns, "\tverbose(\"<%s>\\n\");\n\n", name);
+
+	/* ASN1 is_Xxx() functions */
+	buf_append(&state.decode_is_fns, "bool is_%s(unsigned char class, unsigned int number)\n{\n", name);
+
+	/* count how many non-literal items there are */
+	nitems = 0;
+	for(item=state.items; item; item=item->next)
+		if(item->type != IT_LITERAL)
+			nitems ++;
+
+	/* is it the special case */
+	if(strcmp(name, "OctetString") == 0)
+	{
+		/* decode_Xxx() function */
+		buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
+		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
+		buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", name);
+		buf_append(&state.decode_fns, "\t\tder_decode_%s(der, out, tag.length);\n", name);
+		buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
+		buf_append(&state.decode_fns, "\t}\n\telse\n");
+		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
+		/* is_Xxx() function */
+		buf_append(&state.decode_is_fns, "\treturn MATCH_TAGCLASS(class, number, ASN1TAGCLASS_OCTETSTRING);\n");
+	}
+	/* has it got only 1 non-literal item */
+	else if(nitems == 1)
+	{
+		/* output any literals at the start */
+		for(item=state.items; item && item->type==IT_LITERAL; item=item->next)
+			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
+		/* decode the item */
+		buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
+		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
+		buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", item->name);
+		buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+		buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
+		buf_append(&state.decode_fns, "\t}\n\telse\n");
+		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
+		/* is_Xxx() function */
+		buf_append(&state.decode_is_fns, "\treturn is_%s(class, number);\n", item->name);
+		/* output any literals at the end */
+		item = item->next;
+		while(item)
+		{
+			/* assert */
+			if(item->type != IT_LITERAL)
+				fatal("Trailing non-literal");
+			buf_append(&state.decode_fns, "\tfprintf(out, %s);\n\n", item->name);
+			item = item->next;
+		}
+	}
+	/* is it a SEQUENCE or SET */
+	else if(state.and_items)
+	{
+		/* output any literals at the start */
+		for(item=state.items; item && item->type==IT_LITERAL; item=item->next)
+			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
+		/* items must be in the order they are defined for SEQUENCE types */
+		switch(asn1type(name))
+		{
+		case ASN1TYPE_SEQUENCE:
+			/* assert */
+			if(item->type != IT_IDENTIFIER)
+				fatal("not Identifier");
+			/* is_Xxx() - just match the first item */
+			buf_append(&state.decode_is_fns, "\treturn is_%s(class, number);\n", item->name);
+			/* decode_Xxx() - examine each non-literal item in turn */
+			while(item && item->type != IT_LITERAL)
+			{
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+				item = item->next;
+			}
+			break;
+
+		case ASN1TYPE_SET:
+			/* while there is data left in the current object */
+			buf_append(&state.decode_fns, "\twhile(left > 0)\n\t{\n");
+			/* decode the next tag */
+			buf_append(&state.decode_fns, "\t\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
+			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
+			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
+			/* the non-literal items may appear in any order */
+			first = true;
+			while(item && item->type != IT_LITERAL)
+			{
+				/* is_Xxx() */
+				if(first)
+					buf_append(&state.decode_is_fns, "\treturn ");
+				else
+					buf_append(&state.decode_is_fns, "\t    || ");
+				buf_append(&state.decode_is_fns, "is_%s(class, number)", item->name);
+				/* is it the last */
+				if(item->next == NULL || item->next->type == IT_LITERAL)
+					buf_append(&state.decode_is_fns, ";");
+				buf_append(&state.decode_is_fns, "\n");
+				/* decode_Xxx() */
+				if(first)
+					buf_append(&state.decode_fns, "\t\t");
+				else
+					buf_append(&state.decode_fns, "\t\telse ");
+				first = false;
+				buf_append(&state.decode_fns, "if(is_%s(tag.class, tag.number))\n\t\t{\n", item->name);
+				buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\t\tleft -= tag.length;\n");
+				buf_append(&state.decode_fns, "\t\t}\n");
+				item = item->next;
+			}
+			/* decode_Xxx() */
+			buf_append(&state.decode_fns, "\t\telse\n");
+			buf_append(&state.decode_fns, "\t\t{\n\t\t\treturn der_error(\"%s: unexpected tag [%%s %%u]\", asn1class_name(tag.class), tag.number);\n\t}\n", name);
+			buf_append(&state.decode_fns, "\t\t}\n\n");
+			break;
+
+		default:
+			/* assert */
+			fatal("and_items set but not a SEQUENCE or SET");
+			break;
+		}
+		/* output any literals at the end */
+		while(item)
+		{
+			/* assert */
+			if(item->type != IT_LITERAL)
+				fatal("Trailing non-literal");
+			buf_append(&state.decode_fns, "\tfprintf(out, %s);\n\n", item->name);
+			item = item->next;
+		}
+	}
+	/* is it ENUMERATED */
+	else if(asn1type(name) == ASN1TYPE_ENUMERATED)
+	{
+		/* an ENUMERATED type */
+		buf_append(&state.decode_fns, "\t/* ENUMERATED */\n");
+		buf_append(&state.decode_fns, "\tchar *enum_names[] = {\n");
+		enum_val = 0;
+		for(item=state.items; item; item=item->next)
+		{
+			buf_append(&state.decode_fns, "\t\t%s,\n", item->name);
+			enum_val ++;
+		}
+		buf_append(&state.decode_fns, "\t};\n\n");
+		buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
+		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
+		/* the ENUMERATED value is encoded as an INTEGER */
+		buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", name);
+		buf_append(&state.decode_fns, "\t\tder_decode_ENUMERATED(der, out, tag.length, %u, enum_names);\n", enum_val);
+		buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
+		buf_append(&state.decode_fns, "\t}\n\telse\n");
+		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
+		/* is_Xxx() function */
+		buf_append(&state.decode_is_fns, "\treturn MATCH_TAGCLASS(class, number, ASN1TAGCLASS_ENUMERATED);\n");
+	}
+	/* must be a CHOICE */
+	else
+	{
+		/* a CHOICE type */
+		buf_append(&state.decode_fns, "\t/* CHOICE */\n");
+		buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
+		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
+		/* see which item we chose */
+		for(item=state.items; item; item=item->next)
+		{
+			/* is_Xxx() function */
+			if(item == state.items)
+				buf_append(&state.decode_is_fns, "\treturn ");
+			else
+				buf_append(&state.decode_is_fns, "\t    || ");
+			buf_append(&state.decode_is_fns, "MATCH_TAGCLASS(class, number, ASN1TAGCLASS_%s)", item->name);
+			/* is it the last */
+			if(item->next == NULL)
+				buf_append(&state.decode_is_fns, ";");
+			buf_append(&state.decode_is_fns, "\n");
+			/* decode_Xxx() function */
+			if(item == state.items)
+				buf_append(&state.decode_fns, "\t");
+			else
+				buf_append(&state.decode_fns, "\telse ");
+			buf_append(&state.decode_fns, "if(MATCH_TAGCLASS(tag.class, tag.number, ASN1TAGCLASS_%s))\n\t{\n", item->name);
+			buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
+			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
+			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
+			buf_append(&state.decode_fns, "\t}\n");
+		}
+		buf_append(&state.decode_fns, "\telse\n");
+		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
+	}
+
+	/* end decode_Xxx() function */
+	buf_append(&state.decode_fns, "\tfprintf(out, \"\\n\");\n\n");
+	buf_append(&state.decode_fns, "\tif(left != 0)\n");
+	buf_append(&state.decode_fns, "\t\treturn der_error(\"%s: %%d bytes left\", left);\n\n", name);
+	buf_append(&state.decode_fns, "\tverbose(\"</%s>\\n\");\n\n", name);
+	buf_append(&state.decode_fns, "\treturn length;\n}\n\n");
+
+	/* end is_Xxx() function */
+	buf_append(&state.decode_is_fns, "}\n\n");
+
 	/* free the items */
 	item = state.items;
 	while(item)
@@ -849,6 +1110,9 @@ buf_init(struct buf *b)
 	b->nalloced = INIT_BUF_SIZE;
 	if((b->str = malloc(b->nalloced)) == NULL)
 		fatal("Out of memory");
+
+	/* in case it never gets any data put in it */
+	b->str[0] = '\0';
 
 	return;
 }
