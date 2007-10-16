@@ -8,8 +8,10 @@
 #include <ctype.h>
 
 #include "der_decode.h"
+#include "asn1tag.h"
 
 void verbose(char *, ...);
+void vverbose(char *, ...);
 
 /* DER does not allow indefinite lengths */
 
@@ -74,6 +76,8 @@ der_decode_Tag(FILE *der, struct der_tag *tag)
 		}
 	}
 	tag->length = len;
+
+	vverbose("<TAG class=%s number=%d length=%d/>\n", asn1class_name(tag->class), tag->number, tag->length);
 
 	return nbytes;
 }
