@@ -854,6 +854,10 @@ output_def(char *name)
 	/* is it a SEQUENCE or SET */
 	else if(state.and_items)
 	{
+		if(asn1type(name) == ASN1TYPE_SEQUENCE)
+			buf_append(&state.decode_fns, "\t/* SEQUENCE */\n");
+		else
+			buf_append(&state.decode_fns, "\t/* SET */\n");
 		/* output any literals at the start */
 		for(item=state.items; item && item->type==IT_LITERAL; item=item->next)
 			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
@@ -867,9 +871,33 @@ output_def(char *name)
 			/* is_Xxx() - just match the first item */
 			buf_append(&state.decode_is_fns, "\treturn is_%s(class, number);\n", item->name);
 			/* decode_Xxx() - examine each non-literal item in turn */
+			buf_append(&state.decode_fns, "\tlong pretag;\n\n");
 			while(item && item->type != IT_LITERAL)
 			{
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+				/* decode the next tag */
+				buf_append(&state.decode_fns, "\tpretag = ftell(der);\n");
+				buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
+				buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+				buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
+				/* is it what we expect */
+				buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", item->name);
+				/* if it is a synthetic or ENUMERATED type, we still need the current tag */
+				buf_append(&state.decode_fns, "\t\tif(ASN1TAGCLASS_%s == ASN1TAG_SYNTHETIC\n", item->name);
+				buf_append(&state.decode_fns, "\t\t|| ASN1TAGCLASS_%s == ASN1TAGCLASS_ENUMERATED)\n", item->name);
+				buf_append(&state.decode_fns, "\t\t{\n");
+				buf_append(&state.decode_fns, "\t\t\tfseek(der, pretag, SEEK_SET);\n");
+				buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\t}\n");
+				buf_append(&state.decode_fns, "\t\telse\n");
+				buf_append(&state.decode_fns, "\t\t{\n");
+				buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\t}\n");
+				buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
+				buf_append(&state.decode_fns, "\t}\n\n");
+				/* if it is not optional, raise an error if it is not present */
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+				/* if it is optional and not present, seek back to the start of the tag */
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 				item = item->next;
 			}
 			break;
@@ -935,7 +963,7 @@ output_def(char *name)
 			/* assert */
 			if(item->type != IT_LITERAL)
 				fatal("Trailing non-literal");
-			buf_append(&state.decode_fns, "\tfprintf(out, %s);\n\n", item->name);
+			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
 			item = item->next;
 		}
 	}
@@ -990,6 +1018,7 @@ output_def(char *name)
 				buf_append(&state.decode_fns, "\t");
 			else
 				buf_append(&state.decode_fns, "\telse ");
+/* TODO: does GenericObjectReference_direct_reference need a fseek(pretag) */
 			buf_append(&state.decode_fns, "if(MATCH_TAGCLASS(tag.class, tag.number, ASN1TAGCLASS_%s))\n\t{\n", item->name);
 			buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
 			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);

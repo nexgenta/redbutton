@@ -782,5 +782,11 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_StorageEnum		ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_StreamComponent		FIXME
 #define ASN1TAGCLASS_TerminationEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_ComparisonValue	FIXME
+#define ASN1TAGCLASS_EmulatedEventData	FIXME
+#define ASN1TAGCLASS_NewColour	FIXME
+#define ASN1TAGCLASS_NewContent	FIXME
+#define ASN1TAGCLASS_NewFont	FIXME
+#define ASN1TAGCLASS_NewVariableValue	FIXME
 
 #endif	/* __ASN1TAG_H__ */
