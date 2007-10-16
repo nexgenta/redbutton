@@ -753,5 +753,34 @@ bool needs_tagging(unsigned int, unsigned int);
 /* ContentReference is [69] except in ReferencedContent */
 #define ASN1TAGCLASS_ContentReference	ASN1TAG_SYNTHETIC
 
-#endif	/* __ASN1TAG_H__ */
+/* needed by mhegd */
+#define FIXME	9999
+#define ASN1TAGCLASS_ActionSlot		FIXME
+#define ASN1TAGCLASS_ActionSlotSeq		FIXME
+#define ASN1TAGCLASS_ButtonStyleEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_Colour		FIXME
+#define ASN1TAGCLASS_ContentBody		FIXME
+#define ASN1TAGCLASS_DefaultAttribute		FIXME
+#define ASN1TAGCLASS_ElementaryAction		FIXME
+#define ASN1TAGCLASS_EventDataBody		FIXME
+#define ASN1TAGCLASS_EventTypeEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_FontBody		FIXME
+#define ASN1TAGCLASS_GenericBoolean		FIXME
+#define ASN1TAGCLASS_GenericContentReference		FIXME
+#define ASN1TAGCLASS_GenericInteger		FIXME
+#define ASN1TAGCLASS_GenericObjectReference		FIXME
+#define ASN1TAGCLASS_GenericOctetString		FIXME
+#define ASN1TAGCLASS_GroupItem		FIXME
+#define ASN1TAGCLASS_InputTypeEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_JustificationEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_LineOrientationEnum	ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_OrientationEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_OriginalValueBody		FIXME
+#define ASN1TAGCLASS_Parameter		FIXME
+#define ASN1TAGCLASS_SliderStyleEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_StartCornerEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_StorageEnum		ASN1TAGCLASS_ENUMERATED
+#define ASN1TAGCLASS_StreamComponent		FIXME
+#define ASN1TAGCLASS_TerminationEnum		ASN1TAGCLASS_ENUMERATED
 
+#endif	/* __ASN1TAG_H__ */
