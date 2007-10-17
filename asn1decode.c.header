@@ -1,8 +1,22 @@
+#include <stdio.h>
+#include <stdbool.h>
+
 #include "asn1decode.h"
 #include "der_decode.h"
 #include "asn1tag.h"
 
 void verbose(char *, ...);
+
+bool keep_tag(unsigned int tagclass)
+{
+/* TODO: is this function needed? */
+return true;
+	if(ASN1TAGCLASS_GroupIdentifier == ASN1TAG_SYNTHETIC
+	|| ASN1TAGCLASS_GroupIdentifier == ASN1TAGCLASS_ENUMERATED)
+		return true;
+	else
+		return false;
+}
 
 int asn1decode_BOOLEAN(FILE *der, FILE *out, int length)
 {

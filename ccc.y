@@ -825,8 +825,7 @@ output_def(char *name)
 		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
 		buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", item->name);
 		/* if it is a synthetic or ENUMERATED type, we still need the current tag */
-		buf_append(&state.decode_fns, "\t\tif(ASN1TAGCLASS_%s == ASN1TAG_SYNTHETIC\n", item->name);
-		buf_append(&state.decode_fns, "\t\t|| ASN1TAGCLASS_%s == ASN1TAGCLASS_ENUMERATED)\n", item->name);
+		buf_append(&state.decode_fns, "\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
 		buf_append(&state.decode_fns, "\t\t{\n");
 		buf_append(&state.decode_fns, "\t\t\tfseek(der, pretag, SEEK_SET);\n");
 		buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
@@ -882,8 +881,7 @@ output_def(char *name)
 				/* is it what we expect */
 				buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", item->name);
 				/* if it is a synthetic or ENUMERATED type, we still need the current tag */
-				buf_append(&state.decode_fns, "\t\tif(ASN1TAGCLASS_%s == ASN1TAG_SYNTHETIC\n", item->name);
-				buf_append(&state.decode_fns, "\t\t|| ASN1TAGCLASS_%s == ASN1TAGCLASS_ENUMERATED)\n", item->name);
+				buf_append(&state.decode_fns, "\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
 				buf_append(&state.decode_fns, "\t\t{\n");
 				buf_append(&state.decode_fns, "\t\t\tfseek(der, pretag, SEEK_SET);\n");
 				buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
@@ -932,8 +930,7 @@ output_def(char *name)
 				first = false;
 				buf_append(&state.decode_fns, "if(is_%s(tag.class, tag.number))\n\t\t{\n", item->name);
 				/* if it is a synthetic or ENUMERATED type, we still need the current tag */
-				buf_append(&state.decode_fns, "\t\t\tif(ASN1TAGCLASS_%s == ASN1TAG_SYNTHETIC\n", item->name);
-				buf_append(&state.decode_fns, "\t\t\t|| ASN1TAGCLASS_%s == ASN1TAGCLASS_ENUMERATED)\n", item->name);
+				buf_append(&state.decode_fns, "\t\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
 				buf_append(&state.decode_fns, "\t\t\t{\n");
 				buf_append(&state.decode_fns, "\t\t\t\tfseek(der, pretag, SEEK_SET);\n");
 				buf_append(&state.decode_fns, "\t\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
