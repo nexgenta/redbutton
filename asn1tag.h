@@ -771,7 +771,7 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_GenericInteger		FIXME
 #define ASN1TAGCLASS_GenericObjectReference		FIXME
 #define ASN1TAGCLASS_GenericOctetString		FIXME
-#define ASN1TAGCLASS_GroupItem		FIXME
+#define ASN1TAGCLASS_GroupItem			ASN1TAG_CHOICE
 #define ASN1TAGCLASS_InputTypeEnum		ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_JustificationEnum		ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_LineOrientationEnum	ASN1TAGCLASS_ENUMERATED
