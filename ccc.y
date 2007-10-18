@@ -86,7 +86,7 @@ FILE *safe_fopen(char *, char *);
 void file_append(FILE *, char *);
 
 /* input line we are currently parsing */
-int yylineno = 1;
+unsigned int yylineno = 1;
 
 /* yacc functions we need to provide */
 void

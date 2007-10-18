@@ -2,7 +2,7 @@
 #include <string.h>
 #define YYSTYPE char *
 #include "ccc.tab.h"
-extern int yylineno;
+extern unsigned int yylineno;
 %}
 %%
 \/\/[^\n\r\f]*		return COMMENT;
