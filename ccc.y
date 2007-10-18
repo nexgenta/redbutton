@@ -92,7 +92,7 @@ unsigned int yylineno = 1;
 void
 yyerror(const char *str)
 {
-	fprintf(stderr, "Error: %s at line %d\n", str, yylineno);
+	fprintf(stderr, "Error: %s at line %u\n", str, yylineno);
 
 	return;
 }
