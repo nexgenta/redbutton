@@ -91,6 +91,6 @@ parse_error(const char *fmt, ...)
 unsigned int
 nparse_errors(void)
 {
-	return yynerrs;
+	return nerrs;
 }
 

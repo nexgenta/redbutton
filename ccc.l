@@ -2,7 +2,7 @@
 #include <string.h>
 #define YYSTYPE char *
 #include "ccc.tab.h"
-extern unsigned int yylineno;
+extern unsigned int lineno;
 %}
 %%
 \/\/[^\n\r\f]*		return COMMENT;
@@ -15,7 +15,7 @@ extern unsigned int yylineno;
 "+"			return ONEORMORE;
 "?"			return IDENTORNULL;
 "."			return ENDCLAUSE;
-[\n\r\f]		yylineno ++;
+[\n\r\f]		lineno ++;
 [ \t]+			/* ignore whitespace */
 .			return INVALID;
 %%

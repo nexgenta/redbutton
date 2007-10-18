@@ -5,8 +5,8 @@
 #include <errno.h>
 #include "parser.h"
 #include "tokens.h"
-extern unsigned int yylineno;
-extern unsigned int yynerrs;
+extern unsigned int lineno;
+extern unsigned int nerrs;
 %}
 %%
 \/\/[^\n\r\f]*			return COMMENT;
@@ -16,5 +16,5 @@ true|false			return BOOLEAN;
 '[^']*'				return QPRINTABLE;
 `[^`]*`				return BASE64;
 null				return Null;
-[\n\r\f]			yylineno ++;
+[\n\r\f]			lineno ++;
 [ \t]+				/* ignore whitespace */
