@@ -755,6 +755,7 @@ bool needs_tagging(unsigned int, unsigned int);
 
 /* needed by mhegd */
 #define FIXME	9999
+#define ASN1TAGCLASS_InterchangedObject		ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_ActionSlot		FIXME
 #define ASN1TAGCLASS_ActionSlotSeq		FIXME
 #define ASN1TAGCLASS_ButtonStyleEnum		ASN1TAGCLASS_ENUMERATED

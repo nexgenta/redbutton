@@ -790,6 +790,9 @@ output_def(char *name)
 
 	/* ASN1 is_Xxx() functions */
 	buf_append(&state.decode_is_fns, "bool is_%s(unsigned char class, unsigned int number)\n{\n", name);
+	buf_append(&state.decode_is_fns, "\tif(!is_synthetic(ASN1TAGCLASS_%s))\n", name);
+	buf_append(&state.decode_is_fns, "\t\treturn MATCH_TAGCLASS(class, number, ASN1TAGCLASS_%s);\n", name);
+	buf_append(&state.decode_is_fns, "\telse\n");
 
 	/* count how many non-literal items there are */
 	nitems = 0;
