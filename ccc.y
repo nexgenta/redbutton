@@ -1008,7 +1008,7 @@ output_def(char *name)
 				buf_append(&state.decode_is_fns, "\t\treturn ");
 			else
 				buf_append(&state.decode_is_fns, "\t\t    || ");
-			buf_append(&state.decode_is_fns, "MATCH_TAGCLASS(class, number, ASN1TAGCLASS_%s)", item->name);
+			buf_append(&state.decode_is_fns, "is_%s(class, number)", item->name);
 			/* is it the last */
 			if(item->next == NULL)
 				buf_append(&state.decode_is_fns, ";");
@@ -1019,7 +1019,7 @@ output_def(char *name)
 			else
 				buf_append(&state.decode_fns, "\telse ");
 /* TODO: does GenericObjectReference_direct_reference need a fseek(pretag) */
-			buf_append(&state.decode_fns, "if(MATCH_TAGCLASS(tag.class, tag.number, ASN1TAGCLASS_%s))\n\t{\n", item->name);
+			buf_append(&state.decode_fns, "if(is_%s(tag.class, tag.number))\n\t{\n", item->name);
 			buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
 			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
