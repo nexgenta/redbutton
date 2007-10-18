@@ -813,7 +813,7 @@ output_def(char *name)
 		buf_append(&state.decode_fns, "\t}\n\telse\n");
 		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
 		/* is_Xxx() function */
-		buf_append(&state.decode_is_fns, "\treturn MATCH_TAGCLASS(class, number, ASN1TAGCLASS_OCTETSTRING);\n");
+		buf_append(&state.decode_is_fns, "\t\treturn MATCH_TAGCLASS(class, number, ASN1TAGCLASS_OCTETSTRING);\n");
 	}
 	/* has it got only 1 non-literal item */
 	else if(nitems == 1)
@@ -827,7 +827,7 @@ output_def(char *name)
 		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
 		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
 		buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", item->name);
-		/* if it is a synthetic or ENUMERATED type, we still need the current tag */
+		/* if it is a synthetic or primitive type, we still need the current tag */
 		buf_append(&state.decode_fns, "\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
 		buf_append(&state.decode_fns, "\t\t{\n");
 		buf_append(&state.decode_fns, "\t\t\tfseek(der, pretag, SEEK_SET);\n");
@@ -841,7 +841,7 @@ output_def(char *name)
 		buf_append(&state.decode_fns, "\t}\n\telse\n");
 		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
 		/* is_Xxx() function */
-		buf_append(&state.decode_is_fns, "\treturn is_%s(class, number);\n", item->name);
+		buf_append(&state.decode_is_fns, "\t\treturn is_%s(class, number);\n", item->name);
 		/* output any literals at the end */
 		item = item->next;
 		while(item)
@@ -871,7 +871,7 @@ output_def(char *name)
 			if(item->type != IT_IDENTIFIER)
 				fatal("not Identifier");
 			/* is_Xxx() - just match the first item */
-			buf_append(&state.decode_is_fns, "\treturn is_%s(class, number);\n", item->name);
+			buf_append(&state.decode_is_fns, "\t\treturn is_%s(class, number);\n", item->name);
 			/* decode_Xxx() - examine each non-literal item in turn */
 			buf_append(&state.decode_fns, "\tlong pretag;\n\n");
 			while(item && item->type != IT_LITERAL)
@@ -883,7 +883,7 @@ output_def(char *name)
 				buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
 				/* is it what we expect */
 				buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", item->name);
-				/* if it is a synthetic or ENUMERATED type, we still need the current tag */
+				/* if it is a synthetic or primitive type, we still need the current tag */
 				buf_append(&state.decode_fns, "\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
 				buf_append(&state.decode_fns, "\t\t{\n");
 				buf_append(&state.decode_fns, "\t\t\tfseek(der, pretag, SEEK_SET);\n");
@@ -917,9 +917,9 @@ output_def(char *name)
 			{
 				/* is_Xxx() */
 				if(first)
-					buf_append(&state.decode_is_fns, "\treturn ");
+					buf_append(&state.decode_is_fns, "\t\treturn ");
 				else
-					buf_append(&state.decode_is_fns, "\t    || ");
+					buf_append(&state.decode_is_fns, "\t\t    || ");
 				buf_append(&state.decode_is_fns, "is_%s(class, number)", item->name);
 				/* is it the last */
 				if(item->next == NULL || item->next->type == IT_LITERAL)
@@ -932,7 +932,7 @@ output_def(char *name)
 					buf_append(&state.decode_fns, "\t\telse ");
 				first = false;
 				buf_append(&state.decode_fns, "if(is_%s(tag.class, tag.number))\n\t\t{\n", item->name);
-				/* if it is a synthetic or ENUMERATED type, we still need the current tag */
+				/* if it is a synthetic or primitive type, we still need the current tag */
 				buf_append(&state.decode_fns, "\t\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
 				buf_append(&state.decode_fns, "\t\t\t{\n");
 				buf_append(&state.decode_fns, "\t\t\t\tfseek(der, pretag, SEEK_SET);\n");
@@ -990,7 +990,7 @@ output_def(char *name)
 		buf_append(&state.decode_fns, "\t}\n\telse\n");
 		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
 		/* is_Xxx() function */
-		buf_append(&state.decode_is_fns, "\treturn MATCH_TAGCLASS(class, number, ASN1TAGCLASS_ENUMERATED);\n");
+		buf_append(&state.decode_is_fns, "\t\treturn MATCH_TAGCLASS(class, number, ASN1TAGCLASS_ENUMERATED);\n");
 	}
 	/* must be a CHOICE */
 	else
@@ -1005,9 +1005,9 @@ output_def(char *name)
 		{
 			/* is_Xxx() function */
 			if(item == state.items)
-				buf_append(&state.decode_is_fns, "\treturn ");
+				buf_append(&state.decode_is_fns, "\t\treturn ");
 			else
-				buf_append(&state.decode_is_fns, "\t    || ");
+				buf_append(&state.decode_is_fns, "\t\t    || ");
 			buf_append(&state.decode_is_fns, "MATCH_TAGCLASS(class, number, ASN1TAGCLASS_%s)", item->name);
 			/* is it the last */
 			if(item->next == NULL)
