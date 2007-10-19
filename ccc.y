@@ -849,7 +849,7 @@ output_def(char *name)
 			/* assert */
 			if(item->type != IT_LITERAL)
 				fatal("Trailing non-literal");
-			buf_append(&state.decode_fns, "\tfprintf(out, %s);\n\n", item->name);
+			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
 			item = item->next;
 		}
 	}
@@ -997,6 +997,7 @@ output_def(char *name)
 	{
 		/* a CHOICE type */
 		buf_append(&state.decode_fns, "\t/* CHOICE */\n");
+		buf_append(&state.decode_fns, "\tlong pretag = ftell(der);\n");
 		buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
 		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
 		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
@@ -1018,11 +1019,18 @@ output_def(char *name)
 				buf_append(&state.decode_fns, "\t");
 			else
 				buf_append(&state.decode_fns, "\telse ");
-/* TODO: does GenericObjectReference_direct_reference need a fseek(pretag) */
 			buf_append(&state.decode_fns, "if(is_%s(tag.class, tag.number))\n\t{\n", item->name);
-			buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
-			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
-			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
+			/* if it is a synthetic or primitive type, we still need the current tag */
+			buf_append(&state.decode_fns, "\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
+			buf_append(&state.decode_fns, "\t\t{\n");
+			buf_append(&state.decode_fns, "\t\t\tfseek(der, pretag, SEEK_SET);\n");
+			buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+			buf_append(&state.decode_fns, "\t\t}\n");
+			buf_append(&state.decode_fns, "\t\telse\n");
+			buf_append(&state.decode_fns, "\t\t{\n");
+			buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+			buf_append(&state.decode_fns, "\t\t}\n");
+			buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 			buf_append(&state.decode_fns, "\t}\n");
 		}
 		buf_append(&state.decode_fns, "\telse\n");
@@ -1030,7 +1038,8 @@ output_def(char *name)
 	}
 
 	/* end decode_Xxx() function */
-	buf_append(&state.decode_fns, "\tfprintf(out, \"\\n\");\n\n");
+	buf_append(&state.decode_fns, "\tif(!is_synthetic(ASN1TAGCLASS_%s))\n", name);
+	buf_append(&state.decode_fns, "\t\tfprintf(out, \"\\n\");\n\n");
 	buf_append(&state.decode_fns, "\tif(left != 0)\n");
 	buf_append(&state.decode_fns, "\t\treturn der_error(\"%s: %%d bytes left\", left);\n\n", name);
 	buf_append(&state.decode_fns, "\tverbose(\"</%s>\\n\");\n\n", name);
