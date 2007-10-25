@@ -1,5 +1,24 @@
+mhegc
 output filename should default to App/Scene GroupIdentifier rather than "a"
 (but warn if file exists - stops accidental overwrite of source!)
+
+---
+
+mhegd
+HorizontalJustification doesn't work
+EventTypeEnum does
+ie ENUMERATED types without an explicit ENUMERATED tag don't work
+
+---
+
+mhegd
+check NoTokenActionSlots (empty and not empty)
+check MovementTable (empty and not empty)
+
+---
+
+mhegd
+:ContentRef ContentReference keeps the tag as part of the OctetString
 
 ---
 

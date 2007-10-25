@@ -754,18 +754,18 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_ContentReference	ASN1TAG_SYNTHETIC
 
 /* needed by mhegd */
-#define FIXME	9999
 #define ASN1TAGCLASS_InterchangedObject		ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_ActionSlot			ASN1TAG_CHOICE
-#define ASN1TAGCLASS_ActionSlotSeq	FIXME
+/* TODO: check this, also make sure NoTokenActionSlots are decoded correctly */
+#define ASN1TAGCLASS_ActionSlotSeq		ASN1TAGCLASS_SEQUENCE
 #define ASN1TAGCLASS_ButtonStyleEnum		ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_Colour			ASN1TAG_CHOICE
-#define ASN1TAGCLASS_ContentBody	FIXME
+#define ASN1TAGCLASS_ContentBody		ASN1TAG_CHOICE
 #define ASN1TAGCLASS_DefaultAttribute		ASN1TAG_CHOICE
 #define ASN1TAGCLASS_ElementaryAction		ASN1TAG_CHOICE
 #define ASN1TAGCLASS_EventDataBody		ASN1TAG_CHOICE
 #define ASN1TAGCLASS_EventTypeEnum		ASN1TAGCLASS_ENUMERATED
-#define ASN1TAGCLASS_FontBody		FIXME
+#define ASN1TAGCLASS_FontBody			ASN1TAG_CHOICE
 #define ASN1TAGCLASS_GenericBoolean		ASN1TAG_CHOICE
 #define ASN1TAGCLASS_GenericContentReference	ASN1TAG_CHOICE
 #define ASN1TAGCLASS_GenericInteger		ASN1TAG_CHOICE
@@ -776,18 +776,18 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAGCLASS_JustificationEnum		ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_LineOrientationEnum	ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_OrientationEnum		ASN1TAGCLASS_ENUMERATED
-#define ASN1TAGCLASS_OriginalValueBody	FIXME
-#define ASN1TAGCLASS_Parameter		FIXME
+#define ASN1TAGCLASS_OriginalValueBody		ASN1TAG_CHOICE
+#define ASN1TAGCLASS_Parameter			ASN1TAG_CHOICE
 #define ASN1TAGCLASS_SliderStyleEnum		ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_StartCornerEnum		ASN1TAGCLASS_ENUMERATED
 #define ASN1TAGCLASS_StorageEnum		ASN1TAGCLASS_ENUMERATED
-#define ASN1TAGCLASS_StreamComponent	FIXME
+#define ASN1TAGCLASS_StreamComponent		ASN1TAG_CHOICE
 #define ASN1TAGCLASS_TerminationEnum		ASN1TAGCLASS_ENUMERATED
-#define ASN1TAGCLASS_ComparisonValue	FIXME
-#define ASN1TAGCLASS_EmulatedEventData	FIXME
-#define ASN1TAGCLASS_NewColour		FIXME
-#define ASN1TAGCLASS_NewContent		FIXME
-#define ASN1TAGCLASS_NewFont		FIXME
-#define ASN1TAGCLASS_NewVariableValue	FIXME
+#define ASN1TAGCLASS_ComparisonValue		ASN1TAG_CHOICE
+#define ASN1TAGCLASS_EmulatedEventData		ASN1TAG_CHOICE
+#define ASN1TAGCLASS_NewColour			ASN1TAG_CHOICE
+#define ASN1TAGCLASS_NewContent			ASN1TAG_CHOICE
+#define ASN1TAGCLASS_NewFont			ASN1TAG_CHOICE
+#define ASN1TAGCLASS_NewVariableValue		ASN1TAG_CHOICE
 
 #endif	/* __ASN1TAG_H__ */
