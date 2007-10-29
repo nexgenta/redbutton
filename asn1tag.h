@@ -43,6 +43,8 @@ bool needs_tagging(unsigned int, unsigned int);
 #define ASN1TAG_SYNTHETIC	10000
 /* the tag for CHOICE types is determined by which choice we choose */
 #define ASN1TAG_CHOICE		10001
+/* for signalling internal parser errors */
+#define ASN1TAG_BAD		10002
 
 /* abstract types */
 #define ASN1TAGCLASS_Root		ASN1TAG_SYNTHETIC
