@@ -34,6 +34,7 @@
 char *asn1class_name(unsigned int);
 bool is_synthetic(unsigned int);
 bool needs_tagging(unsigned int, unsigned int);
+unsigned int asn1tagclass(const char *);
 
 /*
  * a synthetic object created as a result of the grammar definition

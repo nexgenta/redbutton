@@ -29,7 +29,7 @@
 #define MATCH(NAME, TYPE)	if(strcmp(name, #NAME) == 0) return ASN1TYPE_ ## TYPE;
 
 enum asn1type
-asn1type(char *name)
+asn1type(const char *name)
 {
 	MATCH(InterchangedObject, CHOICE)
 	MATCH(Group, SET)	// MATCH(GroupClass, SET)

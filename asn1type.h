@@ -32,6 +32,6 @@ enum asn1type
 	ASN1TYPE_SEQUENCE
 };
 
-enum asn1type asn1type(char *);
+enum asn1type asn1type(const char *);
 
 #endif	/* __ASN1TYPE_H__ */
