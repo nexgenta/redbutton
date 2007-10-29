@@ -36,10 +36,10 @@ mhegc:	parser.h ${MHEGC_OBJS}
 mhegd:	asn1decode.h ${MHEGD_OBJS}
 	${CC} ${CFLAGS} ${DEFS} -o mhegd ${MHEGD_OBJS} ${LIBS}
 
-ccc:	ccc.y ccc.l asn1type.o
+ccc:	ccc.y ccc.l asn1type.o asn1tag.o
 	${LEX} -i -t ccc.l > lex.ccc.c
 	${YACC} -b ccc -d ccc.y
-	${CC} ${CFLAGS} ${DEFS} -o ccc lex.ccc.c ccc.tab.c asn1type.o
+	${CC} ${CFLAGS} ${DEFS} -o ccc lex.ccc.c ccc.tab.c asn1type.o asn1tag.o
 
 lex.parser.c parser.c parser.h:	parser.l.* parser.c.* parser.h.* tokens.h.* grammar asn1tag.h ccc
 	cat grammar | ./ccc -l parser.l -p parser.c -h parser.h -t tokens.h

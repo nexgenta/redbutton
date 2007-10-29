@@ -57,6 +57,24 @@ needs_tagging(unsigned int asn1tag, unsigned int asn1class)
 }
 
 /*
+ * return true if we need to pass on the tag for this type in the asn1decode functions
+ */
+
+bool
+keep_tag(unsigned int tagclass)
+{
+	if(is_synthetic(tagclass)
+	|| tagclass == ASN1TAGCLASS_BOOLEAN
+	|| tagclass == ASN1TAGCLASS_INTEGER
+	|| tagclass == ASN1TAGCLASS_OctetString
+	|| tagclass == ASN1TAGCLASS_Null
+	|| tagclass == ASN1TAGCLASS_ENUMERATED)
+		return true;
+	else
+		return false;
+}
+
+/*
  * give access to ASN1TAGCLASS_XXX constants when XXX is not known until run time
  */
 

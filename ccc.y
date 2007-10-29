@@ -10,6 +10,7 @@
 #include <errno.h>
 
 #include "asn1type.h"
+#include "asn1tag.h"
 
 #define YYSTYPE char *
 
@@ -853,15 +854,15 @@ output_def(char *name)
 			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n\n");
 			buf_append(&state.decode_fns, "\t\tif(is_%s(tag.class, tag.number))\n\t\t{\n", item->name);
 			/* if it is a synthetic or primitive type, we still need the current tag */
-			buf_append(&state.decode_fns, "\t\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
-			buf_append(&state.decode_fns, "\t\t\t{\n");
-			buf_append(&state.decode_fns, "\t\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
-			buf_append(&state.decode_fns, "\t\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
-			buf_append(&state.decode_fns, "\t\t\t}\n");
-			buf_append(&state.decode_fns, "\t\t\telse\n");
-			buf_append(&state.decode_fns, "\t\t\t{\n");
-			buf_append(&state.decode_fns, "\t\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
-			buf_append(&state.decode_fns, "\t\t\t}\n");
+			if(keep_tag(asn1tagclass(item->name)))
+			{
+				buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
+				buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+			}
+			else
+			{
+				buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+			}
 			buf_append(&state.decode_fns, "\t\t\tleft -= tag.length;\n");
 			buf_append(&state.decode_fns, "\t\t}\n\t\telse\n");
 			buf_append(&state.decode_fns, "\t\t{\n\t\t\treturn der_error(\"%s\");\n\t\t}\n", name);
@@ -876,16 +877,16 @@ output_def(char *name)
 			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\tif(is_%s(tag.class, tag.number))\n\t\t{\n", item->name);
 			/* if it is a synthetic or primitive type, we still need the current tag */
-			buf_append(&state.decode_fns, "\t\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
-			buf_append(&state.decode_fns, "\t\t\t{\n");
-			buf_append(&state.decode_fns, "\t\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
-			buf_append(&state.decode_fns, "\t\t\t\tsublen = asn1decode_%s(der, out, length);\n", item->name);
-			buf_append(&state.decode_fns, "\t\t\t}\n");
-			buf_append(&state.decode_fns, "\t\t\telse\n");
-			buf_append(&state.decode_fns, "\t\t\t{\n");
-			buf_append(&state.decode_fns, "\t\t\t\tleft -= sublen;\n");
-			buf_append(&state.decode_fns, "\t\t\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
-			buf_append(&state.decode_fns, "\t\t\t}\n");
+			if(keep_tag(asn1tagclass(item->name)))
+			{
+				buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
+				buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, length);\n", item->name);
+			}
+			else
+			{
+				buf_append(&state.decode_fns, "\t\t\tleft -= sublen;\n");
+				buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+			}
 			buf_append(&state.decode_fns, "\t\t\tif(sublen < 0)\n");
 			buf_append(&state.decode_fns, "\t\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\t\tleft -= sublen;\n\n");
@@ -936,15 +937,15 @@ output_def(char *name)
 				/* is it what we expect */
 				buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", item->name);
 				/* if it is a synthetic or primitive type, we still need the current tag */
-				buf_append(&state.decode_fns, "\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
-				buf_append(&state.decode_fns, "\t\t{\n");
-				buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
-				buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
-				buf_append(&state.decode_fns, "\t\t}\n");
-				buf_append(&state.decode_fns, "\t\telse\n");
-				buf_append(&state.decode_fns, "\t\t{\n");
-				buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
-				buf_append(&state.decode_fns, "\t\t}\n");
+				if(keep_tag(asn1tagclass(item->name)))
+				{
+					buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
+					buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+				}
+				else
+				{
+					buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+				}
 				buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 				buf_append(&state.decode_fns, "\t}\n");
 				/* is it a type that is encoded as a NULL if it is not present */
@@ -980,7 +981,6 @@ output_def(char *name)
 			/* while there is data left in the current object */
 			buf_append(&state.decode_fns, "\twhile(left > 0)\n\t{\n");
 			/* decode the next tag */
-			buf_append(&state.decode_fns, "\t\tlong pretag = ftell(der);\n");
 			buf_append(&state.decode_fns, "\t\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
 			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
@@ -1006,15 +1006,15 @@ output_def(char *name)
 				first = false;
 				buf_append(&state.decode_fns, "if(is_%s(tag.class, tag.number))\n\t\t{\n", item->name);
 				/* if it is a synthetic or primitive type, we still need the current tag */
-				buf_append(&state.decode_fns, "\t\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
-				buf_append(&state.decode_fns, "\t\t\t{\n");
-				buf_append(&state.decode_fns, "\t\t\t\tfseek(der, pretag, SEEK_SET);\n");
-				buf_append(&state.decode_fns, "\t\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
-				buf_append(&state.decode_fns, "\t\t\t}\n");
-				buf_append(&state.decode_fns, "\t\t\telse\n");
-				buf_append(&state.decode_fns, "\t\t\t{\n");
-				buf_append(&state.decode_fns, "\t\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
-				buf_append(&state.decode_fns, "\t\t\t}\n");
+				if(keep_tag(asn1tagclass(item->name)))
+				{
+					buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
+					buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+				}
+				else
+				{
+					buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+				}
 				buf_append(&state.decode_fns, "\t\t\tleft -= tag.length;\n");
 				buf_append(&state.decode_fns, "\t\t}\n");
 				item = item->next;
@@ -1070,7 +1070,6 @@ output_def(char *name)
 	{
 		/* a CHOICE type */
 		buf_append(&state.decode_fns, "\t/* CHOICE */\n");
-		buf_append(&state.decode_fns, "\tlong pretag = ftell(der);\n");
 		buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
 		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
 		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
@@ -1094,15 +1093,15 @@ output_def(char *name)
 				buf_append(&state.decode_fns, "\telse ");
 			buf_append(&state.decode_fns, "if(is_%s(tag.class, tag.number))\n\t{\n", item->name);
 			/* if it is a synthetic or primitive type, we still need the current tag */
-			buf_append(&state.decode_fns, "\t\tif(keep_tag(ASN1TAGCLASS_%s))\n", item->name);
-			buf_append(&state.decode_fns, "\t\t{\n");
-			buf_append(&state.decode_fns, "\t\t\tfseek(der, pretag, SEEK_SET);\n");
-			buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
-			buf_append(&state.decode_fns, "\t\t}\n");
-			buf_append(&state.decode_fns, "\t\telse\n");
-			buf_append(&state.decode_fns, "\t\t{\n");
-			buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
-			buf_append(&state.decode_fns, "\t\t}\n");
+			if(keep_tag(asn1tagclass(item->name)))
+			{
+				buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
+				buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+			}
+			else
+			{
+				buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+			}
 			buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 			buf_append(&state.decode_fns, "\t}\n");
 		}
