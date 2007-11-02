@@ -827,18 +827,103 @@ output_def(char *name)
 			fatal("not IDENTIFIER, ONEORMORE or OPTIONAL");
 /* is it OPTIONAL - check if length == 0, if so bomb out now */
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+		/* if it is ONEORMORE we need a while loop */
+		if(item->type == IT_ONEORMORE)
+			buf_append(&state.decode_fns, "\twhile(left > 0)\n\t{\n");
 		/* is it a primitive type */
 		if(strcmp(item->name, "BOOLEAN") == 0
 		|| strcmp(item->name, "INTEGER") == 0
 		|| strcmp(item->name, "OctetString") == 0)
 		{
 			/* assert */
+			if(item->type != IT_IDENTIFIER && item->type != IT_ONEORMORE)
+				fatal("Primitive but not Identifier or Identifier+");
+			/* does it need an extra explicit tag for the primitive type? */
+			if(asn1tagclass(name) != asn1tagclass(item->name))
+			{
+				/* no explicit primitive tag */
+				buf_append(&state.decode_fns, "\tif((sublen = der_decode_%s(der, out, length)) < 0)\n", item->name);
+				buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+				buf_append(&state.decode_fns, "\tleft -= sublen;\n");
+			}
+			else
+			{
+				/* do need an explicit primitive tag */
+				buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
+				buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+				buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n", item->name);
+				buf_append(&state.decode_fns, "\t{\n");
+				buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
+				buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, sublen + tag.length)) < 0)\n", item->name);
+				buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
+				buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
+				buf_append(&state.decode_fns, "\t}\n");
+				buf_append(&state.decode_fns, "\telse\n");
+				buf_append(&state.decode_fns, "\t{\n");
+				buf_append(&state.decode_fns, "\t\treturn der_error(\"%s: unexpected tag [%%s %%u]\", asn1class_name(tag.class), tag.number);\n", name);
+				buf_append(&state.decode_fns, "\t}\n");
+			}
+		}
+#if 0
+		/* is it an ENUMERATED type */
+		else if(asn1tagclass(item->name) == ASN1TAGCLASS_ENUMERATED)
+		{
+			/* assert */
 			if(item->type != IT_IDENTIFIER)
+				fatal("ENUMERATED but not Identifier");
+buf_append(&state.decode_fns, "printf(\"TODO: %s->%s\\n\");\nexit(1);\n",name,item->name);
+		}
+#endif
+		/* else the whole length is the sub types value */
+		else
+		{
+			/* decode the item */
+			buf_append(&state.decode_fns, "\tif((sublen = der_decode_Tag(der, &tag)) < 0)\n");
+			buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+			buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t\t{\n", item->name);
+			/* if it is a synthetic or primitive type, we still need the current tag */
+			if(keep_tag(asn1tagclass(item->name)))
+			{
+				buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
+				buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+			}
+			else
+			{
+				buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
+				buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+			}
+			buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
+			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
+			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n\n");
+			buf_append(&state.decode_fns, "\t}\n");
+			buf_append(&state.decode_fns, "\telse\n");
+			buf_append(&state.decode_fns, "\t{\n");
+			buf_append(&state.decode_fns, "\t\treturn der_error(\"%s: unexpected tag [%%s %%u]\", asn1class_name(tag.class), tag.number);\n", name);
+			buf_append(&state.decode_fns, "\t}");
+		}
+		/* if it is ONEORMORE we need a while loop */
+		if(item->type == IT_ONEORMORE)
+			buf_append(&state.decode_fns, "\t}\n");
+		buf_append(&state.decode_fns, "\n");
+#if 0
+/* is it OPTIONAL - check if length == 0, if so bomb out now */
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+		/* is it a primitive type */
+		if(strcmp(item->name, "OctetString") == 0
+		|| asn1tagclass(item->name) == ASN1TAGCLASS_BOOLEAN
+		|| asn1tagclass(item->name) == ASN1TAGCLASS_INTEGER
+		|| asn1tagclass(item->name) == ASN1TAGCLASS_ENUMERATED)
+		{
+			/* assert */
+			if(item->type != IT_IDENTIFIER && item->type != IT_ONEORMORE)
 				fatal("Primitive but not Identifier");
 			/* does it need an extra explicit tag for the primitive type? */
 			buf_append(&state.decode_fns, "\tif(ASN1TAGCLASS_%s != ASN1TAGCLASS_%s)\n", name, item->name);
 			buf_append(&state.decode_fns, "\t{\n");
-			buf_append(&state.decode_fns, "\t\tif((sublen = der_decode_%s(der, out, length)) < 0)\n", item->name);
+			if(asn1tagclass(item->name) != ASN1TAGCLASS_ENUMERATED)
+				buf_append(&state.decode_fns, "\t\tif((sublen = der_decode_%s(der, out, length)) < 0)\n", item->name);
+			else
+				buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, length)) < 0)\n", item->name);
 			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
 			buf_append(&state.decode_fns, "\t}\n");
@@ -895,6 +980,7 @@ output_def(char *name)
 			buf_append(&state.decode_fns, "\t}\n");
 		}
 		buf_append(&state.decode_fns, "\n");
+#endif
 		/* is_Xxx() function */
 		buf_append(&state.decode_is_fns, "\t\treturn is_%s(class, number);\n", item->name);
 		/* output any literals at the end */
@@ -1110,8 +1196,8 @@ output_def(char *name)
 	}
 
 	/* end decode_Xxx() function */
-	buf_append(&state.decode_fns, "\tif(!is_synthetic(ASN1TAGCLASS_%s))\n", name);
-	buf_append(&state.decode_fns, "\t\tfprintf(out, \"\\n\");\n\n");
+	if(!is_synthetic(asn1tagclass(name)))
+		buf_append(&state.decode_fns, "\tfprintf(out, \"\\n\");\n\n");
 	buf_append(&state.decode_fns, "\tif(left != 0)\n");
 	buf_append(&state.decode_fns, "\t\treturn der_error(\"%s: %%d bytes left\", left);\n\n", name);
 	buf_append(&state.decode_fns, "\tverbose(\"</%s>\\n\");\n\n", name);
