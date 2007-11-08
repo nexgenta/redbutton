@@ -11,9 +11,8 @@ should Movement be SYNTHETIC?
 ---
 
 mhegd
-HorizontalJustification doesn't work
-EventTypeEnum does
-ie ENUMERATED types without an explicit ENUMERATED tag don't work
+HorizontalJustification needs writing
+ie ENUMERATED types without an explicit ENUMERATED tag
 
 ---
 
@@ -25,6 +24,7 @@ check MovementTable (empty and not empty)
 
 mhegd
 :ContentRef ContentReference keeps the tag as part of the OctetString
+(eg enh_gateway.mhg)
 
 ---
 
