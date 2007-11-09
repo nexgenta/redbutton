@@ -303,7 +303,7 @@ unsigned int asn1tagclass(const char *);
 #define ASN1TAG_UnlockScreen	224
 #define ASN1TAG_NewGenericBoolean	225
 #define ASN1TAG_NewGenericInteger	226
-#define ASN1TAG_NewGenericOctetstring	227
+#define ASN1TAG_NewGenericOctetString	227
 #define ASN1TAG_NewGenericObjectReference	228
 #define ASN1TAG_NewGenericContentReference	229
 #define ASN1TAG_NewColourIndex	230
@@ -554,7 +554,7 @@ unsigned int asn1tagclass(const char *);
 #define ASN1TAGCLASS_UnlockScreen	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_UnlockScreen)
 #define ASN1TAGCLASS_NewGenericBoolean	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericBoolean)
 #define ASN1TAGCLASS_NewGenericInteger	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericInteger)
-#define ASN1TAGCLASS_NewGenericOctetstring	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericOctetstring)
+#define ASN1TAGCLASS_NewGenericOctetString	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericOctetString)
 #define ASN1TAGCLASS_NewGenericObjectReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericObjectReference)
 #define ASN1TAGCLASS_NewGenericContentReference	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewGenericContentReference)
 #define ASN1TAGCLASS_NewColourIndex	((ASN1CLASS_CONTEXT << 24) | ASN1TAG_NewColourIndex)
@@ -660,7 +660,6 @@ unsigned int asn1tagclass(const char *);
 #define ASN1TAGCLASS_NewCursorShape	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_NewEntryPoint	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_NewFirstItem	ASN1TAG_SYNTHETIC
-#define ASN1TAGCLASS_NewGenericOctetString	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_NewHighlightStatus	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_NewIncludedContent	ASN1TAG_SYNTHETIC
 #define ASN1TAGCLASS_NewInteractionStatus	ASN1TAG_SYNTHETIC
