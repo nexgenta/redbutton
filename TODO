@@ -16,11 +16,5 @@ check MovementTable (empty and not empty)
 
 ---
 
-mhegd
-:ContentRef ContentReference keeps the tag as part of the OctetString
-(eg enh_gateway.mhg)
-
----
-
 clean up ccc.y
 

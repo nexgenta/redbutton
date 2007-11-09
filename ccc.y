@@ -836,7 +836,8 @@ output_def(char *name)
 			if(item->type != IT_IDENTIFIER)
 				fatal("Primitive but not Identifier");
 			/* does it need an extra explicit tag for the primitive type? */
-			if(asn1tagclass(name) != asn1tagclass(item->name))
+			if(!is_synthetic(asn1tagclass(name))
+			&& asn1tagclass(name) != asn1tagclass(item->name))
 			{
 				/* no explicit primitive tag */
 				buf_append(&state.decode_fns, "\tif((sublen = der_decode_%s(der, out, length)) < 0)\n", item->name);
