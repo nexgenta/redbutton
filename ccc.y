@@ -868,8 +868,9 @@ output_def(char *name)
 			/* assert */
 			if(item->type != IT_IDENTIFIER)
 				fatal("ENUMERATED but not Identifier");
-/* TODO */
-buf_append(&state.decode_fns, "printf(\"TODO: %s->%s\\n\");\nexit(1);\n",name,item->name);
+			buf_append(&state.decode_fns, "\tif((sublen = der_decode_%s(der, out, length)) < 0)\n", item->name);
+			buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+			buf_append(&state.decode_fns, "\tleft -= sublen;\n");
 		}
 		/* is the whole length one or more sub types */
 		else if(item->type == IT_ONEORMORE)
@@ -1101,6 +1102,29 @@ buf_append(&state.decode_fns, "printf(\"TODO: %s->%s\\n\");\nexit(1);\n",name,it
 		buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 		buf_append(&state.decode_fns, "\t}\n\telse\n");
 		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
+		/* end decode_Xxx() function */
+		if(!is_synthetic(asn1tagclass(name)))
+			buf_append(&state.decode_fns, "\tfprintf(out, \"\\n\");\n\n");
+		buf_append(&state.decode_fns, "\tif(left != 0)\n");
+		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s: %%d bytes left\", left);\n\n", name);
+		buf_append(&state.decode_fns, "\tverbose(\"</%s>\\n\");\n\n", name);
+		buf_append(&state.decode_fns, "\treturn length;\n}\n\n");
+		/* create a der_decode_Xxx() function */
+		buf_append(&state.decode_fns, "int der_decode_%s(FILE *der, FILE *out, int length)\n", name);
+		buf_append(&state.decode_fns, "{\n");
+		buf_append(&state.decode_fns, "\tint left = length;\n");
+		buf_append(&state.decode_fns, "\tint sublen;\n\n");
+		buf_append(&state.decode_fns, "\tverbose(\"<%s>\\n\");\n\n", name);
+		buf_append(&state.decode_fns, "\t/* ENUMERATED */\n");
+		buf_append(&state.decode_fns, "\tchar *enum_names[] = {\n");
+		for(item=state.items; item; item=item->next)
+			buf_append(&state.decode_fns, "\t\t%s,\n", item->name);
+		buf_append(&state.decode_fns, "\t};\n\n");
+		buf_append(&state.decode_fns, "\tif((sublen = der_decode_ENUMERATED(der, out, length, %u, enum_names)) < 0)\n", enum_val);
+		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s\");\n", name);
+		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
+		/* prototype */
+		buf_append(&state.decode_hdr, "int der_decode_%s(FILE *, FILE *, int);\n", name);
 		/* is_Xxx() function */
 		buf_append(&state.decode_is_fns, "\t\treturn MATCH_TAGCLASS(class, number, ASN1TAGCLASS_ENUMERATED);\n");
 	}

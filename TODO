@@ -11,12 +11,6 @@ should Movement be SYNTHETIC?
 ---
 
 mhegd
-HorizontalJustification needs writing
-ie ENUMERATED types without an explicit ENUMERATED tag
-
----
-
-mhegd
 check NoTokenActionSlots (empty and not empty)
 check MovementTable (empty and not empty)
 
