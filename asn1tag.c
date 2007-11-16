@@ -547,6 +547,7 @@ asn1tagclass(const char *name)
 	MATCH(NewContent)
 	MATCH(NewFont)
 	MATCH(NewVariableValue)
+	MATCH(NewTimer)
 
 	fprintf(stderr, "Unknown ASN1TAGCLASS type: %s\n", name);
 	exit(EXIT_FAILURE);

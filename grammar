@@ -711,8 +711,8 @@ SetPosition	::= ":SetPosition" "(" Target NewXPosition
 SetSliderValue	::= ":SetSliderValue" "(" Target
 			NewSliderValue ")" .
 SetSpeed	::= ":SetSpeed" "(" Target NewSpeed ")" .
-SetTimer	::= ":SetTimer" "(" Target TimerID
-			[TimerValue] [AbsoluteTime] ")" .
+SetTimer	::= ":SetTimer" "(" Target TimerID [NewTimer] ")" .
+NewTimer	::= TimerValue [AbsoluteTime] .
 SetTransparency	::= ":SetTransparency" "(" Target
 			NewTransparency ")" .
 SetVariable	::= ":SetVariable" "(" Target

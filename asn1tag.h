@@ -792,5 +792,6 @@ unsigned int asn1tagclass(const char *);
 #define ASN1TAGCLASS_NewContent			ASN1TAG_CHOICE
 #define ASN1TAGCLASS_NewFont			ASN1TAG_CHOICE
 #define ASN1TAGCLASS_NewVariableValue		ASN1TAG_CHOICE
+#define ASN1TAGCLASS_NewTimer			ASN1TAGCLASS_SEQUENCE
 
 #endif	/* __ASN1TAG_H__ */
