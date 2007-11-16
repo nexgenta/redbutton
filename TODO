@@ -12,6 +12,7 @@ should Movement be SYNTHETIC?
 
 mhegd
 check NoTokenActionSlots (empty and not empty)
+check ActionSlots empty (ie Null) works
 check MovementTable (empty and not empty)
 
 ---

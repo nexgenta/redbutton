@@ -249,7 +249,7 @@ TokenGroupItems		::= ":TokenGroupItems" "(" TokenGroupItem+ ")" .
 TokenGroupItem		::= "(" AVisible [ActionSlots] ")" .
 AVisible		::= ObjectReference .
 ActionSlots		::= ":ActionSlots" "(" ActionSlot+ ")" .
-ActionSlot		::= ActionClass | Null .
+ActionSlot		::= ActionClassSeq | Null .
 NoTokenActionSlots	::= ":NoTokenActionSlots" "(" ActionSlotSeq+ ")" .
 // srk - to get an explicit SEQUENCE tag under NoTokenActionSlots
 ActionSlotSeq		::= ActionClassSeq | Null .
