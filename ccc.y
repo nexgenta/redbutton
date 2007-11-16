@@ -787,6 +787,7 @@ output_def(char *name)
 	buf_append(&state.decode_fns, "\tint left = length;\n");
 	buf_append(&state.decode_fns, "\tint sublen;\n");
 	buf_append(&state.decode_fns, "\tstruct der_tag tag;\n\n");
+	buf_append(&state.decode_fns, "\t/* keep the compiler happy */\n\ttag = tag;\n\n");
 	buf_append(&state.decode_fns, "\tverbose(\"<%s>\\n\");\n\n", name);
 
 	/* ASN1 is_Xxx() functions */
