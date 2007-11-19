@@ -46,6 +46,7 @@ main(int argc, char *argv[])
 	FILE *in_file;
 	FILE *out_file = stdout;
 	int filesize;
+	int used;
 
 	while((arg = getopt(argc, argv, "o:v")) != EOF)
 	{
@@ -81,7 +82,11 @@ main(int argc, char *argv[])
 	rewind(in_file);
 
 	/* write text form of DER encoded in_file to out_file */
-	if(asn1decode_InterchangedObject(in_file, out_file, filesize) != filesize)
+	used = asn1decode_InterchangedObject(in_file, out_file, filesize);
+	fprintf(out_file, "\n");
+	if(used < 0)
+		fatal("Parsing error");
+	else if(used != filesize)
 		fatal("Unexpected data after InterchangedObject");
 
 	return EXIT_SUCCESS;

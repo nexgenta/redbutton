@@ -982,12 +982,14 @@ output_def(char *name)
 				if(keep_tag(asn1tagclass(item->name)))
 				{
 					buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
-					buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+					buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
 				}
 				else
 				{
-					buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+					buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
 				}
+				buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
+				buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 				buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 				buf_append(&state.decode_fns, "\t}\n");
 				/* is it a type that is encoded as a NULL if it is not present */
@@ -1051,12 +1053,14 @@ output_def(char *name)
 				if(keep_tag(asn1tagclass(item->name)))
 				{
 					buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
-					buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+					buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
 				}
 				else
 				{
-					buf_append(&state.decode_fns, "\t\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+					buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
 				}
+				buf_append(&state.decode_fns, "\t\t\tif(sublen < 0)\n");
+				buf_append(&state.decode_fns, "\t\t\t\treturn der_error(\"%s\");\n", name);
 				buf_append(&state.decode_fns, "\t\t\tleft -= tag.length;\n");
 				buf_append(&state.decode_fns, "\t\t}\n");
 				item = item->next;
@@ -1100,7 +1104,8 @@ output_def(char *name)
 		buf_append(&state.decode_fns, "\tleft -= sublen;\n\n");
 		/* the ENUMERATED value is encoded as an INTEGER */
 		buf_append(&state.decode_fns, "\tif(is_%s(tag.class, tag.number))\n\t{\n", name);
-		buf_append(&state.decode_fns, "\t\tder_decode_ENUMERATED(der, out, tag.length, %u, enum_names);\n", enum_val);
+		buf_append(&state.decode_fns, "\t\tif((sublen = der_decode_ENUMERATED(der, out, tag.length, %u, enum_names)) < 0)\n", enum_val);
+		buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 		buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 		buf_append(&state.decode_fns, "\t}\n\telse\n");
 		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
@@ -1161,12 +1166,14 @@ output_def(char *name)
 			if(keep_tag(asn1tagclass(item->name)))
 			{
 				buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
-				buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
 			}
 			else
 			{
-				buf_append(&state.decode_fns, "\t\tasn1decode_%s(der, out, tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
 			}
+			buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
+			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 			buf_append(&state.decode_fns, "\t}\n");
 		}
