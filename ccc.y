@@ -889,14 +889,13 @@ output_def(char *name)
 			if(keep_tag(asn1tagclass(item->name)))
 			{
 				buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
-				buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\t\tif((sublen = asn1decode_%s(der, out, sublen + tag.length)) < 0)\n", item->name);
 			}
 			else
 			{
 				buf_append(&state.decode_fns, "\t\t\tleft -= sublen;\n");
-				buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
 			}
-			buf_append(&state.decode_fns, "\t\t\tif(sublen < 0)\n");
 			buf_append(&state.decode_fns, "\t\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\t\tleft -= sublen;\n");
 			buf_append(&state.decode_fns, "\t\t}\n");
@@ -920,14 +919,13 @@ output_def(char *name)
 			if(keep_tag(asn1tagclass(item->name)))
 			{
 				buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
-				buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, length)) < 0)\n", item->name);
 			}
 			else
 			{
 				buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
-				buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
 			}
-			buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
 			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\tleft -= sublen;\n");
 			buf_append(&state.decode_fns, "\t}\n");
@@ -982,8 +980,7 @@ output_def(char *name)
 				if(keep_tag(asn1tagclass(item->name)))
 				{
 					buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
-					buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
-					buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
+					buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, sublen + tag.length)) < 0)\n", item->name);
 					buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 					buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 				}
@@ -1002,16 +999,14 @@ output_def(char *name)
 						buf_append(&state.decode_fns, "\t\telse\n");
 						buf_append(&state.decode_fns, "\t\t{\n");
 						buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
-						buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
-						buf_append(&state.decode_fns, "\t\t\tif(sublen < 0)\n");
+						buf_append(&state.decode_fns, "\t\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
 						buf_append(&state.decode_fns, "\t\t\t\treturn der_error(\"%s\");\n", name);
 						buf_append(&state.decode_fns, "\t\t\tleft -= tag.length;\n");
 						buf_append(&state.decode_fns, "\t\t}\n");
 					}
 					else
 					{
-						buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
-						buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
+						buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
 						buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 						buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 					}
@@ -1078,13 +1073,12 @@ output_def(char *name)
 				if(keep_tag(asn1tagclass(item->name)))
 				{
 					buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
-					buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+					buf_append(&state.decode_fns, "\t\t\tif((sublen = asn1decode_%s(der, out, sublen + tag.length)) < 0)\n", item->name);
 				}
 				else
 				{
-					buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+					buf_append(&state.decode_fns, "\t\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
 				}
-				buf_append(&state.decode_fns, "\t\t\tif(sublen < 0)\n");
 				buf_append(&state.decode_fns, "\t\t\t\treturn der_error(\"%s\");\n", name);
 				buf_append(&state.decode_fns, "\t\t\tleft -= tag.length;\n");
 				buf_append(&state.decode_fns, "\t\t}\n");
@@ -1191,13 +1185,12 @@ output_def(char *name)
 			if(keep_tag(asn1tagclass(item->name)))
 			{
 				buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
-				buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, sublen + tag.length)) < 0)\n", item->name);
 			}
 			else
 			{
-				buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+				buf_append(&state.decode_fns, "\t\tif((sublen = asn1decode_%s(der, out, tag.length)) < 0)\n", item->name);
 			}
-			buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
 			buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
 			buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 			buf_append(&state.decode_fns, "\t}\n");
