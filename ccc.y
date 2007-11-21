@@ -983,17 +983,42 @@ output_def(char *name)
 				{
 					buf_append(&state.decode_fns, "\t\tfseek(der, -sublen, SEEK_CUR);\n");
 					buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, sublen + tag.length);\n", item->name);
+					buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
+					buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
+					buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 				}
 				else
 				{
-					buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+					/* is it a type that is encoded as a NULL if it is not present */
+					if(item->type == IT_IDENTORNULL)
+					{
+						buf_append(&state.decode_fns, "\t\tstruct der_tag null_tag;\n");
+						buf_append(&state.decode_fns, "\t\tif((sublen = der_decode_Tag(der, &null_tag)) < 0)\n");
+						buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
+						buf_append(&state.decode_fns, "\t\tif(is_Null(null_tag.class, null_tag.number))\n");
+						buf_append(&state.decode_fns, "\t\t{\n");
+						buf_append(&state.decode_fns, "\t\t\tleft -= sublen;\n");
+						buf_append(&state.decode_fns, "\t\t}\n");
+						buf_append(&state.decode_fns, "\t\telse\n");
+						buf_append(&state.decode_fns, "\t\t{\n");
+						buf_append(&state.decode_fns, "\t\t\tfseek(der, -sublen, SEEK_CUR);\n");
+						buf_append(&state.decode_fns, "\t\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+						buf_append(&state.decode_fns, "\t\t\tif(sublen < 0)\n");
+						buf_append(&state.decode_fns, "\t\t\t\treturn der_error(\"%s\");\n", name);
+						buf_append(&state.decode_fns, "\t\t\tleft -= tag.length;\n");
+						buf_append(&state.decode_fns, "\t\t}\n");
+					}
+					else
+					{
+						buf_append(&state.decode_fns, "\t\tsublen = asn1decode_%s(der, out, tag.length);\n", item->name);
+						buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
+						buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
+						buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
+					}
 				}
-				buf_append(&state.decode_fns, "\t\tif(sublen < 0)\n");
-				buf_append(&state.decode_fns, "\t\t\treturn der_error(\"%s\");\n", name);
-				buf_append(&state.decode_fns, "\t\tleft -= tag.length;\n");
 				buf_append(&state.decode_fns, "\t}\n");
 				/* is it a type that is encoded as a NULL if it is not present */
-				if(item->type == IT_IDENTORNULL)
+				if(item->type == IT_IDENTORNULL && keep_tag(asn1tagclass(item->name)))
 				{
 					buf_append(&state.decode_fns, "\telse if(!is_Null(tag.class, tag.number))\n");
 					buf_append(&state.decode_fns, "\t{\n");
