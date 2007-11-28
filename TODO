@@ -5,8 +5,7 @@ output filename should default to App/Scene GroupIdentifier rather than "a"
 ---
 
 mhegc
-not entirely convinced MovementTable/Movement/TargetElement will be encoded correctly
-should Movement be SYNTHETIC?
+check MovementTable/Movement/TargetElement are encoded correctly
 
 ---
 
