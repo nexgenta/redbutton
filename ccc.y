@@ -826,8 +826,14 @@ output_def(char *name)
 		/* assert */
 		if(item->type != IT_IDENTIFIER && item->type != IT_ONEORMORE && item->type != IT_OPTIONAL)
 			fatal("not IDENTIFIER, ONEORMORE or OPTIONAL");
-/* TODO */
-/* is it OPTIONAL - check if length == 0, if so bomb out now */
+#if 0
+		/* is it OPTIONAL - check if length == 0, if so bomb out now */
+		/*
+		 * only thing this effects is TokenManager ::= [MovementTable]
+		 * which works without this check (because TokenGroupBody is a SET)
+		 */
+		if(item->type == IT_OPTIONAL) printf("TODO: OPTIONAL %s->%s\n", name, item->name);
+#endif
 		/* is it a primitive type */
 		if(strcmp(item->name, "BOOLEAN") == 0
 		|| strcmp(item->name, "INTEGER") == 0
