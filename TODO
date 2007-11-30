@@ -9,6 +9,13 @@ check MovementTable/Movement/TargetElement are encoded correctly
 
 ---
 
+mhegc
+be able to choose what value is used for 'true' BOOLEANs (1-255)
+curently we always use 1
+BBC use 0xff
+
+---
+
 mhegd
 check NoTokenActionSlots (empty and not empty)
 check ActionSlots empty (ie Null) works
