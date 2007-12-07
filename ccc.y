@@ -822,7 +822,7 @@ output_def(char *name)
 	{
 		/* output any literals at the start */
 		for(item=state.items; item && item->type==IT_LITERAL; item=item->next)
-			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
+			buf_append(&state.decode_fns, "\toutput_token(out, %s);\n\n", item->name);
 		/* assert */
 		if(item->type != IT_IDENTIFIER && item->type != IT_ONEORMORE && item->type != IT_OPTIONAL)
 			fatal("not IDENTIFIER, ONEORMORE or OPTIONAL");
@@ -951,7 +951,7 @@ output_def(char *name)
 			/* assert */
 			if(item->type != IT_LITERAL)
 				fatal("Trailing non-literal");
-			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
+			buf_append(&state.decode_fns, "\toutput_token(out, %s);\n\n", item->name);
 			item = item->next;
 		}
 	}
@@ -964,7 +964,7 @@ output_def(char *name)
 			buf_append(&state.decode_fns, "\t/* SET */\n");
 		/* output any literals at the start */
 		for(item=state.items; item && item->type==IT_LITERAL; item=item->next)
-			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
+			buf_append(&state.decode_fns, "\toutput_token(out, %s);\n\n", item->name);
 		/* items must be in the order they are defined for SEQUENCE types */
 		switch(asn1type(name))
 		{
@@ -1112,7 +1112,7 @@ output_def(char *name)
 			/* assert */
 			if(item->type != IT_LITERAL)
 				fatal("Trailing non-literal");
-			buf_append(&state.decode_fns, "\tfprintf(out, \"%%s \", %s);\n\n", item->name);
+			buf_append(&state.decode_fns, "\toutput_token(out, %s);\n\n", item->name);
 			item = item->next;
 		}
 	}
@@ -1140,8 +1140,6 @@ output_def(char *name)
 		buf_append(&state.decode_fns, "\t}\n\telse\n");
 		buf_append(&state.decode_fns, "\t{\n\t\treturn der_error(\"%s\");\n\t}\n\n", name);
 		/* end decode_Xxx() function */
-		if(!is_synthetic(asn1tagclass(name)))
-			buf_append(&state.decode_fns, "\tfprintf(out, \"\\n\");\n\n");
 		buf_append(&state.decode_fns, "\tif(left != 0)\n");
 		buf_append(&state.decode_fns, "\t\treturn der_error(\"%s: %%d bytes left\", left);\n\n", name);
 		buf_append(&state.decode_fns, "\tverbose(\"</%s>\\n\");\n\n", name);
@@ -1215,8 +1213,6 @@ output_def(char *name)
 	}
 
 	/* end decode_Xxx() function */
-	if(!is_synthetic(asn1tagclass(name)))
-		buf_append(&state.decode_fns, "\tfprintf(out, \"\\n\");\n\n");
 	buf_append(&state.decode_fns, "\tif(left != 0)\n");
 	buf_append(&state.decode_fns, "\t\treturn der_error(\"%s: %%d bytes left\", left);\n\n", name);
 	buf_append(&state.decode_fns, "\tverbose(\"</%s>\\n\");\n\n", name);

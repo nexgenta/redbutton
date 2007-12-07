@@ -24,6 +24,7 @@ MHEGD_OBJS=	mhegd.o	\
 		asn1decode.o	\
 		der_decode.o	\
 		asn1tag.o	\
+		output.o	\
 		utils.o
 
 TARDIR=`basename ${PWD}`

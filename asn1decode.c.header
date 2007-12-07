@@ -4,6 +4,7 @@
 #include "asn1decode.h"
 #include "der_decode.h"
 #include "asn1tag.h"
+#include "output.h"
 
 void verbose(char *, ...);
 

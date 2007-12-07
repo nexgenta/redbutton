@@ -95,7 +95,7 @@ der_decode_BOOLEAN(FILE *der, FILE *out, int length)
 
 	verbose("<Boolean value=\"%s\"/>\n", val ? "true" : "false");
 
-	fprintf(out, "%s ", val ? "true" : "false");
+	fprintf(out, " %s", val ? "true" : "false");
 
 	return length;
 }
@@ -107,7 +107,7 @@ der_decode_INTEGER(FILE *der, FILE *out, int length)
 
 	verbose("<Integer value=\"%d\"/>\n", val);
 
-	fprintf(out, "%d ", val);
+	fprintf(out, " %d", val);
 
 	return length;
 }
@@ -123,7 +123,7 @@ der_decode_OctetString(FILE *der, FILE *out, int length)
 	verbose("<OctetString size=\"%d\">\n", length);
 
 	/* output a QPRINTABLE string */
-	fprintf(out, "'");
+	fprintf(out, " '");
 	while(left > 0)
 	{
 		if(der_read_file(der, 1, &byte) < 0)
@@ -134,7 +134,7 @@ der_decode_OctetString(FILE *der, FILE *out, int length)
 			fprintf(out, "=%02x", byte);
 		left --;
 	}
-	fprintf(out, "' ");
+	fprintf(out, "'");
 
 	verbose("</OctetString>\n");
 
@@ -162,7 +162,7 @@ der_decode_ENUMERATED(FILE *der, FILE *out, int length, unsigned int max, char *
 
 	verbose("<Enumerated value=\"%d\"/>\n", val);
 
-	fprintf(out, "%s ", names[val - 1]);
+	fprintf(out, " %s", names[val - 1]);
 
 	return length;
 }
