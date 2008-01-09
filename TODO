@@ -25,3 +25,9 @@ check MovementTable (empty and not empty)
 
 clean up ccc.y
 
+---
+
+ideas from mhegenc (http://www.spongelava.com/mhegenc.html):
+allow INTEGERs to be arthimetic expressions
+#include "uk.inc"
+
