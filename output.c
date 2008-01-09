@@ -54,7 +54,14 @@ output_token(FILE *out, char *tok)
 		print_newline(out);
 		print_token(out, tok);
 	}
-	else if(tok[0] == ':' && strcmp(tok, ":ContentRef") != 0)
+	else if(tok[0] == ':'
+	     && strcmp(tok, ":GBoolean") != 0
+	     && strcmp(tok, ":GInteger") != 0
+	     && strcmp(tok, ":GOctetString") != 0
+	     && strcmp(tok, ":GObjectRef") != 0
+	     && strcmp(tok, ":GContentRef") != 0
+	     && strcmp(tok, ":IndirectRef") != 0
+	     && strcmp(tok, ":ContentRef") != 0)
 	{
 		print_newline(out);
 		print_token(out, tok);
