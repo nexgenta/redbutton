@@ -25,6 +25,8 @@
 
 #include <stdio.h>
 
+void output_init(void);
+
 void output_token(FILE *, char *);
 
 #endif	/* __OUTPUT_H__ */

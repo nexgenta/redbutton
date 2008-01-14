@@ -31,3 +31,32 @@ ideas from mhegenc (http://www.spongelava.com/mhegenc.html):
 allow INTEGERs to be arthimetic expressions
 #include "uk.inc"
 
+---
+
+mhegd
+make this look nicer (4165/a)...
+{:TokenGroup 1000
+	:Shared true
+	:TokenGroupItems (
+		( 102
+		:ActionSlots (
+			(
+			:Call ( ... )
+			:Activate ( 1001 )
+		) )
+	)
+}
+
+this is even worse (4165/enh_gateway.mhg)...
+                {:TokenGroup 82
+                        :TokenGroupItems (
+                                ( ( '/a' 1 )
+                                :ActionSlots (
+                                        (
+                                        :Run ( ( '/a' 119 ) ) ) (
+                                        :Run ( ( '/a' 119 ) ) ) (
+                                        :Run ( ( '/a' 122 ) )
+                                        :Run ( ( '/a' 120 ) ) )
+                                ) )
+                        )
+

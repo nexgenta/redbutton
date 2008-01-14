@@ -29,6 +29,7 @@
 
 #include "asn1decode.h"
 #include "der_decode.h"
+#include "output.h"
 #include "utils.h"
 
 void verbose(const char *, ...);
@@ -82,6 +83,7 @@ main(int argc, char *argv[])
 	rewind(in_file);
 
 	/* write text form of DER encoded in_file to out_file */
+	output_init();
 	used = asn1decode_InterchangedObject(in_file, out_file, filesize);
 	fprintf(out_file, "\n");
 	if(used < 0)
