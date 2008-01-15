@@ -68,7 +68,7 @@ output_token(FILE *out, char *tok)
 	else if(tok[0] == ')' && tok[1] == '\0')
 	{
 		/* assert */
-		if(paren_level <=0)
+		if(paren_level <= 0)
 			fatal("output_token: unexpected ')'");
 		if(indent_paren[paren_level])
 		{
