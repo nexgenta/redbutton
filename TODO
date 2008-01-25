@@ -19,3 +19,6 @@ transactionId in DII messages is a version number
 create carousels/PID/CID dir in add_dsmcc_pid()
 (may need to use carousels/<assoc_tag> as stream2pid may return 0)
 
+if you run rb-download without a service ID (ie want to list channels), but we
+can't get a lock, then list the channels in the channels.conf file
+
