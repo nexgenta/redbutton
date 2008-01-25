@@ -101,6 +101,10 @@ output_token(FILE *out, char *tok)
 	     || strcmp(tok, ":Multiplex") == 0
 	     || strcmp(tok, ":NextScenes") == 0
 	     || strcmp(tok, ":NoTokenActionSlots") == 0
+	     || strcmp(tok, ":OnCloseDown") == 0
+	     || strcmp(tok, ":OnRestart") == 0
+	     || strcmp(tok, ":OnSpawnCloseDown") == 0
+	     || strcmp(tok, ":OnStartUp") == 0
 	     || strcmp(tok, ":Positions") == 0
 	     || strcmp(tok, ":TokenGroupItems") == 0)
 	{
