@@ -36,7 +36,7 @@ der_encode_BOOLEAN(unsigned char **out, unsigned int *len, bool val)
 
 	*len = 1;
 	*out = safe_malloc(1);
-	(*out)[0] = val ? 1 : 0;
+	(*out)[0] = val ? 0xff : 0;
 
 	return;
 }
