@@ -128,7 +128,8 @@ has_real_children(struct node *n)
  * parser functions for the predefined types
  */
 
-void parse_BOOLEAN(struct node *parent)
+void
+parse_BOOLEAN(struct node *parent)
 {
 	if(next_token() != BOOLEAN)
 		parse_error("Unexpected token '%s'; expecting 'true' or 'false'", token_text());
@@ -144,8 +145,8 @@ void parse_BOOLEAN(struct node *parent)
 	return;
 }
 
-
-void parse_INTEGER(struct node *parent)
+void
+parse_INTEGER(struct node *parent)
 {
 	if(next_token() != INTEGER)
 		parse_error("Unexpected token '%s'; expecting an integer", token_text());
@@ -161,7 +162,8 @@ void parse_INTEGER(struct node *parent)
 	return;
 }
 
-void parse_OCTETSTRING(struct node *parent)
+void
+parse_OCTETSTRING(struct node *parent)
 {
 	/*
 	 * create an explicit UNIVERSAL type if necessary
@@ -178,7 +180,8 @@ void parse_OCTETSTRING(struct node *parent)
 	return;
 }
 
-void parse_STRING(struct node *parent)
+void
+parse_STRING(struct node *parent)
 {
 	if(next_token() != STRING)
 		parse_error("Unexpected token '%s'; expecting \"STRING\"", token_text());
@@ -190,7 +193,8 @@ void parse_STRING(struct node *parent)
 	return;
 }
 
-void parse_QPRINTABLE(struct node *parent)
+void
+parse_QPRINTABLE(struct node *parent)
 {
 	if(next_token() != QPRINTABLE)
 		parse_error("Unexpected token '%s'; expecting 'QPRINTABLE'", token_text());
@@ -202,7 +206,8 @@ void parse_QPRINTABLE(struct node *parent)
 	return;
 }
 
-void parse_BASE64(struct node *parent)
+void
+parse_BASE64(struct node *parent)
 {
 	if(next_token() != BASE64)
 		parse_error("Unexpected token '%s'; expecting `BASE64`", token_text());
@@ -214,7 +219,8 @@ void parse_BASE64(struct node *parent)
 	return;
 }
 
-void parse_Null(struct node *parent)
+void
+parse_Null(struct node *parent)
 {
 	if(next_token() != Null)
 		parse_error("Unexpected token '%s'; expecting 'Null'", token_text());
