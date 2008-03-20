@@ -139,7 +139,7 @@ void parse_BOOLEAN(struct node *parent)
 	if(needs_tagging(parent->asn1tag, parent->asn1class))
 		parent = add_child(parent, ASN1TAGCLASS_BOOLEAN);
 
-	der_encode_BOOLEAN(&parent->value, &parent->length, strcmp(token_text(), "false"));
+	der_encode_BOOLEAN(&parent->value, &parent->length, strcasecmp(token_text(), "false"));
 
 	return;
 }
