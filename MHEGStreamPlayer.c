@@ -102,7 +102,7 @@ new_AudioFrameListItem(void)
 
 	af->item.pts = AV_NOPTS_VALUE;
 
-	af->item.size = 0;
+	af->item.size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 
 	return af;
 }
@@ -433,7 +433,8 @@ decode_thread(void *arg)
 			{
 				audio_frame = new_AudioFrameListItem();
 				af = &audio_frame->item;
-				used = avcodec_decode_audio(audio_codec_ctx, af->data, &af->size, data, size);
+
+				used = avcodec_decode_audio2(audio_codec_ctx, af->data, &af->size, data, size);
 				data += used;
 				size -= used;
 				if(af->size > 0)
