@@ -15,7 +15,7 @@ typedef struct
 } MHEGAudioOutput;
 
 /* default ALSA device */
-#define ALSA_AUDIO_DEVICE	"plughw"
+#define ALSA_AUDIO_DEVICE	"default"
 
 bool MHEGAudioOutput_init(MHEGAudioOutput *);
 void MHEGAudioOutput_fini(MHEGAudioOutput *);
