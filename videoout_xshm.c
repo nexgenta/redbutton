@@ -38,8 +38,7 @@ vo_xshm_init(void)
 
 	v->current_frame = NULL;
 
-	v->resize_ctx = NULL;
-	v->resized_data = NULL;
+	v->sws_ctx = NULL;
 
 	return v;
 }
@@ -49,10 +48,9 @@ vo_xshm_fini(void *ctx)
 {
 	vo_xshm_ctx *v = (vo_xshm_ctx *) ctx;
 
-	if(v->resize_ctx != NULL)
+	if(v->sws_ctx != NULL)
 	{
-		img_resample_close(v->resize_ctx);
-		safe_free(v->resized_data);
+		sws_freeContext(v->sws_ctx);
 	}
 
 	if(v->current_frame != NULL)
@@ -67,8 +65,6 @@ void
 vo_xshm_prepareFrame(void *ctx, VideoFrame *f, unsigned int out_width, unsigned int out_height)
 {
 	vo_xshm_ctx *v = (vo_xshm_ctx *) ctx;
-	AVPicture *yuv_frame;
-	int resized_size;
 
 	/* have we created the output frame yet */
 	if(v->current_frame == NULL)
@@ -78,41 +74,28 @@ vo_xshm_prepareFrame(void *ctx, VideoFrame *f, unsigned int out_width, unsigned 
 	if(v->current_frame->width != out_width || v->current_frame->height != out_height)
 		vo_xshm_resize_frame(v, out_width, out_height);
 
-	/* see if the input size is different than the output size */
-	if(f->width != out_width || f->height != out_height)
+	/* have the input or output dimensions changed */
+	if(v->sws_ctx == NULL
+	|| v->resize_in.width != f->width || v->resize_in.height != f->height
+	|| v->resize_out.width != out_width || v->resize_out.height != out_height)
 	{
-		/* have the resize input or output dimensions changed */
-		if(v->resize_ctx == NULL
-		|| v->resize_in.width != f->width || v->resize_in.height != f->height
-		|| v->resize_out.width != out_width || v->resize_out.height != out_height)
-		{
-			/* get rid of any existing resize context */
-			if(v->resize_ctx != NULL)
-				img_resample_close(v->resize_ctx);
-			if((v->resize_ctx = img_resample_init(out_width, out_height, f->width, f->height)) == NULL)
-				fatal("Out of memory");
-			/* remember the resize input and output dimensions */
-			v->resize_in.width = f->width;
-			v->resize_in.height = f->height;
-			v->resize_out.width = out_width;
-			v->resize_out.height = out_height;
-			/* somewhere to store the resized frame */
-			if((resized_size = avpicture_get_size(f->pix_fmt, out_width, out_height)) < 0)
-				fatal("vo_xshm_prepareFrame: invalid frame size");
-			v->resized_data = safe_realloc(v->resized_data, resized_size);
-			avpicture_fill(&v->resized_frame, v->resized_data, f->pix_fmt, out_width, out_height);
-		}
-		/* resize it */
-		img_resample(v->resize_ctx, &v->resized_frame, &f->frame);
-		yuv_frame = &v->resized_frame;
-	}
-	else
-	{
-		yuv_frame = &f->frame;
+		/* get rid of any existing resize context */
+		if(v->sws_ctx != NULL)
+			sws_freeContext(v->sws_ctx);
+		if((v->sws_ctx = sws_getContext(f->width, f->height, f->pix_fmt,
+						out_width, out_height, v->out_format,
+						SWS_FAST_BILINEAR, NULL, NULL, NULL)) == NULL)
+			fatal("Out of memory");
+		verbose("videoout_xshm: input=%d,%d output=%d,%d", f->width, f->height, out_width, out_height);
+		/* remember the resize input and output dimensions */
+		v->resize_in.width = f->width;
+		v->resize_in.height = f->height;
+		v->resize_out.width = out_width;
+		v->resize_out.height = out_height;
 	}
 
-	/* convert the frame to RGB */
-	img_convert(&v->rgb_frame, v->out_format, yuv_frame, f->pix_fmt, out_width, out_height);
+	/* resize it (if needed) and convert to RGB */
+	sws_scale(v->sws_ctx, f->frame.data, f->frame.linesize, 0, f->height, v->rgb_frame.data, v->rgb_frame.linesize);
 
 	return;
 }

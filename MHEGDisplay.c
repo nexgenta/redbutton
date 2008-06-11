@@ -14,6 +14,7 @@
 #include <X11/Shell.h>
 #include <X11/keysym.h>
 #include <ffmpeg/avformat.h>
+#include <ffmpeg/swscale.h>
 
 #include "MHEGEngine.h"
 #include "MHEGDisplay.h"
@@ -908,13 +909,20 @@ MHEGDisplay_newMPEGBitmap(MHEGDisplay *d, OctetString *mpeg)
 	else
 	{
 		/* convert to RGBA */
+		struct SwsContext *sws_ctx;
 		width = codec_ctx->width;
 		height = codec_ctx->height;
 		if((nbytes = avpicture_get_size(PIX_FMT_RGBA32, width, height)) < 0)
 			fatal("Invalid MPEG image");
 		rgba = safe_malloc(nbytes);
 		avpicture_fill((AVPicture *) rgb_frame, rgba, PIX_FMT_RGBA32, width, height);
-		img_convert((AVPicture *) rgb_frame, PIX_FMT_RGBA32, (AVPicture*) yuv_frame, codec_ctx->pix_fmt, width, height);
+		//img_convert((AVPicture *) rgb_frame, PIX_FMT_RGBA32, (AVPicture*) yuv_frame, codec_ctx->pix_fmt, width, height);
+		if((sws_ctx = sws_getContext(width, height, codec_ctx->pix_fmt,
+					     width, height, PIX_FMT_RGBA32,
+					     SWS_FAST_BILINEAR, NULL, NULL, NULL)) == NULL)
+			fatal("Out of memory");
+		sws_scale(sws_ctx, yuv_frame->data, yuv_frame->linesize, 0, height, rgb_frame->data, rgb_frame->linesize);
+		sws_freeContext(sws_ctx);
 		/* convert the PIX_FMT_RGBA32 data to a MHEGBitmap */
 		b = MHEGBitmap_fromRGBA(d, rgba, width, height);
 	}

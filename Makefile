@@ -11,6 +11,9 @@ DEFS=-D_REENTRANT -D_GNU_SOURCE
 INCS=`freetype-config --cflags`
 LIBS=-lm -lz -L/usr/X11R6/lib -lX11 -lXext -lXt -lXrender -lXft -lpng -lavformat -lavcodec -lavutil -lasound -lpthread
 
+# if libswscale is not in libavcodec, add a -lswscale to the LIBS
+LIBS+=`[ -f /usr/lib/libswscale.so -o -f /usr/local/lib/libswscale.so ] && echo "-lswscale"`
+
 CLASSES=ActionClass.o	\
 	ApplicationClass.o	\
 	AudioClass.o	\

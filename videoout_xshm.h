@@ -9,6 +9,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
 #include <ffmpeg/avcodec.h>
+#include <ffmpeg/swscale.h>
 
 typedef struct
 {
@@ -22,11 +23,9 @@ typedef struct
 	XShmSegmentInfo shm;			/* shared memory used by current_frame */
 	AVPicture rgb_frame;			/* ffmpeg wrapper for current_frame SHM data */
 	enum PixelFormat out_format;		/* rgb_frame ffmpeg pixel format */
-	ImgReSampleContext *resize_ctx;		/* NULL if we do not need to resize the frame */
-	FrameSize resize_in;			/* resize_ctx input dimensions */
-	FrameSize resize_out;			/* resize_ctx output dimensions */
-	AVPicture resized_frame;		/* resized output frame */
-	uint8_t *resized_data;			/* resized_frame data buffer */
+        struct SwsContext *sws_ctx;		/* converts to RGB and resizes if needed */
+	FrameSize resize_in;			/* input dimensions */
+	FrameSize resize_out;			/* output dimensions */
 } vo_xshm_ctx;
 
 extern MHEGVideoOutputMethod vo_xshm_fns;
