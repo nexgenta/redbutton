@@ -1037,6 +1037,7 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 	if(d->fullscreen)
 	{
 printf("TODO: MHEGBitmap_fromRGBA: take aspect ratio into account\n");
+/* TODO: use swscale here to permenantly scale up the image */
 		/* set up the matrix to scale it */
 		XTransform xform;
 		/* X */
