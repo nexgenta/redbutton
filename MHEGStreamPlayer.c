@@ -119,47 +119,87 @@ free_AudioFrameListItem(LIST_TYPE(AudioFrame) *af)
 	return;
 }
 
+/*
+ * MHEGStreamPlayer is a singleton
+ * UK MHEG spec says we only need one video/audio decoder
+ * Linux only allows us to open the dvr device once, so we can't have more than one MHEGStreamPlayer
+ */
+
+static MHEGStreamPlayer player;
+
 void
-MHEGStreamPlayer_init(MHEGStreamPlayer *p)
+MHEGStreamPlayer_init(MHEGStreamPlayer **p)
 {
-	bzero(p, sizeof(MHEGStreamPlayer));
+	static bool created = false;
 
-	p->playing = false;
-	p->stop = false;
+	/* have we created the singleton yet */
+	if(!created)
+	{
+		bzero(&player, sizeof(MHEGStreamPlayer));
 
-	p->have_video = false;
-	p->have_audio = false;
+		player.nusers = 0;
 
-	p->video = NULL;
-	p->audio = NULL;
+		player.playing = false;
+		player.stop = false;
 
-	/* stream a/v components from the service we are currently tuned to */
-	p->service_id = -1;
+		player.have_video = false;
+		player.have_audio = false;
 
-	p->audio_codec = NULL;
+		player.video = NULL;
+		player.audio = NULL;
 
-	pthread_mutex_init(&p->base_lock, NULL);
-	pthread_cond_init(&p->base_cond, NULL);
+		/* stream a/v components from the service we are currently tuned to */
+		player.service_id = -1;
 
-	pthread_mutex_init(&p->videoq_lock, NULL);
-	p->videoq = NULL;
+		player.audio_codec = NULL;
 
-	pthread_mutex_init(&p->audioq_lock, NULL);
-	p->audioq = NULL;
+		pthread_mutex_init(&player.base_lock, NULL);
+		pthread_cond_init(&player.base_cond, NULL);
+
+		pthread_mutex_init(&player.videoq_lock, NULL);
+		player.videoq = NULL;
+
+		pthread_mutex_init(&player.audioq_lock, NULL);
+		player.audioq = NULL;
+
+		created = true;
+	}
+
+	player.nusers ++;
+
+	verbose("MHEGStreamPlayer: %u users", player.nusers);
+
+	*p = &player;
 
 	return;
 }
 
 void
-MHEGStreamPlayer_fini(MHEGStreamPlayer *p)
+MHEGStreamPlayer_fini(MHEGStreamPlayer **p)
 {
-	MHEGStreamPlayer_stop(p);
+	/* assert */
+	if(*p != &player)
+		fatal("MHEGStreamPlayer: *p=%p, &player=%p", *p, &player);
 
-	pthread_mutex_destroy(&p->base_lock);
-	pthread_cond_destroy(&p->base_cond);
+	if(player.nusers == 0)
+		fatal("MHEGStreamPlayer: nusers is 0");
 
-	pthread_mutex_destroy(&p->videoq_lock);
-	pthread_mutex_destroy(&p->audioq_lock);
+	MHEGStreamPlayer_stop(&player);
+
+	player.nusers --;
+
+	verbose("MHEGStreamPlayer: %u users", player.nusers);
+
+	*p = NULL;
+
+#if 0
+	/* this is how you would destroy it */
+	pthread_mutex_destroy(&player.base_lock);
+	pthread_cond_destroy(&player.base_cond);
+
+	pthread_mutex_destroy(&player.videoq_lock);
+	pthread_mutex_destroy(&player.audioq_lock);
+#endif
 
 	return;
 }
@@ -173,6 +213,10 @@ MHEGStreamPlayer_fini(MHEGStreamPlayer *p)
 void
 MHEGStreamPlayer_setServiceID(MHEGStreamPlayer *p, int id)
 {
+	/* assert */
+	if(p != &player)
+		fatal("MHEGStreamPlayer_setServiceID: p=%p, &player=%p", p, &player);
+
 	p->service_id = id;
 
 	return;
@@ -181,6 +225,11 @@ MHEGStreamPlayer_setServiceID(MHEGStreamPlayer *p, int id)
 void
 MHEGStreamPlayer_setVideoStream(MHEGStreamPlayer *p, VideoClass *video)
 {
+	/* assert */
+	if(p != &player)
+		fatal("MHEGStreamPlayer_setVideoStream: p=%p, &player=%p", p, &player);
+
+/* TODO need to be able to handle this */
 	/* assert */
 	if(p->playing)
 		fatal("MHEGStreamPlayer_setVideoStream: trying to set stream while playing");
@@ -217,6 +266,11 @@ MHEGStreamPlayer_setVideoStream(MHEGStreamPlayer *p, VideoClass *video)
 void
 MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *p, AudioClass *audio)
 {
+	/* assert */
+	if(p != &player)
+		fatal("MHEGStreamPlayer_setAudioStream: p=%p, &player=%p", p, &player);
+
+/* TODO need to be able to handle this */
 	/* assert */
 	if(p->playing)
 		fatal("MHEGStreamPlayer_setAudioStream: trying to set stream while playing");
@@ -256,6 +310,10 @@ MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *p, AudioClass *audio)
 void
 MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 {
+	/* assert */
+	if(p != &player)
+		fatal("MHEGStreamPlayer_play: p=%p, &player=%p", p, &player);
+
 	verbose("MHEGStreamPlayer_play: service_id=%d audio_tag=%d video_tag=%d", p->service_id, p->audio_tag, p->video_tag);
 
 	/* make sure the VideoClass doesn't try to draw anything yet */
@@ -323,6 +381,10 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 void
 MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 {
+	/* assert */
+	if(p != &player)
+		fatal("MHEGStreamPlayer_stop: p=%p, &player=%p", *p, &player);
+
 	verbose("MHEGStreamPlayer_stop");
 
 	/* are we playing */

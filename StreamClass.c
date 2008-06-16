@@ -108,7 +108,7 @@ StreamClass_Activation(StreamClass *t)
 		 */
 		if(OctetString_strncmp(service, "dvb:", 4) == 0)
 		{
-			MHEGStreamPlayer_setServiceID(&t->inst.player, si_get_service_id(service));
+			MHEGStreamPlayer_setServiceID(t->inst.player, si_get_service_id(service));
 		}
 		else if(OctetString_strncmp(service, "rec://svc/lcn/", 14) == 0)
 		{
@@ -118,7 +118,7 @@ printf("TODO: StreamClass: service='%.*s'\n", service->size, service->data);
 		else if(OctetString_strcmp(service, "rec://svc/def") == 0)
 		{
 			/* use the service ID we are currently tuned to */
-			MHEGStreamPlayer_setServiceID(&t->inst.player, -1);
+			MHEGStreamPlayer_setServiceID(t->inst.player, -1);
 		}
 		/* leave player's service ID as it is for "rec://svc/cur" */
 		else if(OctetString_strcmp(service, "rec://svc/cur") != 0)
@@ -133,10 +133,10 @@ printf("TODO: StreamClass: service='%.*s'\n", service->size, service->data);
 	{
 		if((r = StreamComponent_rootClass(&comp->item)) != NULL
 		&& r->inst.RunningStatus)
-			StreamComponent_play(&comp->item, &t->inst.player);
+			StreamComponent_play(&comp->item, t->inst.player);
 		comp = comp->next;
 	}
-	MHEGStreamPlayer_play(&t->inst.player);
+	MHEGStreamPlayer_play(t->inst.player);
 
 	/* multiplex is now playing */
 	MHEGEngine_generateAsyncEvent(&t->rootClass.inst.ref, EventType_stream_playing, NULL);
@@ -177,13 +177,13 @@ StreamClass_Deactivation(StreamClass *t)
 	}
 
 	/* stop playing all active StreamComponents */
-	MHEGStreamPlayer_stop(&t->inst.player);
+	MHEGStreamPlayer_stop(t->inst.player);
 	comp = t->multiplex;
 	while(comp)
 	{
 		if((r = StreamComponent_rootClass(&comp->item)) != NULL
 		&& r->inst.RunningStatus)
-			StreamComponent_stop(&comp->item, &t->inst.player);
+			StreamComponent_stop(&comp->item, t->inst.player);
 		comp = comp->next;
 	}
 
@@ -260,12 +260,12 @@ StreamClass_activateVideoComponent(StreamClass *t, VideoClass *c)
 
 	/* if we are activated, stop playing while we change the component */
 	if(t->rootClass.inst.RunningStatus)
-		MHEGStreamPlayer_stop(&t->inst.player);
+		MHEGStreamPlayer_stop(t->inst.player);
 
-	MHEGStreamPlayer_setVideoStream(&t->inst.player, c);
+	MHEGStreamPlayer_setVideoStream(t->inst.player, c);
 
 	if(t->rootClass.inst.RunningStatus)
-		MHEGStreamPlayer_play(&t->inst.player);
+		MHEGStreamPlayer_play(t->inst.player);
 
 	return;
 }
@@ -282,12 +282,12 @@ StreamClass_activateAudioComponent(StreamClass *t, AudioClass *c)
 
 	/* if we are activated, stop playing while we change the component */
 	if(t->rootClass.inst.RunningStatus)
-		MHEGStreamPlayer_stop(&t->inst.player);
+		MHEGStreamPlayer_stop(t->inst.player);
 
-	MHEGStreamPlayer_setAudioStream(&t->inst.player, c);
+	MHEGStreamPlayer_setAudioStream(t->inst.player, c);
 
 	if(t->rootClass.inst.RunningStatus)
-		MHEGStreamPlayer_play(&t->inst.player);
+		MHEGStreamPlayer_play(t->inst.player);
 
 	return;
 }
@@ -304,12 +304,12 @@ StreamClass_deactivateVideoComponent(StreamClass *t, VideoClass *c)
 
 	/* if we are activated, stop playing while we change the component */
 	if(t->rootClass.inst.RunningStatus)
-		MHEGStreamPlayer_stop(&t->inst.player);
+		MHEGStreamPlayer_stop(t->inst.player);
 
-	MHEGStreamPlayer_setVideoStream(&t->inst.player, NULL);
+	MHEGStreamPlayer_setVideoStream(t->inst.player, NULL);
 
 	if(t->rootClass.inst.RunningStatus)
-		MHEGStreamPlayer_play(&t->inst.player);
+		MHEGStreamPlayer_play(t->inst.player);
 
 	return;
 }
@@ -326,12 +326,12 @@ StreamClass_deactivateAudioComponent(StreamClass *t, AudioClass *c)
 
 	/* if we are activated, stop playing while we change the component */
 	if(t->rootClass.inst.RunningStatus)
-		MHEGStreamPlayer_stop(&t->inst.player);
+		MHEGStreamPlayer_stop(t->inst.player);
 
-	MHEGStreamPlayer_setAudioStream(&t->inst.player, NULL);
+	MHEGStreamPlayer_setAudioStream(t->inst.player, NULL);
 
 	if(t->rootClass.inst.RunningStatus)
-		MHEGStreamPlayer_play(&t->inst.player);
+		MHEGStreamPlayer_play(t->inst.player);
 
 	return;
 }

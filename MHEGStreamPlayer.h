@@ -53,6 +53,7 @@ void free_AudioFrameListItem(LIST_TYPE(AudioFrame) *);
 /* player state */
 typedef struct
 {
+	unsigned int nusers;		/* reference count */
 	bool playing;			/* true when our threads are active */
 	bool stop;			/* true => stop playback */
 	bool have_video;		/* false if we have no video stream */
@@ -81,8 +82,8 @@ typedef struct
 	LIST_OF(AudioFrame) *audioq;	/* head of list is next to be played */
 } MHEGStreamPlayer;
 
-void MHEGStreamPlayer_init(MHEGStreamPlayer *);
-void MHEGStreamPlayer_fini(MHEGStreamPlayer *);
+void MHEGStreamPlayer_init(MHEGStreamPlayer **);
+void MHEGStreamPlayer_fini(MHEGStreamPlayer **);
 
 void MHEGStreamPlayer_setServiceID(MHEGStreamPlayer *, int);
 void MHEGStreamPlayer_setVideoStream(MHEGStreamPlayer *, VideoClass *);
