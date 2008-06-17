@@ -314,6 +314,12 @@ MHEGStreamPlayer_play(MHEGStreamPlayer *p)
 
 	verbose("MHEGStreamPlayer_play: service_id=%d audio_tag=%d video_tag=%d", p->service_id, p->audio_tag, p->video_tag);
 
+	if(p->playing)
+	{
+		verbose("MHEGStreamPlayer_play: already playing");
+		return;
+	}
+
 	/* make sure the VideoClass doesn't try to draw anything yet */
 	if(p->video != NULL)
 		p->video->inst.no_video = true;
