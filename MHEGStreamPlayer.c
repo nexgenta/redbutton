@@ -229,7 +229,6 @@ MHEGStreamPlayer_setVideoStream(MHEGStreamPlayer *p, VideoClass *video)
 	if(p != &player)
 		fatal("MHEGStreamPlayer_setVideoStream: p=%p, &player=%p", p, &player);
 
-/* TODO need to be able to handle this */
 	/* assert */
 	if(p->playing)
 		fatal("MHEGStreamPlayer_setVideoStream: trying to set stream while playing");
@@ -270,7 +269,6 @@ MHEGStreamPlayer_setAudioStream(MHEGStreamPlayer *p, AudioClass *audio)
 	if(p != &player)
 		fatal("MHEGStreamPlayer_setAudioStream: p=%p, &player=%p", p, &player);
 
-/* TODO need to be able to handle this */
 	/* assert */
 	if(p->playing)
 		fatal("MHEGStreamPlayer_setAudioStream: trying to set stream while playing");
