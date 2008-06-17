@@ -383,7 +383,7 @@ MHEGStreamPlayer_stop(MHEGStreamPlayer *p)
 {
 	/* assert */
 	if(p != &player)
-		fatal("MHEGStreamPlayer_stop: p=%p, &player=%p", *p, &player);
+		fatal("MHEGStreamPlayer_stop: p=%p, &player=%p", p, &player);
 
 	verbose("MHEGStreamPlayer_stop");
 
