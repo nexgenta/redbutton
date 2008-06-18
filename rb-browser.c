@@ -8,7 +8,7 @@
  * (do 'rb-browser -o' for a list of available methods)
  * -k changes the default key map to the given file
  * (use rb-keymap to generate a keymap config file)
- * -t is how long to poll for missing files before generating a ContentRefError (default 10 seconds)
+ * -t is how long to poll for missing files before generating a ContentRefError (default 30 seconds)
  * -r means use a remote backend (rb-download running on another host), <service_gateway> should be host[:port]
  * if -r is not specified, rb-download is running on the same machine
  * and <service_gateway> should be an entry in the services directory, eg. services/4165
