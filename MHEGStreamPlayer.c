@@ -188,6 +188,17 @@ MHEGStreamPlayer_fini(MHEGStreamPlayer **p)
 
 	player.nusers --;
 
+	/* reset the service ID and streams if all the users have gone */
+	if(player.nusers == 0)
+	{
+		player.service_id = -1;
+		player.have_video = false;
+		player.video = NULL;
+		player.have_audio = false;
+		player.audio = NULL;
+		player.audio_codec = NULL;
+	}
+
 	verbose("MHEGStreamPlayer: %u users", player.nusers);
 
 	*p = NULL;
@@ -216,6 +227,10 @@ MHEGStreamPlayer_setServiceID(MHEGStreamPlayer *p, int id)
 	/* assert */
 	if(p != &player)
 		fatal("MHEGStreamPlayer_setServiceID: p=%p, &player=%p", p, &player);
+
+	/* assert */
+	if(p->playing && p->service_id != id)
+		fatal("MHEGStreamPlayer_setServiceID: trying to change service ID while playing");
 
 	p->service_id = id;
 
