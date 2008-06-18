@@ -18,7 +18,7 @@
 #include "listof.h"
 
 /* default time to poll for missing content before generating a ContentRefError (seconds) */
-#define MISSING_CONTENT_TIMEOUT		10
+#define MISSING_CONTENT_TIMEOUT		30
 
 /* where to start searching for unused object numbers for clones */
 #define FIRST_CLONED_OBJ_NUM		(1<<16)
