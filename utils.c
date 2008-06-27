@@ -264,6 +264,6 @@ fatal(char *message, ...)
 	printf("\n");
 	va_end(ap);
 
-	exit(EXIT_FAILURE);
+	abort();
 }
 
