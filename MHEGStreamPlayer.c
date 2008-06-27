@@ -103,7 +103,7 @@ new_AudioFrameListItem(void)
 
 	af->item.pts = AV_NOPTS_VALUE;
 
-	af->item.size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
+	af->item.size = sizeof(af->item.data);
 
 	return af;
 }
@@ -518,7 +518,7 @@ decode_thread(void *arg)
 				used = avcodec_decode_audio2(audio_codec_ctx, af->data, &af->size, data, size);
 				data += used;
 				size -= used;
-				if(af->size > 0)
+				if(used > 0 && af->size > 0)
 				{
 					af->pts = pts;
 					/* 16 or 32-bit samples, but af->size is in bytes */
@@ -535,6 +535,8 @@ decode_thread(void *arg)
 				else
 				{
 					free_AudioFrameListItem(audio_frame);
+					/* throw the rest of the packet away */
+					size = 0;
 				}
 			}
 			/* don't want one thread hogging the CPU time */
