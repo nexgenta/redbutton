@@ -56,7 +56,7 @@ typedef struct
 	MHEGKeyMapEntry *keymap;		/* keyboard mapping */
 } MHEGDisplay;
 
-void MHEGDisplay_init(MHEGDisplay *, bool, char *);
+void MHEGDisplay_init(MHEGDisplay *, bool, char *, int);
 void MHEGDisplay_fini(MHEGDisplay *);
 
 bool MHEGDisplay_processEvents(MHEGDisplay *, bool);

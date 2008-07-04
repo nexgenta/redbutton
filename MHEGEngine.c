@@ -171,7 +171,7 @@ MHEGEngine_init(MHEGEngineOptions *opts)
 	engine.verbose = opts->verbose;
 	engine.timeout = opts->timeout;
 
-	MHEGDisplay_init(&engine.display, opts->fullscreen, opts->keymap);
+	MHEGDisplay_init(&engine.display, opts->fullscreen, opts->keymap, opts->verbose);
 
 	engine.vo_method = MHEGVideoOutputMethod_fromString(opts->vo_method);
 	engine.av_disabled = opts->av_disabled;

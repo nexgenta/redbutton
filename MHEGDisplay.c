@@ -66,7 +66,7 @@ static MHEGKeyMapEntry default_keymap[] =
 };
 
 void
-MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
+MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap, int verbose)
 {
 	unsigned int xrender_major;
 	unsigned int xrender_minor;
@@ -255,6 +255,9 @@ MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap)
 
 	/* init ffmpeg */
 	av_register_all();
+	/* stop ffmpeg flooding stderr if the signal is noisy */
+	if(!verbose)
+		av_log_set_level(AV_LOG_QUIET);
 
 	return;
 }
