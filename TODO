@@ -1,3 +1,11 @@
+FreeSat MHEG needs Interactible and Slider classes
+
+
+include a local copy of ffmpeg (and swscale)
+(new versions of ffmpeg have broken our audio output somewhere)
+
+
+
 got this once when changing channels:
 X Error of failed request:  BadAccess (attempt to access private resource denied)
   Major opcode of failed request:  146 (MIT-SHM)
