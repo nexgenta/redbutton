@@ -68,7 +68,7 @@ static int diseqc_send_msg(int, fe_sec_voltage_t, struct diseqc_cmd *, fe_sec_to
  */
 
 char *
-zap_name(unsigned int adapter)
+zap_name(unsigned int adapter, unsigned int frontend)
 {
 	char fe_dev[PATH_MAX];
 	int fe_fd;
@@ -76,7 +76,7 @@ zap_name(unsigned int adapter)
 	bool got_info;
 
 	/* see what type of DVB device the adapter is */
-	snprintf(fe_dev, sizeof(fe_dev), FE_DEVICE, adapter);
+	snprintf(fe_dev, sizeof(fe_dev), FE_DEVICE, adapter, frontend);
 
 	if((fe_fd = open(fe_dev, O_RDONLY | O_NONBLOCK)) < 0)
 		fatal("open '%s': %s", fe_dev, strerror(errno));
@@ -503,7 +503,7 @@ diseqc_send_msg(int fd, fe_sec_voltage_t v, struct diseqc_cmd *cmd, fe_sec_tone_
  */
 
 bool
-tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
+tune_service_id(unsigned int adapter, unsigned int frontend, unsigned int timeout, uint16_t service_id)
 {
 	char fe_dev[PATH_MAX];
 	bool got_info;
@@ -522,7 +522,7 @@ tune_service_id(unsigned int adapter, unsigned int timeout, uint16_t service_id)
 
 	if(fe_fd < 0)
 	{
-		snprintf(fe_dev, sizeof(fe_dev), FE_DEVICE, adapter);
+		snprintf(fe_dev, sizeof(fe_dev), FE_DEVICE, adapter, frontend);
 		/*
 		 * need O_RDWR if you want to tune, O_RDONLY is okay for getting info
 		 * if someone else is using the frontend, we can only open O_RDONLY

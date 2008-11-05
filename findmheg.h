@@ -33,7 +33,7 @@ struct avstreams
 	uint8_t video_type;
 };
 
-struct carousel *find_mheg(unsigned int, unsigned int, uint16_t, int);
+struct carousel *find_mheg(unsigned int, unsigned int, unsigned int, unsigned int, uint16_t, int);
 
 struct avstreams *find_avstreams(struct carousel *, int, int, int);
 

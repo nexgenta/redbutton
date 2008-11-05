@@ -30,7 +30,7 @@
 #define TAG_SERVICE_DESCRIPTOR	0x48
 
 void
-list_channels(unsigned int adapter, unsigned int timeout)
+list_channels(unsigned int adapter, unsigned int demux, unsigned int timeout)
 {
 	char demux_dev[PATH_MAX];
 	unsigned char sdt[MAX_TABLE_LEN];
@@ -42,7 +42,7 @@ list_channels(unsigned int adapter, unsigned int timeout)
 	uint8_t desc_length;
 	uint8_t name_len;
 
-	snprintf(demux_dev, sizeof(demux_dev), DEMUX_DEVICE, adapter);
+	snprintf(demux_dev, sizeof(demux_dev), DEMUX_DEVICE, adapter, demux);
 
 	printf("Channels on this mutiplex:\n\n");
 	printf("ID\tChannel\n");

@@ -26,11 +26,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-char *zap_name(unsigned int);
+char *zap_name(unsigned int, unsigned int);
 
 bool init_channels_conf(char *, char *);
 
-bool tune_service_id(unsigned int, unsigned int, uint16_t);
+bool tune_service_id(unsigned int, unsigned int, unsigned int, uint16_t);
 
 bool service_available(uint16_t);
 

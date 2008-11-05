@@ -123,7 +123,7 @@ get_host_addr(char *host, struct in_addr *output)
  */
 
 void
-start_listener(struct sockaddr_in *listen_addr, unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
+start_listener(struct sockaddr_in *listen_addr, unsigned int adapter, unsigned int frontend, unsigned int demux, unsigned int dvr, unsigned int timeout, uint16_t service_id, int carousel_id)
 {
 	struct listen_data listen_data;
 	struct sigaction action;
@@ -143,7 +143,7 @@ start_listener(struct sockaddr_in *listen_addr, unsigned int adapter, unsigned i
 		fatal("signal: SIGCHLD: %s", strerror(errno));
 
 	/* fork off a child to download the carousel */
-	listen_data.carousel = start_downloader(adapter, timeout, service_id, carousel_id);
+	listen_data.carousel = start_downloader(adapter, frontend, demux, dvr, timeout, service_id, carousel_id);
 
 	/* catch SIGHUP - tells us to retune */
 	action.sa_sigaction = hup_handler;
@@ -179,7 +179,7 @@ start_listener(struct sockaddr_in *listen_addr, unsigned int adapter, unsigned i
 			/* kill the current downloader process and start a new one */
 			kill(listen_data.carousel->downloader, SIGKILL);
 			cache_flush();
-			listen_data.carousel = start_downloader(adapter, timeout, retune_id, -1);
+			listen_data.carousel = start_downloader(adapter, frontend, demux, dvr, timeout, retune_id, -1);
 			retune_id = -1;
 		}
 		/* listen for a connection */
@@ -275,17 +275,17 @@ handle_connection(struct listen_data *listen_data, int client_sock, struct socka
 }
 
 struct carousel *
-start_downloader(unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
+start_downloader(unsigned int adapter, unsigned int frontend, unsigned int demux, unsigned int dvr, unsigned int timeout, uint16_t service_id, int carousel_id)
 {
 	struct carousel *car;
 	pid_t child;
 
 	/* retune if needed */
-	if(!tune_service_id(adapter, timeout, service_id))
+	if(!tune_service_id(adapter, frontend, timeout, service_id))
 		error("Unable to retune; let's hope you're already tuned to the right frequency...");
 	
 	/* find the MHEG PIDs */
-	car = find_mheg(adapter, timeout, service_id, carousel_id);
+	car = find_mheg(adapter, demux, dvr, timeout, service_id, carousel_id);
 
 	verbose("Carousel ID=%u", car->carousel_id);
 	verbose("Boot PID=%u", car->boot_pid);

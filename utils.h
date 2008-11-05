@@ -33,23 +33,23 @@
 
 /* DVB demux device - %u is card number */
 #if defined(HAVE_DREAMBOX_HARDWARE)
-#define DEMUX_DEVICE "/dev/dvb/card%u/demux0"
+#define DEMUX_DEVICE "/dev/dvb/card%u/demux%u"
 #else
-#define DEMUX_DEVICE  "/dev/dvb/adapter%u/demux0"
+#define DEMUX_DEVICE  "/dev/dvb/adapter%u/demux%u"
 #endif
 
 /* DVB dvr device - %u is card number */
 #if defined(HAVE_DREAMBOX_HARDWARE)
-#define DVR_DEVICE "/dev/dvb/card%u/dvr0"
+#define DVR_DEVICE "/dev/dvb/card%u/dvr%u"
 #else
-#define DVR_DEVICE  "/dev/dvb/adapter%u/dvr0"
+#define DVR_DEVICE  "/dev/dvb/adapter%u/dvr%u"
 #endif
 
 /* DVB frontend device - %u is card number */
 #if defined(HAVE_DREAMBOX_HARDWARE)
-#define FE_DEVICE "/dev/dvb/card%u/frontend0"
+#define FE_DEVICE "/dev/dvb/card%u/frontend%u"
 #else
-#define FE_DEVICE  "/dev/dvb/adapter%u/frontend0"
+#define FE_DEVICE  "/dev/dvb/adapter%u/frontend%u"
 #endif
 
 char *skip_ws(char *);

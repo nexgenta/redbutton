@@ -98,7 +98,7 @@ is_audio_stream(uint8_t stream_type)
 static struct carousel _car;
 
 struct carousel *
-find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int carousel_id)
+find_mheg(unsigned int adapter, unsigned int demux, unsigned int dvr, unsigned int timeout, uint16_t service_id, int carousel_id)
 {
 	unsigned char pmt[MAX_TABLE_LEN];
 	unsigned char *sdt = pmt;
@@ -114,8 +114,8 @@ find_mheg(unsigned int adapter, unsigned int timeout, uint16_t service_id, int c
 	int desc_carousel_id;
 
 	/* carousel data we know so far */
-	snprintf(_car.demux_device, sizeof(_car.demux_device), DEMUX_DEVICE, adapter);
-	snprintf(_car.dvr_device, sizeof(_car.dvr_device), DVR_DEVICE, adapter);
+	snprintf(_car.demux_device, sizeof(_car.demux_device), DEMUX_DEVICE, adapter, demux);
+	snprintf(_car.dvr_device, sizeof(_car.dvr_device), DVR_DEVICE, adapter, dvr);
 	_car.timeout = timeout;
 	_car.service_id = service_id;
 
