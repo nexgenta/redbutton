@@ -41,6 +41,7 @@ list_channels(unsigned int adapter, unsigned int demux, unsigned int timeout)
 	uint8_t desc_tag;
 	uint8_t desc_length;
 	uint8_t name_len;
+	uint8_t sn, lsn;
 
 	snprintf(demux_dev, sizeof(demux_dev), DEMUX_DEVICE, adapter, demux);
 
@@ -49,50 +50,53 @@ list_channels(unsigned int adapter, unsigned int demux, unsigned int timeout)
 	printf("==\t=======\n");
 
 	/* grab the Service Description Table */
-	if(!read_sdt(demux_dev, timeout, sdt))
-		fatal("Unable to read SDT");
-
-	/* 12 bit section_length field */
-	size = 3 + (((sdt[1] & 0x0f) << 8) + sdt[2]);
-
-	/* loop through the services */
-	offset = 11;
-	/* -4 for the CRC at the end */
-	while(offset < (size - 4))
+	for(sn=0, lsn=0; sn<=lsn; sn++)
 	{
-		service_id = (sdt[offset] << 8) + sdt[offset+1];
-		printf("%u\t", service_id);
-		/* move on to the descriptors */
-		offset += 3;
-		desc_loop_length = ((sdt[offset] & 0x0f) << 8) + sdt[offset+1];
-		offset += 2;
-		/* find the service_descriptor tag */
-		while(desc_loop_length != 0)
+		if(!read_sdt(demux_dev, timeout, sdt, sn))
+			fatal("Unable to read SDT");
+		/* 12 bit section_length field */
+		size = 3 + (((sdt[1] & 0x0f) << 8) + sdt[2]);
+		/* last_section_number */
+		lsn = sdt[7];
+		/* loop through the services */
+		offset = 11;
+		/* -4 for the CRC at the end */
+		while(offset < (size - 4))
 		{
-			desc_tag = sdt[offset];
-			desc_length = sdt[offset+1];
+			service_id = (sdt[offset] << 8) + sdt[offset+1];
+			printf("%u\t", service_id);
+			/* move on to the descriptors */
+			offset += 3;
+			desc_loop_length = ((sdt[offset] & 0x0f) << 8) + sdt[offset+1];
 			offset += 2;
-			desc_loop_length -= 2;
-			if(desc_tag == TAG_SERVICE_DESCRIPTOR)
+			/* find the service_descriptor tag */
+			while(desc_loop_length != 0)
 			{
-				/* service_type = sds[offset]; */
-				offset += 1;
-				/* service_provider_name */
-				name_len = sdt[offset];
-				offset += 1 + name_len;
-				/* service_name */
-				name_len = sdt[offset];
-				offset += 1;
-				printf("%.*s\n", name_len, &sdt[offset]);
-				offset += name_len;
+				desc_tag = sdt[offset];
+				desc_length = sdt[offset+1];
+				offset += 2;
+				desc_loop_length -= 2;
+				if(desc_tag == TAG_SERVICE_DESCRIPTOR)
+				{
+					/* service_type = sds[offset]; */
+					offset += 1;
+					/* service_provider_name */
+					name_len = sdt[offset];
+					offset += 1 + name_len;
+					/* service_name */
+					name_len = sdt[offset];
+					offset += 1;
+					printf("%.*s\n", name_len, &sdt[offset]);
+					offset += name_len;
+				}
+				else
+				{
+					vverbose("desc_tag: %u", desc_tag);
+					vhexdump(&sdt[offset], desc_length);
+					offset += desc_length;
+				}
+				desc_loop_length -= desc_length;
 			}
-			else
-			{
-				vverbose("desc_tag: %u", desc_tag);
-				vhexdump(&sdt[offset], desc_length);
-				offset += desc_length;
-			}
-			desc_loop_length -= desc_length;
 		}
 	}
 

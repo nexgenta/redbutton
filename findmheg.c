@@ -139,7 +139,7 @@ find_mheg(unsigned int adapter, unsigned int demux, unsigned int dvr, unsigned i
 	_car.modules = NULL;
 
 	/* find the original_network_id from the SDT */
-	if(!read_sdt(_car.demux_device, timeout, sdt))
+	if(!read_sdt(_car.demux_device, timeout, sdt, 0))
 		fatal("Unable to read SDT");
 	_car.network_id = (sdt[8] << 8) + sdt[9];
 	vverbose("original_network_id=%u", _car.network_id);

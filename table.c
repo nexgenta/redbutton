@@ -73,7 +73,7 @@ read_pat(char *demux, unsigned int timeout, unsigned char *out)
 		return true;
 
 	/* read it from the DVB card */
-	if(!read_table(demux, PID_PAT, TID_PAT, timeout, out))
+	if(!read_table(demux, PID_PAT, TID_PAT, timeout, out, 0))
 	{
 		error("Unable to read PAT");
 		return false;
@@ -135,7 +135,7 @@ read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *
 	vverbose("PMT PID: %u", map_pid);
 
 	/* get the PMT */
-	rc = read_table(demux, map_pid, TID_PMT, timeout, out);
+	rc = read_table(demux, map_pid, TID_PMT, timeout, out, 0);
 
 	/* cache it */
 	if(rc)
@@ -152,32 +152,38 @@ read_pmt(char *demux, uint16_t service_id, unsigned int timeout, unsigned char *
  */
 
 bool
-read_sdt(char *demux, unsigned int timeout, unsigned char *out)
+read_sdt(char *demux, unsigned int timeout, unsigned char *out, unsigned char sn)
 {
+	char cache_item[PATH_MAX];
+
+	snprintf(cache_item, sizeof(cache_item), "sdt-%u", sn);
+
 	/* is it in the cache */
-	if(cache_load("sdt", out))
+	if(cache_load(cache_item, out))
 		return true;
 
 	/* read it from the DVB card */
-	if(!read_table(demux, PID_SDT, TID_SDT, timeout, out))
+	if(!read_table(demux, PID_SDT, TID_SDT, timeout, out, sn))
 	{
 		error("Unable to read SDT");
 		return false;
 	}
 
 	/* cache it */
-	cache_save("sdt", out);
+	cache_save(cache_item, out);
 
 	return true;
 }
 
 /*
+ * read the given table (defined by pid and tid) from the given DVB device
+ * sn is the section number
  * output buffer must be at least MAX_TABLE_LEN bytes
  * returns false if it timesout
  */
 
 bool
-read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs, unsigned char *out)
+read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs, unsigned char *out, unsigned char sn)
 {
 	int fd_data;
 	struct dmx_sct_filter_params sctFilterParams;
@@ -195,8 +201,10 @@ read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs, unsigned 
 	sctFilterParams.pid = pid;
 	sctFilterParams.timeout = 0;
 	sctFilterParams.flags = DMX_IMMEDIATE_START;
-        sctFilterParams.filter.filter[0] = tid;
- 	sctFilterParams.filter.mask[0] = 0xff;
+	sctFilterParams.filter.filter[0] = tid;
+	sctFilterParams.filter.mask[0] = 0xff;
+	sctFilterParams.filter.filter[4] = sn;
+	sctFilterParams.filter.mask[4] = 0xff;
 
 	if(ioctl(fd_data, DMX_SET_FILTER, &sctFilterParams) < 0)
 	{
@@ -237,7 +245,7 @@ read_table(char *device, uint16_t pid, uint8_t tid, unsigned int secs, unsigned 
 			return false;
 		}
 	}
-	while(out[0] != tid);
+	while(out[0] != tid || out[6] != sn);
 
 	close(fd_data);
 

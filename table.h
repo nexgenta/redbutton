@@ -33,9 +33,9 @@
 
 bool read_pat(char *, unsigned int, unsigned char *);
 bool read_pmt(char *, uint16_t, unsigned int, unsigned char *);
-bool read_sdt(char *, unsigned int, unsigned char *);
+bool read_sdt(char *, unsigned int, unsigned char *, unsigned char);
 
-bool read_table(char *, uint16_t, uint8_t, unsigned int, unsigned char *);
+bool read_table(char *, uint16_t, uint8_t, unsigned int, unsigned char *, unsigned char);
 
 bool read_dsmcc_tables(struct carousel *, unsigned char *);
 
