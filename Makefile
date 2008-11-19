@@ -1,5 +1,5 @@
-CC=gcc
-CFLAGS=-Wall -O
+CC?=gcc
+CFLAGS?=-Wall -O
 
 DESTDIR=/usr/local
 
@@ -20,23 +20,22 @@ OBJS=	rb-download.o	\
 	cache.o		\
 	utils.o
 
-LIBS=-lz
+CPPFLAGS+=-MD
+LDFLAGS+=-lz
 
-TARDIR=`basename ${PWD}`
+TARDIR=${basename ${PWD}}
 
 rb-download:	${OBJS}
-	${CC} ${CFLAGS} -o rb-download ${OBJS} ${LIBS}
-
-.c.o:
-	${CC} ${CFLAGS} -c $<
 
 install:	rb-download
+	install -d ${DESTDIR}/bin
 	install -m 755 rb-download ${DESTDIR}/bin
 
 clean:
-	rm -f rb-download *.o core
+	${RM} rb-download *.d *.o core
 
 tar:
-	make clean
-	(cd ..; tar zcvf ${TARDIR}.tar.gz --exclude .svn ${TARDIR})
+	${MAKE} clean
+	(cd ..; tar -zcvf ${TARDIR}.tar.gz --exclude .svn ${TARDIR})
 
+-include ${OBJS:.o=.d}
