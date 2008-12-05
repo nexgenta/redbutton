@@ -898,7 +898,7 @@ audio_thread(void *arg)
 	}
 
 	/* even if this fails, we still need to consume the audioq */
-	(void) MHEGAudioOutput_init(&ao);
+	(void) MHEGAudioOutput_init(&ao, MHEGEngine_getAudioOutputDevice());
 
 	/* assert - if audioq is not empty then the codec cannot be NULL */
 	if(p->audio_codec == NULL)

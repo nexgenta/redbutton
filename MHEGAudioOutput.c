@@ -12,15 +12,15 @@
 #include "utils.h"
 
 bool
-MHEGAudioOutput_init(MHEGAudioOutput *a)
+MHEGAudioOutput_init(MHEGAudioOutput *a, char *alsa_dev)
 {
 	int err;
 
 	a->ctx = NULL;
 
-	if((err = snd_pcm_open(&a->ctx, ALSA_AUDIO_DEVICE, SND_PCM_STREAM_PLAYBACK, 0)) < 0)
+	if((err = snd_pcm_open(&a->ctx, alsa_dev, SND_PCM_STREAM_PLAYBACK, 0)) < 0)
 	{
-		error("Unable to open audio device '%s': %s", ALSA_AUDIO_DEVICE, snd_strerror(err));
+		error("Unable to open audio device '%s': %s", alsa_dev, snd_strerror(err));
 		return false;
 	}
 

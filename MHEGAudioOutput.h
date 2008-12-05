@@ -15,9 +15,9 @@ typedef struct
 } MHEGAudioOutput;
 
 /* default ALSA device */
-#define ALSA_AUDIO_DEVICE	"default"
+#define DEFAULT_ALSA_DEVICE	"default"
 
-bool MHEGAudioOutput_init(MHEGAudioOutput *);
+bool MHEGAudioOutput_init(MHEGAudioOutput *, char *);
 void MHEGAudioOutput_fini(MHEGAudioOutput *);
 
 bool MHEGAudioOutput_setParams(MHEGAudioOutput *, snd_pcm_format_t, unsigned int, unsigned int);

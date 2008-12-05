@@ -1,9 +1,10 @@
 /*
- * rb-browser [-v] [-f] [-d] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-r] [<service_gateway>]
+ * rb-browser [-v] [-f] [-d] [-a <alsa_device>] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-r] [<service_gateway>]
  *
  * -v is verbose/debug mode
  * -f is full screen, otherwise it uses a window
  * -d disables all video and audio output
+ * -a changes the ALSA audio device, eg "hw" or "plughw", the default is "default"
  * -o allows you to choose a video output method if the default is not supported/too slow on your graphics card
  * (do 'rb-browser -o' for a list of available methods)
  * -k changes the default key map to the given file
@@ -24,6 +25,7 @@
 #include <limits.h>
 
 #include "MHEGEngine.h"
+#include "MHEGAudioOutput.h"
 #include "utils.h"
 
 void usage(char *);
@@ -51,12 +53,13 @@ main(int argc, char *argv[])
 	opts.srg_loc = DEFAULT_BACKEND;
 	opts.verbose = 0;
 	opts.fullscreen = false;
+	opts.audio_dev = DEFAULT_ALSA_DEVICE;
 	opts.vo_method = NULL;
 	opts.av_disabled = false;
 	opts.timeout = MISSING_CONTENT_TIMEOUT;
 	opts.keymap = NULL;
 
-	while((arg = getopt(argc, argv, "rvfdo:k:t:")) != EOF)
+	while((arg = getopt(argc, argv, "rvfda:o:k:t:")) != EOF)
 	{
 		switch(arg)
 		{
@@ -74,6 +77,10 @@ main(int argc, char *argv[])
 
 		case 'd':
 			opts.av_disabled = true;
+			break;
+
+		case 'a':
+			opts.audio_dev = optarg;
 			break;
 
 		case 'o':
@@ -125,6 +132,7 @@ usage(char *prog_name)
 		"[-v] "
 		"[-f] "
 		"[-d] "
+		"[-a <alsa_device>] "
 		"[-o <video_output_method>] "
 		"[-k <keymap_file>] "
 		"[-t <timeout>] "

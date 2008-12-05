@@ -88,6 +88,7 @@ typedef struct
 	int verbose;		/* -v flag */
 	unsigned int timeout;	/* seconds to poll for missing content before generating a ContentRefError */
 	bool fullscreen;	/* scale to fullscreen? */
+	char *audio_dev;	/* ALSA audio device name */
 	char *vo_method;	/* MHEGVideoOutputMethod name (NULL for default) */
 	bool av_disabled;	/* true => audio and video output totally disabled */
 	char *keymap;		/* keymap config file to use (NULL for default) */
@@ -171,6 +172,7 @@ typedef struct
 	int verbose;					/* -v cmd line flag */
 	unsigned int timeout;				/* how long to poll for missing content before generating an error */
 	MHEGDisplay display;				/* make porting easier */
+	char *audio_dev;				/* audio device name */
 	MHEGVideoOutputMethod *vo_method;		/* video output method (resolved from name given in MHEGEngineOptions) */
 	bool av_disabled;				/* true => video and audio output totally disabled */
 	MHEGBackend backend;				/* local or remote access to DSMCC carousel and MPEG streams */
@@ -193,6 +195,7 @@ int MHEGEngine_run(void);
 void MHEGEngine_fini(void);
 
 MHEGDisplay *MHEGEngine_getDisplay(void);
+char *MHEGEngine_getAudioOutputDevice(void);
 MHEGVideoOutputMethod *MHEGEngine_getVideoOutputMethod(void);
 bool MHEGEngine_avDisabled(void);
 

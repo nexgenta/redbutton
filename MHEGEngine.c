@@ -173,6 +173,7 @@ MHEGEngine_init(MHEGEngineOptions *opts)
 
 	MHEGDisplay_init(&engine.display, opts->fullscreen, opts->keymap, opts->verbose);
 
+	engine.audio_dev = safe_strdup(opts->audio_dev);
 	engine.vo_method = MHEGVideoOutputMethod_fromString(opts->vo_method);
 	engine.av_disabled = opts->av_disabled;
 
@@ -319,6 +320,12 @@ MHEGDisplay *
 MHEGEngine_getDisplay(void)
 {
 	return &engine.display;
+}
+
+char *
+MHEGEngine_getAudioOutputDevice(void)
+{
+	return engine.audio_dev;
 }
 
 MHEGVideoOutputMethod *
