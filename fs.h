@@ -31,7 +31,7 @@
 
 char *make_carousel_root(uint16_t, uint32_t);
 
-void save_file(char *, uint16_t, uint32_t, uint16_t, char *, uint32_t, char *, uint32_t);
+void save_file(char *, uint16_t, uint32_t, uint16_t, char *, uint32_t, unsigned char *, uint32_t);
 
 void make_service_root(uint16_t, char *, uint16_t, uint32_t, uint16_t, char *, uint32_t);
 

@@ -65,7 +65,7 @@ make_carousel_root(uint16_t elementary_pid, uint32_t carousel_id)
 }
 
 void
-save_file(char *kind, uint16_t elementary_pid, uint32_t carousel_id, uint16_t module_id, char *key, uint32_t key_size, char *file, uint32_t file_size)
+save_file(char *kind, uint16_t elementary_pid, uint32_t carousel_id, uint16_t module_id, char *key, uint32_t key_size, unsigned char *file, uint32_t file_size)
 {
 	char *root;
 	char *ascii_key;

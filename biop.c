@@ -93,29 +93,29 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 		subhdr += biop_sequence(data->byte_order, subhdr, &body);
 		vverbose("messageBody: %u bytes", body.size);
 		/* decode the message body, based on the objectKind field */
-		if(strcmp(kind.data, BIOP_DIR) == 0)
+		if(strcmp((char *) kind.data, BIOP_DIR) == 0)
 		{
 			/* a directory */
 			verbose("DSM::Directory");
-			dirname = make_dir(kind.data, car->current_pid, mod->download_id, mod->module_id, key.data, key.size);
+			dirname = make_dir((char *) kind.data, car->current_pid, mod->download_id, mod->module_id, (char *) key.data, key.size);
 			process_biop_dir(data->byte_order, dirname, car, body.data, body.size);
 		}
-		else if(strcmp(kind.data, BIOP_SERVICEGATEWAY) == 0)
+		else if(strcmp((char *) kind.data, BIOP_SERVICEGATEWAY) == 0)
 		{
 			/* the service gateway is the root directory */
 			verbose("DSM::ServiceGateway");
-			dirname = make_dir(kind.data, car->current_pid, mod->download_id, mod->module_id, key.data, key.size);
+			dirname = make_dir((char *) kind.data, car->current_pid, mod->download_id, mod->module_id, (char *) key.data, key.size);
 			process_biop_dir(data->byte_order, dirname, car, body.data, body.size);
 		}
-		else if(strcmp(kind.data, BIOP_FILE) == 0)
+		else if(strcmp((char *) kind.data, BIOP_FILE) == 0)
 		{
 			/* a file */
 			verbose("DSM::File");
 			(void) biop_sequence(data->byte_order, body.data, &file);
 			vhexdump(file.data, file.size);
-			save_file(kind.data, car->current_pid, mod->download_id, mod->module_id, key.data, key.size, file.data, file.size);
+			save_file((char *) kind.data, car->current_pid, mod->download_id, mod->module_id, (char *) key.data, key.size, file.data, file.size);
 		}
-		else if(strcmp(kind.data, BIOP_STREAM) == 0)
+		else if(strcmp((char *) kind.data, BIOP_STREAM) == 0)
 		{
 			/* a stream */
 			verbose("DSM::Stream");
@@ -124,9 +124,9 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 			 * just save it for now
 			 * could parse the Taps to make it easier for the browser
 			 */
-			save_file(kind.data, car->current_pid, mod->download_id, mod->module_id, key.data, key.size, body.data, body.size);
+			save_file((char *) kind.data, car->current_pid, mod->download_id, mod->module_id, (char *) key.data, key.size, body.data, body.size);
 		}
-		else if(strcmp(kind.data, BIOP_STREAMEVENT) == 0)
+		else if(strcmp((char *) kind.data, BIOP_STREAMEVENT) == 0)
 		{
 			/* a stream event */
 			verbose("BIOP::StreamEvent");
@@ -135,7 +135,7 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 			 * just save it for now
 			 * could parse it to make it easier for the browser
 			 */
-			save_file(kind.data, car->current_pid, mod->download_id, mod->module_id, key.data, key.size, body.data, body.size);
+			save_file((char *) kind.data, car->current_pid, mod->download_id, mod->module_id, (char *) key.data, key.size, body.data, body.size);
 		}
 		else
 		{
@@ -201,7 +201,7 @@ process_biop_dir(uint8_t byte_order, char *dirname, struct carousel *car, unsign
 		 */
 		if(pid != 0)
 			add_dsmcc_pid(car, pid);
-		add_dir_entry(dirname, name.data, name.size, kind.data, pid, ior.carousel_id, ior.module_id, ior.key.data, ior.key.size);
+		add_dir_entry(dirname, (char *) name.data, name.size, (char *) kind.data, pid, ior.carousel_id, ior.module_id, (char *) ior.key.data, ior.key.size);
 		/* objectInfo */
 		data += biop_sequence65535(byte_order, data, &info);
 		vverbose(" objectInfo:");
@@ -228,7 +228,7 @@ process_biop_service_gateway_info(uint16_t service_id, struct assoc *assoc, unsi
 
 	elementary_pid = stream2pid(assoc, ior.association_tag);
 
-	make_service_root(service_id, BIOP_SERVICEGATEWAY, elementary_pid, ior.carousel_id, ior.module_id, ior.key.data, ior.key.size);
+	make_service_root(service_id, BIOP_SERVICEGATEWAY, elementary_pid, ior.carousel_id, ior.module_id, (char *) ior.key.data, ior.key.size);
 
 	return elementary_pid;
 }

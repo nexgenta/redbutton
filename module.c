@@ -139,7 +139,7 @@ download_block(struct carousel *car, struct module *mod, uint16_t block, unsigne
 	{
 		verbose("got module %u (size=%u)", mod->module_id, mod->size);
 		/* if it doesn't start with 'BIOP' assume it is compressed */
-		if(strncmp(mod->data, BIOP_MAGIC_STR, BIOP_MAGIC_LEN) != 0)
+		if(strncmp((char *) mod->data, BIOP_MAGIC_STR, BIOP_MAGIC_LEN) != 0)
 		{
 			vhexdump(mod->data, mod->size);
 			uncompress_module(mod);
