@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
+#include <fontconfig/fontconfig.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 
@@ -23,6 +24,8 @@ typedef struct
 } GlyphExtents;
 
 static void close_font(MHEGFont *);
+
+static bool match_font(char *, char **);
 
 static bool get_font_attr(char **, unsigned int *, char *, unsigned int);
 
@@ -119,38 +122,50 @@ static char *_font_name_sans = "sans";
 void
 MHEGFont_defaultName(MHEGFont *font)
 {
-	Display *dpy = MHEGEngine_getDisplay()->dpy;
-	char *xlfd_tiresias = "-*-TiresiasScreenfont-medium-r-normal-*";
-	char *xlfd_freesans = "-*-freesans-medium-r-normal-*";
-	char **names = NULL;
-	int count;
+	char *fontname;
 
 	/* first time */
 	if(_default_font_name == NULL)
 	{
 		/* do we have Tiresias */
-		if((names = XListFonts(dpy, xlfd_tiresias, 1, &count)) != NULL)
+		if(match_font(_font_name_tiresias, &fontname))
 		{
-			_default_font_name = _font_name_tiresias;
+			_default_font_name = safe_strdup(fontname);
 		}
-		else if((names = XListFonts(dpy, xlfd_freesans, 1, &count)) != NULL)
+		else if(match_font(_font_name_freesans, &fontname))
 		{
-			_default_font_name = _font_name_freesans;
-			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", _font_name_tiresias, _font_name_freesans);
+			_default_font_name = safe_strdup(fontname);
+			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", _font_name_tiresias, fontname);
 		}
 		else
 		{
-			_default_font_name = _font_name_sans;
-			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", _font_name_tiresias, _font_name_sans);
+			match_font(_font_name_sans, &fontname);
+			_default_font_name = safe_strdup(fontname);
+			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", _font_name_tiresias, fontname);
 		}
-		/* clean up */
-		if(names != NULL)
-			XFreeFontNames(names);
 	}
 
 	font->name = _default_font_name;
 
 	return;
+}
+
+static bool
+match_font(char *wanted, char **found)
+{
+	FcPattern *p, *m;
+	FcResult result;
+
+	p = FcNameParse(wanted);
+	FcConfigSubstitute(0, p, FcMatchPattern);
+	FcDefaultSubstitute(p);
+	m = FcFontMatch(0, p, &result);
+
+	FcPatternGetString(m, FC_FAMILY, 0, (FcChar8 **) found);
+
+	verbose("MHEGFont: match_font: wanted='%s' found='%s'", wanted, *found);
+
+	return (strcasecmp(wanted, *found) == 0);
 }
 
 /*
