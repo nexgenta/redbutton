@@ -115,34 +115,23 @@ MHEGFont_setName(MHEGFont *font, FontBody *body)
  */
 
 static char *_default_font_name = NULL;
-static char *_font_name_tiresias = "TiresiasScreenfont";
-static char *_font_name_freesans = "FreeSans";
-static char *_font_name_sans = "sans";
 
 void
 MHEGFont_defaultName(MHEGFont *font)
 {
+	char *try_font[] = { "TiresiasScreenfont", "FreeSans", "sans", NULL };
 	char *fontname;
+	unsigned int i;
 
 	/* first time */
 	if(_default_font_name == NULL)
 	{
-		/* do we have Tiresias */
-		if(match_font(_font_name_tiresias, &fontname))
-		{
-			_default_font_name = safe_strdup(fontname);
-		}
-		else if(match_font(_font_name_freesans, &fontname))
-		{
-			_default_font_name = safe_strdup(fontname);
-			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", _font_name_tiresias, fontname);
-		}
-		else
-		{
-			match_font(_font_name_sans, &fontname);
-			_default_font_name = safe_strdup(fontname);
-			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", _font_name_tiresias, fontname);
-		}
+		/* look for fonts in order */
+		for(i=0; try_font[i] && !match_font(try_font[i], &fontname); i++)
+			/* do nothing */;
+		_default_font_name = safe_strdup(fontname);
+		if(i > 0)
+			error("Font '%s' not available; using '%s' for 'rec://font/uk1'", try_font[0], fontname);
 	}
 
 	font->name = _default_font_name;
