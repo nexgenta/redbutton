@@ -130,7 +130,7 @@ convert_STRING(unsigned char **out, unsigned int *len, const unsigned char *str)
 	bool err;
 
 	/* max size it could be */
-	*out = safe_malloc(strlen(str));
+	*out = safe_malloc(strlen((char *) str));
 
 	/* skip the initial " */
 	str ++;
@@ -206,7 +206,7 @@ convert_QPRINTABLE(unsigned char **out, unsigned int *len, const unsigned char *
 	bool err;
 
 	/* max size it could be */
-	*out = safe_malloc(strlen(str));
+	*out = safe_malloc(strlen((char *) str));
 
 	/* skip the initial ' */
 	str ++;
@@ -272,7 +272,7 @@ convert_BASE64(unsigned char **out, unsigned int *len, const unsigned char *str)
 	bool err;
 
 	/* max size it could be */
-	*out = safe_malloc(strlen(str));
+	*out = safe_malloc(strlen((char *) str));
 
 	/* skip the initial ` */
 	str ++;
@@ -345,9 +345,9 @@ unsigned char
 next_base64_char(unsigned char **in)
 {
 	/* would be faster with a 256 byte lookup table */
-	unsigned char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-	unsigned char *pos;
-	unsigned char out;
+	char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+	char *pos;
+	char out;
 
 	while(**in != '`')
 	{

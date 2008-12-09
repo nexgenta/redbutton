@@ -175,7 +175,7 @@ parse_OCTETSTRING(struct node *parent)
 	if(needs_tagging(parent->parent->asn1tag, parent->parent->asn1class))
 		parent = add_child(parent, ASN1TAGCLASS_OCTETSTRING);
 
-	der_encode_OctetString(&parent->value, &parent->length, token_text());
+	der_encode_OctetString(&parent->value, &parent->length, (unsigned char *) token_text());
 
 	return;
 }
