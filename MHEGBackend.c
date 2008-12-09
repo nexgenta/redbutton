@@ -593,7 +593,7 @@ local_retune(MHEGBackend *t, OctetString *service)
 	int prefix_len;
 
 	/* assert */
-	if(service->size < 6 || strncmp(service->data, "dvb://", 6) != 0)
+	if(service->size < 6 || strncmp((char *) service->data, "dvb://", 6) != 0)
 		fatal("local_retune: unable to tune to '%.*s'", service->size, service->data);
 
 	/* extract the service_id */
@@ -643,7 +643,7 @@ local_isServiceAvailable(MHEGBackend *t, OctetString *service)
 	bool exists;
 
 	/* assert */
-	if(service->size < 6 || strncmp(service->data, "dvb://", 6) != 0)
+	if(service->size < 6 || strncmp((char *) service->data, "dvb://", 6) != 0)
 		fatal("local_isServiceAvailable: invalid service '%.*s'", service->size, service->data);
 
 	/* extract the service_id */
@@ -809,7 +809,7 @@ remote_retune(MHEGBackend *t, OctetString *service)
 	FILE *sock;
 
 	/* assert */
-	if(service->size < 6 || strncmp(service->data, "dvb://", 6) != 0)
+	if(service->size < 6 || strncmp((char *) service->data, "dvb://", 6) != 0)
 		fatal("remote_retune: unable to tune to '%.*s'", service->size, service->data);
 
 	snprintf(cmd, sizeof(cmd), "retune %u\n", si_get_service_id(service));
@@ -846,7 +846,7 @@ remote_isServiceAvailable(MHEGBackend *t, OctetString *service)
 	bool available = true;
 
 	/* assert */
-	if(service->size < 6 || strncmp(service->data, "dvb://", 6) != 0)
+	if(service->size < 6 || strncmp((char *) service->data, "dvb://", 6) != 0)
 		fatal("remote_isServiceAvailable: invalid service '%.*s'", service->size, service->data);
 
 	snprintf(cmd, sizeof(cmd), "available %u\n", si_get_service_id(service));

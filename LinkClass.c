@@ -192,7 +192,7 @@ LinkClass_conditionMet(LinkClass *l, ExternalReference *src, EventType type, Eve
 		/* make sure the event src is an absolute group id (ie starts with ~//) */
 		fullname = MHEGEngine_absoluteFilename(&link_src->u.external_reference.group_identifier);
 		absolute.size = strlen(fullname);
-		absolute.data = fullname;
+		absolute.data = (unsigned char *) fullname;
 		link_gid = &absolute;
 		if(OctetString_cmp(&src->group_identifier, link_gid) != 0
 		|| src->object_number != link_src->u.external_reference.object_number)

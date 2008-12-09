@@ -61,7 +61,7 @@ OctetStringVariableClass_SetVariable(OctetStringVariableClass *v, NewVariableVal
 		safe_free(v->inst.Value.u.octetstring.data);
 		v->inst.Value.u.octetstring.size = strlen(val_str);
 		v->inst.Value.u.octetstring.data = safe_malloc(v->inst.Value.u.octetstring.size);
-		strncpy(v->inst.Value.u.octetstring.data, val_str, v->inst.Value.u.octetstring.size);
+		strncpy((char *) v->inst.Value.u.octetstring.data, val_str, v->inst.Value.u.octetstring.size);
 	}
 
 	return;

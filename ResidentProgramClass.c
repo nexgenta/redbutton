@@ -473,45 +473,45 @@ prog_FormatDate(LIST_OF(Parameter) *params, OctetString *caller_gid)
 			case 'Y':
 				/* 4 digit year */
 				year = tm->tm_year + 1900;
-				dateString.size += sprintf(&dateString.data[dateString.size], "%u", year);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%u", year);
 				break;
 
 			case 'y':
 				/* 2 digit year */
 				year = (tm->tm_year + 1900) % 100;
-				dateString.size += sprintf(&dateString.data[dateString.size], "%02u", year);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%02u", year);
 				break;
 
 			case 'X':
 				/* month 01-12 */
 				month = tm->tm_mon + 1;
-				dateString.size += sprintf(&dateString.data[dateString.size], "%02u", month);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%02u", month);
 				break;
 
 			case 'x':
 				/* month 1-12 */
 				month = tm->tm_mon + 1;
-				dateString.size += sprintf(&dateString.data[dateString.size], "%u", month);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%u", month);
 				break;
 
 			case 'D':
 				/* day 01-31 */
-				dateString.size += sprintf(&dateString.data[dateString.size], "%02u", tm->tm_mday);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%02u", tm->tm_mday);
 				break;
 
 			case 'd':
 				/* day 1-31 */
-				dateString.size += sprintf(&dateString.data[dateString.size], "%u", tm->tm_mday);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%u", tm->tm_mday);
 				break;
 
 			case 'H':
 				/* hour 00-23 */
-				dateString.size += sprintf(&dateString.data[dateString.size], "%02u", tm->tm_hour);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%02u", tm->tm_hour);
 				break;
 
 			case 'h':
 				/* hour 0-23 */
-				dateString.size += sprintf(&dateString.data[dateString.size], "%u", tm->tm_hour);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%u", tm->tm_hour);
 				break;
 
 			case 'I':
@@ -519,7 +519,7 @@ prog_FormatDate(LIST_OF(Parameter) *params, OctetString *caller_gid)
 				hour = tm->tm_hour % 12;
 				if(hour == 0)
 					hour = 12;
-				dateString.size += sprintf(&dateString.data[dateString.size], "%02u", hour);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%02u", hour);
 				break;
 
 			case 'i':
@@ -527,43 +527,43 @@ prog_FormatDate(LIST_OF(Parameter) *params, OctetString *caller_gid)
 				hour = tm->tm_hour % 12;
 				if(hour == 0)
 					hour = 12;
-				dateString.size += sprintf(&dateString.data[dateString.size], "%u", hour);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%u", hour);
 				break;
 
 			case 'M':
 				/* minutes 00-59 */
-				dateString.size += sprintf(&dateString.data[dateString.size], "%02u", tm->tm_min);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%02u", tm->tm_min);
 				break;
 
 			case 'm':
 				/* minutes 0-59 */
-				dateString.size += sprintf(&dateString.data[dateString.size], "%u", tm->tm_min);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%u", tm->tm_min);
 				break;
 
 			case 'S':
 				/* seconds 00-59 */
-				dateString.size += sprintf(&dateString.data[dateString.size], "%02u", tm->tm_sec);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%02u", tm->tm_sec);
 				break;
 
 			case 's':
 				/* seconds 0-59 */
-				dateString.size += sprintf(&dateString.data[dateString.size], "%u", tm->tm_sec);
+				dateString.size += sprintf((char *) &dateString.data[dateString.size], "%u", tm->tm_sec);
 				break;
 
 			case 'A':
 				/* AM/PM */
 				if(tm->tm_hour < 12)
-					dateString.size += sprintf(&dateString.data[dateString.size], "AM");
+					dateString.size += sprintf((char *) &dateString.data[dateString.size], "AM");
 				else
-					dateString.size += sprintf(&dateString.data[dateString.size], "PM");
+					dateString.size += sprintf((char *) &dateString.data[dateString.size], "PM");
 				break;
 
 			case 'a':
 				/* am/pm */
 				if(tm->tm_hour < 12)
-					dateString.size += sprintf(&dateString.data[dateString.size], "am");
+					dateString.size += sprintf((char *) &dateString.data[dateString.size], "am");
 				else
-					dateString.size += sprintf(&dateString.data[dateString.size], "pm");
+					dateString.size += sprintf((char *) &dateString.data[dateString.size], "pm");
 				break;
 
 			case '%':
@@ -1193,7 +1193,7 @@ prog_WhoAmI(LIST_OF(Parameter) *params, OctetString *caller_gid)
 	ident_par = &(get_parameter(params, 1)->u.new_generic_octetstring);
 
 	ident.size = strlen(ident_str);
-	ident.data = ident_str;
+	ident.data = (unsigned char *) ident_str;
 
 	GenericOctetString_setOctetString(ident_par, caller_gid, &ident);
 

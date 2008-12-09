@@ -210,7 +210,7 @@ MHEGEngine_run(void)
 			for(i=0; !found && boot_order[i] != NULL; i++)
 			{
 				boot_obj.size = strlen(boot_order[i]);
-				boot_obj.data = boot_order[i];
+				boot_obj.data = (unsigned char *) boot_order[i];
 				found = MHEGEngine_checkContentRef(&boot_obj);
 			}
 			gettimeofday(&now, NULL);
@@ -1045,7 +1045,7 @@ void
 MHEGEngine_setDERObject(OctetString *gid)
 {
 	/* assert */
-	if(gid->size < 3 || strncmp(gid->data, "~//", 3) != 0)
+	if(gid->size < 3 || strncmp((char *) gid->data, "~//", 3) != 0)
 		fatal("MHEGEngine_setDERObject: group ID '%.*s' is not absolute", gid->size, gid->data);
 
 	engine.der_object = gid;
@@ -1159,7 +1159,7 @@ MHEGEngine_findObjectReference(ObjectReference *ref, OctetString *caller_gid)
 	/* get the absolute group ID */
 	fullname = MHEGEngine_absoluteFilename(gid);
 	absolute.size = strlen(fullname);
-	absolute.data = fullname;
+	absolute.data = (unsigned char *) fullname;
 	gid = &absolute;
 
 	while(list)
@@ -1191,7 +1191,7 @@ MHEGEngine_findGroupObject(OctetString *gid)
 	SceneClass *scene;
 
 	/* assert */
-	if(gid->size < 3 || strncmp(gid->data, "~//", 3) != 0)
+	if(gid->size < 3 || strncmp((char *) gid->data, "~//", 3) != 0)
 		fatal("MHEGEngine_findGroupObject: group ID '%.*s' is not absolute", gid->size, gid->data);
 
 	/* is it the app */
@@ -1514,13 +1514,13 @@ MHEGEngine_absoluteFilename(OctetString *name)
 
 /* TODO */
 /* need to cope with CI: at the start */
-	if(name->size > 2 && strncmp(name->data, "CI:", 3) == 0)
+	if(name->size > 2 && strncmp((char *) name->data, "CI:", 3) == 0)
 	{
 printf("TODO: absoluteFilename '%.*s'\n", name->size, name->data);
 	}
 
 	/* DSM: at the start is equivalent to ~ */
-	if(name->size > 3 && strncmp(name->data, "DSM:", 4) == 0)
+	if(name->size > 3 && strncmp((char *) name->data, "DSM:", 4) == 0)
 	{
 		size = name->size - 4;
 		data = &name->data[4];
@@ -1532,13 +1532,13 @@ printf("TODO: absoluteFilename '%.*s'\n", name->size, name->data);
 	}
 
 	/* does it already start with a ~// */
-	if(size > 2 && strncmp(data, "~//", 3) == 0)
+	if(size > 2 && strncmp((char *) data, "~//", 3) == 0)
 		snprintf(_absolute, sizeof(_absolute), "%.*s", size, data);
 	/* starting with // is the same as starting with ~// */
-	else if(size > 1 && strncmp(data, "//", 2) == 0)
+	else if(size > 1 && strncmp((char *) data, "//", 2) == 0)
 		snprintf(_absolute, sizeof(_absolute), "~%.*s", size, data);
 	/* starting with ~/ means prepend the path to the current active app */
-	else if(size > 1 && strncmp(data, "~/", 2) == 0)
+	else if(size > 1 && strncmp((char *) data, "~/", 2) == 0)
 		snprintf(_absolute, sizeof(_absolute), "%s%.*s", active_app_path(), size - 1, &data[1]);
 	/* starting with / is the same as starting with ~/ */
 	else if(size > 0 && data[0] == '/')
@@ -1563,7 +1563,7 @@ active_app_path(void)
 	char *slash;
 
 	/* assert */
-	if(gid->size < 3 || strncmp(gid->data, "~//", 3) != 0)
+	if(gid->size < 3 || strncmp((char *) gid->data, "~//", 3) != 0)
 		fatal("active_app_path: invalid group ID '%.*s'", gid->size, gid->data);
 
 	snprintf(_active_app_path, sizeof(_active_app_path), "%.*s", gid->size, gid->data);

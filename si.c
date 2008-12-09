@@ -106,7 +106,7 @@ si_get_network_id(OctetString *ref)
 	unsigned int pos;
 	unsigned int id;
 
-	if(ref == NULL || ref->size < 6 || strncmp(ref->data, "dvb://", 6) != 0)
+	if(ref == NULL || ref->size < 6 || strncmp((char *) ref->data, "dvb://", 6) != 0)
 		return 0;
 
 	/* read upto the first . or end of string */
@@ -128,7 +128,7 @@ si_get_transport_id(OctetString *ref)
 	unsigned int pos;
 	unsigned int id;
 
-	if(ref == NULL || ref->size < 6 || strncmp(ref->data, "dvb://", 6) != 0)
+	if(ref == NULL || ref->size < 6 || strncmp((char *) ref->data, "dvb://", 6) != 0)
 		return 0;
 
 	/* find the first . or end of string */
@@ -157,7 +157,7 @@ si_get_service_id(OctetString *ref)
 	unsigned int len;
 	unsigned int id;
 
-	if(ref == NULL || ref->size < 6 || strncmp(ref->data, "dvb://", 6) != 0)
+	if(ref == NULL || ref->size < 6 || strncmp((char *) ref->data, "dvb://", 6) != 0)
 		return 0;
 
 	len = ref->size;

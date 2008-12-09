@@ -52,7 +52,7 @@ MHEGApp_loadApplication(MHEGApp *m, OctetString *derfile)
 	int rc;
 
 	/* assert */
-	if(derfile->size < 3 || strncmp(derfile->data, "~//", 3) != 0)
+	if(derfile->size < 3 || strncmp((char *) derfile->data, "~//", 3) != 0)
 		fatal("MHEGApp_loadApplication: group ID '%.*s' is not absolute", derfile->size, derfile->data);
 
 	if(m->app != NULL)
@@ -107,7 +107,7 @@ MHEGApp_loadScene(MHEGApp *m, OctetString *derfile)
 	int rc;
 
 	/* assert */
-	if(derfile->size < 3 || strncmp(derfile->data, "~//", 3) != 0)
+	if(derfile->size < 3 || strncmp((char *) derfile->data, "~//", 3) != 0)
 		fatal("MHEGApp_loadScene: group ID '%.*s' is not absolute", derfile->size, derfile->data);
 
 	if(m->scene != NULL)

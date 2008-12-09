@@ -68,8 +68,8 @@ static MHEGKeyMapEntry default_keymap[] =
 void
 MHEGDisplay_init(MHEGDisplay *d, bool fullscreen, char *keymap, int verbose)
 {
-	unsigned int xrender_major;
-	unsigned int xrender_minor;
+	int xrender_major;
+	int xrender_minor;
 	int x, y;
 	XVisualInfo visinfo;
 	unsigned long mask;
@@ -1021,7 +1021,7 @@ MHEGBitmap_fromRGBA(MHEGDisplay *d, unsigned char *rgba, unsigned int width, uns
 	}
 
 	/* get X to draw the XImage onto a Pixmap */
-	if((ximg = XCreateImage(d->dpy, NULL, 32, ZPixmap, 0, xdata, width, height, 32, 0)) == NULL)
+	if((ximg = XCreateImage(d->dpy, NULL, 32, ZPixmap, 0, (char *) xdata, width, height, 32, 0)) == NULL)
 		fatal("XCreateImage failed");
 	/* passed NULL Visual to XCreateImage, so set the rgb masks now */
 	ximg->red_mask = pic_format->direct.redMask;

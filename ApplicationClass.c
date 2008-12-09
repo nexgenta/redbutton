@@ -396,7 +396,7 @@ ApplicationClass_Launch(ApplicationClass *t, GenericObjectReference *launch, Oct
 	/* get the absolute group ID of the new app */
 	absolute = MHEGEngine_absoluteFilename(&ref->u.external_reference.group_identifier);
 	quit_data.size = strlen(absolute);
-	quit_data.data = absolute;
+	quit_data.data = (unsigned char *) absolute;
 
 	MHEGEngine_quit(QuitReason_Launch, &quit_data);
 
@@ -424,7 +424,7 @@ ApplicationClass_Spawn(ApplicationClass *t, GenericObjectReference *spawn, Octet
 	/* get the absolute group ID of the new app */
 	absolute = MHEGEngine_absoluteFilename(&ref->u.external_reference.group_identifier);
 	quit_data.size = strlen(absolute);
-	quit_data.data = absolute;
+	quit_data.data = (unsigned char *) absolute;
 
 	MHEGEngine_quit(QuitReason_Spawn, &quit_data);
 
@@ -545,8 +545,8 @@ ApplicationClass_GetEngineSupport(ApplicationClass *t, GetEngineSupport *params,
 	found = false;
 	for(i=0; features[i].func != NULL && !found; i++)
 	{
-		if(strncmp(feature->data, features[i].short_name, feature_len) == 0
-		|| strncmp(feature->data, features[i].long_name, feature_len) == 0)
+		if(strncmp((char *) feature->data, features[i].short_name, feature_len) == 0
+		|| strncmp((char *) feature->data, features[i].long_name, feature_len) == 0)
 		{
 			feature_pars.data = pars_start;
 			feature_pars.size = feature->size - feature_len;
@@ -815,7 +815,7 @@ feature_BitmapDecodeOffset(OctetString *params)
 }
 
 #define UKEP_MATCH(STR)		if(params->size == strlen(STR)				\
-				&& strncmp(params->data, STR, params->size) == 0)	\
+				&& strncmp((char *) params->data, STR, params->size) == 0)	\
 					return true
 
 bool

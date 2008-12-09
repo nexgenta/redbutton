@@ -77,7 +77,7 @@ MHEGFont_init(MHEGFont *f)
 void
 MHEGFont_setName(MHEGFont *font, FontBody *body)
 {
-	OctetString default_font = { 14, "rec://font/uk1" };
+	OctetString default_font = { 14, (unsigned char *) "rec://font/uk1" };
 	OctetString *str;
 
 	/* free any existing internal data */
@@ -145,7 +145,7 @@ match_font(char *wanted, char **found)
 	FcPattern *p, *m;
 	FcResult result;
 
-	p = FcNameParse(wanted);
+	p = FcNameParse((FcChar8 *) wanted);
 	FcConfigSubstitute(0, p, FcMatchPattern);
 	FcDefaultSubstitute(p);
 	m = FcFontMatch(0, p, &result);
@@ -200,7 +200,7 @@ MHEGFont_setAttributes(MHEGFont *font, OctetString *str)
 	{
 		/* long form */
 		left = str->size;
-		p = str->data;
+		p = (char *) str->data;
 		/* style, only one possibility at the moment */
 		if(get_font_attr(&p, &left, out, sizeof(out)))
 		{
@@ -324,7 +324,7 @@ MHEGFont_layoutText(MHEGFont *f, MHEGColour *col, OctetString *text, OriginalBox
 				      FC_ASPECT, FcTypeDouble, aspect,
 				      /* may not give us a scalable font */
 				      FC_SCALABLE, FcTypeBool, FcTrue,
-				      0);
+				      NULL);
 		if(f->font == NULL)
 			fatal("Font '%s' does not exist", f->name);
 	}
@@ -511,7 +511,7 @@ split_text(MHEGFont *f, MHEGColour *col, OctetString *text, bool wrap, int avail
 	FT_Face face;
 	FT_UShort units_per_EM;
 	int xpos, ypos;
-	char *data;
+	unsigned char *data;
 	int size;
 	int tok;
 	int len;

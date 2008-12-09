@@ -151,7 +151,7 @@ vo_xshm_create_frame(vo_xshm_ctx *v, unsigned int out_width, unsigned int out_he
 
 	/* we made sure these pixel formats are the same */
 	v->current_frame->data = v->shm.shmaddr;
-	avpicture_fill(&v->rgb_frame, v->shm.shmaddr, v->out_format, out_width, out_height);
+	avpicture_fill(&v->rgb_frame, (uint8_t *) v->shm.shmaddr, v->out_format, out_width, out_height);
 
 	return;
 }

@@ -515,7 +515,7 @@ decode_thread(void *arg)
 			{
 				audio_frame = new_AudioFrameListItem();
 				af = &audio_frame->item;
-				used = avcodec_decode_audio2(audio_codec_ctx, af->data, &af->size, data, size);
+				used = avcodec_decode_audio2(audio_codec_ctx, (int16_t *) af->data, (int *) &af->size, data, size);
 				data += used;
 				size -= used;
 				if(used > 0 && af->size > 0)
