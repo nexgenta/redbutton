@@ -8,7 +8,11 @@
  * -c gives the output C source file (default is <ASN1-types>.c)
  * -h gives the output header file (default is <ASN1-types>.h)
  *
- * Simon Kilvington, 25/8/2006
+ * Simon Kilvington
+ * 
+ * 2006-01-09 - initial release
+ * 2006-08-25 - enum ptrs are not int ptrs on some platforms
+ * 2008-12-11 - stop gcc 4 complaining about unsigned int pointer targets
  */
 
 #include <unistd.h>
@@ -1584,6 +1588,15 @@ output_decode_tag(FILE *src, char *name, char *ptr, int indent)
 void
 output_decode_subtype(FILE *src, char *name, char *type, char *ptr, char *len, int indent)
 {
+	char cast[1024];
+
+	/* stop gcc 4 complaining about unsigned int pointer targets */
+	if(strcmp(type, "Integer") == 0)
+	{
+		snprintf(cast, sizeof(cast), "(int *) %s", ptr);
+		ptr = cast;
+	}
+
 	print_indent(src, indent);
 	fprintf(src, "sublen = der_decode_%s(der, %s, %s);\n", type, ptr, len);
 	print_indent(src, indent);
