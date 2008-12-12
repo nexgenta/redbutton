@@ -62,8 +62,7 @@ new_VideoFrameListItem(double pts, enum PixelFormat pix_fmt, unsigned int width,
 		fatal("Invalid frame_size");
 	vf->item.frame_data = safe_fast_realloc(vf->item.frame_data, &vf->item.nalloced, frame_size);
 	avpicture_fill(&vf->item.frame, vf->item.frame_data, pix_fmt, width, height);
-/* TODO: img_copy is deprecated, use swscale instead */
-	img_copy(&vf->item.frame, (AVPicture*) frame, pix_fmt, width, height);
+	av_picture_copy(&vf->item.frame, (AVPicture*) frame, pix_fmt, width, height);
 
 	return vf;
 }
