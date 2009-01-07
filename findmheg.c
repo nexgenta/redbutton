@@ -37,6 +37,7 @@
 #define STREAM_TYPE_AUDIO_MPEG1		0x03
 #define STREAM_TYPE_AUDIO_MPEG2		0x04
 #define STREAM_TYPE_ISO13818_6_B	0x0b
+#define STREAM_TYPE_AUDIO_MPEG4		0x11
 
 /* descriptors we want */
 #define TAG_LANGUAGE_DESCRIPTOR			0x0a
@@ -83,6 +84,7 @@ is_audio_stream(uint8_t stream_type)
 	{
 	case STREAM_TYPE_AUDIO_MPEG1:
 	case STREAM_TYPE_AUDIO_MPEG2:
+	case STREAM_TYPE_AUDIO_MPEG4:
 		return true;
 
 	default:

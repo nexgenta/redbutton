@@ -1,3 +1,6 @@
+NZ uses stream ID 0x11 for audio (MPEG4)
+need to check rb-browser plays it correctly
+
 need to kill all existing command connections on retune
 (listen_data->carousel is stale for them)
 
