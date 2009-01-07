@@ -1,5 +1,5 @@
 CC?=gcc
-CFLAGS?=-Wall -O
+CFLAGS?=-Wall -O2
 
 DESTDIR=/usr/local
 
