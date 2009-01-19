@@ -1400,7 +1400,7 @@ MHEGEngine_loadFile(OctetString *name, OctetString *out)
 	out->data = NULL;
 
 	/* just in case */
-	if(name->size == 0)
+	if(name == NULL || name->size == 0)
 	{
 		verbose("MHEGEngine_loadFile: no filename given");
 		return false;
