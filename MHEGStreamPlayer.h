@@ -8,8 +8,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include <ffmpeg/avformat.h>
-#include <ffmpeg/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
 
 #include "ISO13522-MHEG-5.h"
 #include "MHEGBackend.h"

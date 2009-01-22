@@ -8,8 +8,8 @@
 #include <stdint.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/swscale.h>
+#include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
 
 typedef struct
 {

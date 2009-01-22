@@ -7,7 +7,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/XShm.h>
-#include <ffmpeg/avformat.h>
+#include <libavformat/avformat.h>
 
 #include "MHEGEngine.h"
 #include "MHEGVideoOutput.h"

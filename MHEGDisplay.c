@@ -13,8 +13,8 @@
 #include <X11/Intrinsic.h>
 #include <X11/Shell.h>
 #include <X11/keysym.h>
-#include <ffmpeg/avformat.h>
-#include <ffmpeg/swscale.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
 
 #include "MHEGEngine.h"
 #include "MHEGDisplay.h"
