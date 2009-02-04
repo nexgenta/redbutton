@@ -5,6 +5,8 @@ include a local copy of ffmpeg (and swscale)
 (new versions of ffmpeg have broken our audio output somewhere)
 
 
+have a look at pixops scaling/compositing library
+
 
 got this once when changing channels:
 X Error of failed request:  BadAccess (attempt to access private resource denied)
