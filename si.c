@@ -28,6 +28,7 @@ static OctetString *si_channel = NULL;
 int
 si_get_index(OctetString *ref)
 {
+	OctetString *orig = ref;
 	int i;
 
 	/* resolve it to dvb:// format */
@@ -35,16 +36,19 @@ si_get_index(OctetString *ref)
 	{
 		/* promise we wont change it */
 		ref = (OctetString *) MHEGEngine_getRecSvcDef();
+		verbose("si_get_index: resolved '%.*s' to '%.*s'", orig->size, orig->data, ref->size, ref->data);
 	}
 	else if(OctetString_strcmp(ref, "rec://svc/cur") == 0)
 	{
 		/* promise we wont change it */
 		ref = (OctetString *) MHEGEngine_getRecSvcCur();
+		verbose("si_get_index: resolved '%.*s' to '%.*s'", orig->size, orig->data, ref->size, ref->data);
 	}
 	else if(OctetString_strncmp(ref, "rec://svc/lcn/", 14) == 0)
 	{
 /* TODO */
 printf("TODO: si_get_index: service='%.*s'\n", ref->size, ref->data);
+		verbose("si_get_index: resolved '%.*s' to '%.*s'", orig->size, orig->data, ref->size, ref->data);
 	}
 	else if(OctetString_strncmp(ref, "dvb:", 4) != 0)
 	{
