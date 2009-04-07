@@ -32,7 +32,12 @@ si_get_index(OctetString *ref)
 	int i;
 
 	/* resolve it to dvb:// format */
-	if(OctetString_strcmp(ref, "rec://svc/def") == 0)
+	if(ref == NULL || ref->size == 0)
+	{
+		error("si_get_index: NULL service requested");
+		return -1;
+	}
+	else if(OctetString_strcmp(ref, "rec://svc/def") == 0)
 	{
 		/* promise we wont change it */
 		ref = (OctetString *) MHEGEngine_getRecSvcDef();
@@ -53,6 +58,7 @@ printf("TODO: si_get_index: service='%.*s'\n", ref->size, ref->data);
 	else if(OctetString_strncmp(ref, "dvb:", 4) != 0)
 	{
 		error("si_get_index: unexpected service '%.*s'", ref->size, ref->data);
+		return -1;
 	}
 
 	/* have we assigned it already */
