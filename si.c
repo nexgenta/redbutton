@@ -68,7 +68,10 @@ printf("TODO: si_get_index: service='%.*s'\n", ref->size, ref->data);
 
 	/* does the backend say it is available */
 	if(!MHEGEngine_isServiceAvailable(ref))
+	{
+		verbose("si_get_index: service '%.*s' is unavailable", ref->size, ref->data);
 		return -1;
+	}
 
 	/* add it to the list */
 	si_max_index ++;
