@@ -25,6 +25,7 @@ typedef struct MHEGBackend
 {
 	OctetString rec_svc_def;	/* service we are downloading the carousel from */
 	char *base_dir;			/* local Service Gateway root directory */
+	char network_id[16];		/* local Network ID (maybe blank if you don't care) */
 	struct sockaddr_in addr;	/* remote backend IP and port */
 	FILE *be_sock;			/* connection to remote backend */
 	/* function pointers */
@@ -49,7 +50,7 @@ typedef struct MHEGBackend
 	} *fns;
 } MHEGBackend;
 
-void MHEGBackend_init(MHEGBackend *, bool, char *);
+void MHEGBackend_init(MHEGBackend *, bool, char *, int);
 void MHEGBackend_fini(MHEGBackend *);
 
 #endif	/* __MHEGBACKEND_H__ */

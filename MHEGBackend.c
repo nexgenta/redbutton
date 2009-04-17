@@ -74,7 +74,7 @@ static struct MHEGBackendFns remote_backend_fns =
 /* public interface */
 
 void
-MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
+MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc, int net_id)
 {
 	bzero(b, sizeof(MHEGBackend));
 
@@ -94,7 +94,10 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 	{
 		/* backend is on a different host, srg_loc is the remote host[:port] */
 		b->fns = &remote_backend_fns;
+		/* these are only used by local backends */
 		b->base_dir = NULL;
+		b->network_id[0] = '\0';
+		/* resolve the host:port */
 		if(parse_addr(srg_loc, &b->addr.sin_addr, &b->addr.sin_port) < 0)
 			fatal("Unable to resolve host %s", srg_loc);
 		verbose("Remote backend at %s:%u", inet_ntoa(b->addr.sin_addr), ntohs(b->addr.sin_port));
@@ -106,6 +109,11 @@ MHEGBackend_init(MHEGBackend *b, bool remote, char *srg_loc)
 		/* backend and frontend on same host, srg_loc is the base directory */
 		b->fns = &local_backend_fns;
 		b->base_dir = safe_strdup(srg_loc);
+		/* net_id < 0 means leave it blank */
+		if(net_id >= 0)
+			snprintf(b->network_id, sizeof(b->network_id), "%x", net_id);
+		else
+			b->network_id[0] = '\0';
 		verbose("Local backend; carousel file root '%s'", srg_loc);
 		/* initialise rec://svc/def value */
 		local_set_service_url(b);
@@ -374,7 +382,7 @@ local_set_service_url(MHEGBackend *t)
 	}
 
 	/* create a fake dvb:// format URL */
-	len = snprintf(url, sizeof(url), "dvb://..%x", service_id);
+	len = snprintf(url, sizeof(url), "dvb://%s..%x", t->network_id, service_id);
 
 	/* overwrite any existing value */
 	t->rec_svc_def.size = len;

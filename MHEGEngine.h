@@ -85,6 +85,7 @@ typedef struct
 {
 	bool remote;		/* or local rb-download backend */
 	char *srg_loc;		/* service gateway location: directory for local; host[:port] for remote */
+	int network_id;		/* Network ID for local backends, used to resolve rec://svc/def (<0 => leave it blank) */
 	int verbose;		/* -v flag */
 	unsigned int timeout;	/* seconds to poll for missing content before generating a ContentRefError */
 	bool fullscreen;	/* scale to fullscreen? */

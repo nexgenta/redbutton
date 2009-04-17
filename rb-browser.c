@@ -1,5 +1,5 @@
 /*
- * rb-browser [-v] [-f] [-d] [-a <alsa_device>] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-r] [<service_gateway>]
+ * rb-browser [-v] [-f] [-d] [-a <alsa_device>] [-o <video_output_method>] [-k <keymap_file>] [-t <timeout>] [-n <network_id>] [-r] [<service_gateway>]
  *
  * -v is verbose/debug mode
  * -f is full screen, otherwise it uses a window
@@ -15,6 +15,8 @@
  * and <service_gateway> should be an entry in the services directory, eg. services/4165
  * (this is really only for debugging or running MHEG apps you've written yourself)
  * the default backend is "-r 127.0.0.1"
+ * -n allows you to specify a Network ID for local backends, this is used to resolve rec://svc/def
+ * by default, the Network ID is left blank in rec://svc/def
  */
 
 #include <unistd.h>
@@ -58,8 +60,9 @@ main(int argc, char *argv[])
 	opts.av_disabled = false;
 	opts.timeout = MISSING_CONTENT_TIMEOUT;
 	opts.keymap = NULL;
+	opts.network_id = -1;		/* => leave it blank */
 
-	while((arg = getopt(argc, argv, "rvfda:o:k:t:")) != EOF)
+	while((arg = getopt(argc, argv, "rvfda:o:k:t:n:")) != EOF)
 	{
 		switch(arg)
 		{
@@ -93,6 +96,10 @@ main(int argc, char *argv[])
 
 		case 't':
 			opts.timeout = strtoul(optarg, NULL, 0);
+			break;
+
+		case 'n':
+			opts.network_id = strtoul(optarg, NULL, 0);
 			break;
 
 		default:
@@ -136,6 +143,7 @@ usage(char *prog_name)
 		"[-o <video_output_method>] "
 		"[-k <keymap_file>] "
 		"[-t <timeout>] "
+		"[-n <network_id>] "
 		"[-r] "
 		"[<service_gateway>]\n\n"
 		"%s",

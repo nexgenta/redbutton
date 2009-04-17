@@ -177,7 +177,7 @@ MHEGEngine_init(MHEGEngineOptions *opts)
 	engine.vo_method = MHEGVideoOutputMethod_fromString(opts->vo_method);
 	engine.av_disabled = opts->av_disabled;
 
-	MHEGBackend_init(&engine.backend, opts->remote, opts->srg_loc);
+	MHEGBackend_init(&engine.backend, opts->remote, opts->srg_loc, opts->network_id);
 
 	MHEGApp_init(&engine.active_app);
 
