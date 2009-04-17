@@ -355,7 +355,7 @@ close_stream(MHEGBackend *t, MHEGStream *stream)
 
 /*
  * update rec_svc_def to the service directory we are reading the carousel from
- * rec_svc_def will be in dvb:// format, but the network_id will be empty
+ * rec_svc_def will be in dvb:// format, but the network_id will be empty (unless you used -n on the command line)
  * eg if we are reading path/to/services/4165, then rec_svc_def will be dvb://..1045
  */
 
