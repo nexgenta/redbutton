@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 void
 usage(char *prog_name)
 {
-	fatal("Usage: %s "
+	printf("Usage: %s "
 		"[-v] "
 		"[-f] "
 		"[-d] "
@@ -146,7 +146,9 @@ usage(char *prog_name)
 		"[-n <network_id>] "
 		"[-r] "
 		"[<service_gateway>]\n\n"
-		"%s",
+		"%s\n",
 		prog_name, MHEGVideoOutputMethod_getUsage());
+
+	exit(EXIT_FAILURE);
 }
 
