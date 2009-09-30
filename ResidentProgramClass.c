@@ -300,6 +300,13 @@ run_program(ResidentProgramClass *p, LIST_OF(Parameter) *params, OctetString *ca
 	else
 	{
 		error("Unknown ResidentProgram: '%.*s'", p->name.size, p->name.data);
+		while(params)
+		{
+			printf("ResidentProgram params: '");
+			Parameter_print(&params->item, caller_gid);
+			printf("'\n");
+			params = params->next;
+		}
 		rc = false;
 	}
 
