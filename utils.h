@@ -34,6 +34,11 @@
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #endif
 
+/* newer versions of libavutil (0.5+) renamed RGBA32 to just RGB32 */
+#ifndef PIX_FMT_RGBA32
+#define PIX_FMT_RGBA32	PIX_FMT_RGB32
+#endif
+
 enum PixelFormat find_av_pix_fmt(int, unsigned long, unsigned long, unsigned long);
 
 unsigned int char2hex(unsigned char);
