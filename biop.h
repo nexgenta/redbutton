@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2005, Simon Kilvington
+ * Copyright (C) 2005-2010, Simon Kilvington
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -105,8 +105,8 @@ void process_biop_dir(uint8_t, char *, struct carousel *, unsigned char *, uint3
 uint32_t process_iop_ior(uint8_t, unsigned char *, struct biop_iop_ior *);
 uint16_t process_biop_service_gateway_info(uint16_t, struct assoc *, unsigned char *, uint16_t);
 
-uint16_t biop_uint16(uint8_t, uint16_t);
-uint32_t biop_uint32(uint8_t, uint32_t);
+uint16_t biop_uint16(uint8_t, unsigned char *);
+uint32_t biop_uint32(uint8_t, unsigned char *);
 
 uint32_t biop_sequence255(unsigned char *, struct biop_sequence *);
 uint32_t biop_sequence65535(uint8_t, unsigned char *, struct biop_sequence *);

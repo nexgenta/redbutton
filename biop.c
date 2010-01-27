@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2005, Simon Kilvington
+ * Copyright (C) 2005-2010, Simon Kilvington
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ process_biop(struct carousel *car, struct module *mod, struct BIOPMessageHeader 
 			error("Invalid BIOP header");
 			return false;
 		}
-		size = biop_uint32(data->byte_order, data->message_size);
+		size = biop_uint32(data->byte_order, (unsigned char *) &data->message_size);
 		vverbose("BIOP message_size=%u", size);
 		if(bytes_left < sizeof(struct BIOPMessageHeader) + size)
 		{
@@ -167,7 +167,7 @@ process_biop_dir(uint8_t byte_order, char *dirname, struct carousel *car, unsign
 	struct biop_sequence info;
 	uint16_t pid;
 
-	nbindings = biop_uint16(byte_order, *((uint16_t *) data));
+	nbindings = biop_uint16(byte_order, data);
 	data += 2;
 	vverbose("binding_count: %u", nbindings);
 
@@ -257,13 +257,13 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 	data += biop_sequence(byte_order, data, &type);
 	vverbose("  typeId: '%.*s'", type.size, type.data);
 
-	nprofiles = biop_uint32(byte_order, *((uint32_t *) data));
+	nprofiles = biop_uint32(byte_order, data);
 	data += 4;
 	vverbose("  taggedProfiles_count: %u", nprofiles);
 	for(i=0; i<nprofiles; i++)
 	{
 		vverbose("   IOP::taggedProfile %u", i);
-		tag = biop_uint32(byte_order, *((uint32_t *) data));
+		tag = biop_uint32(byte_order, data);
 		data += 4;
 		data += biop_sequence(byte_order, data, &profile);
 		if(tag == TAG_BIOP)
@@ -275,17 +275,17 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 			/* ncomponents = *(profile.data); */
 			profile.data += 1;
 			/* BIOP::ObjectLocation */
-			if(biop_uint32(profile_bo, *((uint32_t *) profile.data)) != TAG_ObjectLocation)
+			if(biop_uint32(profile_bo, profile.data) != TAG_ObjectLocation)
 				fatal("Expecting BIOP::ObjectLocation");
 			profile.data += 4;
 			/* component_data_length = *(profile.data); */
 			profile.data += 1;
 			/* carouselId */
-			ior->carousel_id = biop_uint32(profile_bo, *((uint32_t *) profile.data));
+			ior->carousel_id = biop_uint32(profile_bo, profile.data);
 			profile.data += 4;
 			vverbose("    carouselId: %u", ior->carousel_id);
 			/* moduleId */
-			ior->module_id = biop_uint16(profile_bo, *((uint16_t *) profile.data));
+			ior->module_id = biop_uint16(profile_bo, profile.data);
 			profile.data += 2;
 			vverbose("    moduleId: %u", ior->module_id);
 			/* BIOP version */
@@ -298,7 +298,7 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 			vverbose("    objectKey: '%.*s'", ior->key.size, ior->key.data);
 			vhexdump(ior->key.data, ior->key.size);
 			/* DSM::ConnBinder */
-			if(biop_uint32(profile_bo, *((uint32_t *) profile.data)) != TAG_ConnBinder)
+			if(biop_uint32(profile_bo, profile.data) != TAG_ConnBinder)
 				fatal("Expecting DSM::ConnBinder");
 			profile.data += 4;
 			vverbose("    DSM::ConnBinder");
@@ -310,22 +310,22 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
 			if(taps_count > 0)
 			{
 				vverbose("    BIOP::Tap");
-				/* id = biop_uint16(profile_bo, *((uint16_t *) profile.data)) */
+				/* id = biop_uint16(profile_bo, profile.data) */
 				profile.data += 2;
-				if(biop_uint16(profile_bo, *((uint16_t *) profile.data)) != BIOP_DELIVERY_PARA_USE)
+				if(biop_uint16(profile_bo, profile.data) != BIOP_DELIVERY_PARA_USE)
 					fatal("Expecting BIOP_DELIVERY_PARA_USE");
 				profile.data += 2;
 				vverbose("    use: BIOP_DELIVERY_PARA_USE");
-				ior->association_tag = biop_uint16(profile_bo, *((uint16_t *) profile.data));
+				ior->association_tag = biop_uint16(profile_bo, profile.data);
 				profile.data += 2;
 				vverbose("    association_tag: %u", ior->association_tag);
 				if(*profile.data != SELECTOR_TYPE_MESSAGE_LEN)
 					fatal("Expecting selector_length %u", SELECTOR_TYPE_MESSAGE_LEN);
 				profile.data += 1;
-				if(biop_uint16(profile_bo, *((uint16_t *) profile.data)) != SELECTOR_TYPE_MESSAGE)
+				if(biop_uint16(profile_bo, profile.data) != SELECTOR_TYPE_MESSAGE)
 					fatal("Expecting selector_type MESSAGE");
 				profile.data += 2;
-				transaction_id = biop_uint32(profile_bo, *((uint32_t *) profile.data));
+				transaction_id = biop_uint32(profile_bo, profile.data);
 				profile.data += 4;
 				vverbose("    transaction_id: %u", transaction_id);
 			}
@@ -348,15 +348,14 @@ process_iop_ior(uint8_t byte_order, unsigned char *data, struct biop_iop_ior *io
  */
 
 uint16_t
-biop_uint16(uint8_t byte_order, uint16_t raw)
+biop_uint16(uint8_t byte_order, unsigned char *raw)
 {
-	uint8_t *p = (uint8_t *) &raw;
 	uint16_t val;
 
 	if(byte_order == BIOP_BIGENDIAN)
-		val = (p[0] << 8) + p[1];
+		val = (raw[0] << 8) + raw[1];
 	else
-		val = (p[1] << 8) + p[0];
+		val = (raw[1] << 8) + raw[0];
 
 	return val;
 }
@@ -366,15 +365,14 @@ biop_uint16(uint8_t byte_order, uint16_t raw)
  */
 
 uint32_t
-biop_uint32(uint8_t byte_order, uint32_t raw)
+biop_uint32(uint8_t byte_order, unsigned char *raw)
 {
-	uint8_t *p = (uint8_t *) &raw;
 	uint32_t val;
 
 	if(byte_order == BIOP_BIGENDIAN)
-		val = (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3];
+		val = (raw[0] << 24) + (raw[1] << 16) + (raw[2] << 8) + raw[3];
 	else
-		val = (p[3] << 24) + (p[2] << 16) + (p[1] << 8) + p[0];
+		val = (raw[3] << 24) + (raw[2] << 16) + (raw[1] << 8) + raw[0];
 
 	return val;
 }
@@ -399,7 +397,7 @@ biop_sequence255(unsigned char *raw, struct biop_sequence *out)
 uint32_t
 biop_sequence65535(uint8_t byte_order, unsigned char *raw, struct biop_sequence *out)
 {
-	out->size = biop_uint16(byte_order, *((uint16_t *) raw));
+	out->size = biop_uint16(byte_order, raw);
 	out->data = &raw[2];
 
 	return 2 + out->size;
@@ -412,7 +410,7 @@ biop_sequence65535(uint8_t byte_order, unsigned char *raw, struct biop_sequence 
 uint32_t
 biop_sequence(uint8_t byte_order, unsigned char *raw, struct biop_sequence *out)
 {
-	out->size = biop_uint32(byte_order, *((uint32_t *) raw));
+	out->size = biop_uint32(byte_order, raw);
 	out->data = &raw[4];
 
 	return 4 + out->size;
